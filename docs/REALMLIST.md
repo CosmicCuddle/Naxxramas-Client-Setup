@@ -18,6 +18,18 @@ If a different address is found, the tool **only warns**. It does not overwrite,
 
 `Test-Naxxramas-Client.ps1 -RealmHost example.org` allows a temporary command-line override when checking a future address without changing the repository configuration.
 
+## Manual installation option (until the installer is ready)
+
+A ready-to-use text template is available at [`templates/realmlist.wtf`](../templates/realmlist.wtf).
+
+1. Close World of Warcraft.
+2. On a **separate copy of your WoW installation**, open `Data/enUS`.
+3. **Back up any existing `realmlist.wtf`** to a safe folder outside the game directory.
+4. Copy the repository's `templates/realmlist.wtf` into `Data/enUS`, replacing the old file only after making the backup.
+5. If you need to undo the change, close WoW and restore the exact previous file from your backup.
+
+The template changes only the realmlist setting; it does not supply mandatory Naxxramas patches, install addons, or verify network connectivity. The automated installer will handle backup and rollback later.
+
 ## Future installer requirements
 
 1. Use the default host from `config/realm.json`, with an advanced/manual override.

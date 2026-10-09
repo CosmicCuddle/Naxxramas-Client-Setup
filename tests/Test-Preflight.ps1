@@ -5,6 +5,20 @@ Set-StrictMode -Version Latest
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).ProviderPath
 $policyPath = Join-Path $repo 'config/client-patches.json'
 $policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
+$realmPolicy = Get-Content -LiteralPath (Join-Path $repo 'config/realm.json') -Raw | ConvertFrom-Json
+$realmTemplate = Join-Path $repo 'templates/realmlist.wtf'
+if ($realmPolicy.schema_version -ne 1 -or
+    $realmPolicy.host -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$' -or
+    $realmPolicy.relative_path -ne 'Data/enUS/realmlist.wtf') {
+  throw 'Unexpected initial default realm configuration.'
+}
+if (-not (Test-Path -LiteralPath $realmTemplate -PathType Leaf)) { throw 'Missing realmlist template.' }
+$rawTemplate = Get-Content -LiteralPath $realmTemplate -Raw -Encoding ASCII
+if ($rawTemplate -ne ('set realmlist ' + $realmPolicy.host) -or
+    $realmPolicy.line -ne $rawTemplate) {
+  throw 'Realmlist template does not match config/realm.json.'
+}
+
 
 foreach ($name in @('Test-Naxxramas-Client.ps1','Get-Core-Patch-Hashes.ps1','Prepare-Patch-Update.ps1')) {
   $path = Join-Path (Join-Path $repo 'tools') $name
@@ -45,7 +59,7 @@ try {
   Copy-Item -LiteralPath (Join-Path $repo 'tools/Test-Naxxramas-Client.ps1') -Destination (Join-Path $testRepo 'tools/Test-Naxxramas-Client.ps1')
   Copy-Item -LiteralPath (Join-Path $repo 'tools/Prepare-Patch-Update.ps1') -Destination (Join-Path $testRepo 'tools/Prepare-Patch-Update.ps1')
   Copy-Item -LiteralPath (Join-Path $repo 'config/realm.json') -Destination (Join-Path $testRepo 'config/realm.json')
-  Set-Content -LiteralPath (Join-Path $client 'Data/enUS/realmlist.wtf') -Value 'set realmlist 85.190.254.242' -Encoding ASCII
+  Set-Content -LiteralPath (Join-Path $client 'Data/enUS/realmlist.wtf') -Value ('set realmlist ' + $realmPolicy.host) -Encoding ASCII
   [IO.File]::WriteAllBytes((Join-Path $client 'Wow.exe'),[byte[]]@())
   $v = Join-Path $client 'Data/patch-V.mpq'
   $z = Join-Path $client 'Data/patch-Z.mpq'
