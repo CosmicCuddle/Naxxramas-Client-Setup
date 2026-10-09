@@ -1,0 +1,35 @@
+# Never commit a copied World of Warcraft installation.
+# These rules are protective only: always review staged changes before committing.
+
+/Data/
+/WTF/
+/Cache/
+/Screenshots/
+/Logs/
+/Errors/
+/Interface/AddOns/
+
+# Proprietary game/client binaries and archives
+*.MPQ
+*.mpq
+*.DBC
+*.dbc
+*.exe
+*.dll
+*.zip
+*.7z
+*.rar
+*.iso
+*.torrent
+
+# Inventory output and local working files
+client-inventory.txt
+*.bak
+*.tmp
+*.log
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
