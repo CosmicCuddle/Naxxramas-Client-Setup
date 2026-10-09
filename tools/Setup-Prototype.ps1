@@ -82,7 +82,10 @@ function SaveJSON([string]$p,[object]$data) {
  try { $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) }
  finally { $stream.Dispose() }
  if (Test-Path -LiteralPath $p -PathType Leaf) {
-  [IO.File]::Replace($tmp,$p,$null)
+  # Preserve last committed JSON as an independent recoverable snapshot.
+  # Windows File.Replace requires a valid backup path in this runtime.
+  $previous=$p+'.previous-'+[guid]::NewGuid().ToString('N')
+  [IO.File]::Replace($tmp,$p,$previous)
  } else {
   [IO.File]::Move($tmp,$p)
  }
