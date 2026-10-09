@@ -38,6 +38,14 @@ try {
  }
  [pscustomobject]@{schema_version=1;patch_set_version='synthetic-test';patches=$patches} |
   ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $fakeRepo 'config/client-patches.json') -Encoding UTF8
+ Copy-Item -LiteralPath (Join-Path $project 'config/addon-suite.json') -Destination (Join-Path $fakeRepo 'config/addon-suite.json')
+ $suite=Join-Path $root 'addons'
+ foreach($d in @('NCore','DungeonJournal','MultiBot')) { New-Item -ItemType Directory -Force -Path (Join-Path $suite $d) | Out-Null }
+ foreach($d in @('NCore','DungeonJournal','MultiBot')) {
+  [IO.File]::WriteAllText((Join-Path (Join-Path $suite $d) ($d+'.toc')),'## Interface: 30300')
+ }
+ [IO.File]::WriteAllText((Join-Path $suite 'NCore/core.lua'),'print("ncore")')
+ [IO.File]::WriteAllText((Join-Path $suite 'DungeonJournal/journal.lua'),'print("journal")')
  $script=Join-Path $fakeRepo 'tools/Setup-Prototype.ps1'
  function Run([string[]]$flags) {
   $a=@('-NoProfile','-ExecutionPolicy','Bypass','-File',$script,'-ClientPath',$game,'-PatchSourcePath',$source)+@($flags)
@@ -132,6 +140,50 @@ try {
   if (Test-Path -LiteralPath (Join-Path (Join-Path $game 'Data') $name)) {throw "New file $name not removed."}
  }
  if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {throw 'Original realmlist was not restored.'}
+ # The N Addon Suite is always selected with NCore, and only explicitly selected optional modules.
+ $r=Run @('-Addons','DungeonJournal')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('require -AddonSuitePath')) {
+  throw 'Selected optional addons were accepted without an addon suite.'
+ }
+ $r=Run @('-AddonSuitePath',$suite,'-Addons','DungeonJournal')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('PLAN: 7 file change(s)')) {
+  throw ("Addon preview failed: "+$r.text)
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/NCore')) {
+  throw 'Read-only addon plan copied addon files.'
+ }
+ $r=Run @('-AddonSuitePath',$suite,'-Addons','DungeonJournal','-Action','Install','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('TEST INSTALL COMPLETE')) {throw ("Addon install fixture failed: "+$r.text)}
+ foreach($p in @('Interface/AddOns/NCore/NCore.toc','Interface/AddOns/NCore/core.lua',
+                 'Interface/AddOns/DungeonJournal/DungeonJournal.toc','Interface/AddOns/DungeonJournal/journal.lua')) {
+  if (-not (Test-Path -LiteralPath (Join-Path $game $p))) {throw "Missing addon file: $p"}
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/MultiBot')) {
+  throw 'Unselected optional addon MultiBot was installed.'
+ }
+ $addonFile=Join-Path $game 'Interface/AddOns/NCore/core.lua'
+ [IO.File]::WriteAllText($addonFile,'player altered addon')
+ $r=Run @('-Action','Rollback','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('changed after setup')) {
+  throw 'Rollback could overwrite player-edited addon content.'
+ }
+ [IO.File]::WriteAllText($addonFile,'print("ncore")')
+ $r=Run @('-Action','Rollback','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -ne 0) { throw ("Addon rollback failed: "+$r.text) }
+ if (Test-Path -LiteralPath $addonFile -PathType Leaf) {throw 'Rollback left installer-created NCore file.'}
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/DungeonJournal/DungeonJournal.toc')) {
+  throw 'Rollback left installer-created journal file.'
+ }
+ # A pre-existing addon folder must be protected, even when contents differ.
+ New-Item -ItemType Directory -Force -Path (Join-Path $game 'Interface/AddOns/NCore') | Out-Null
+ [IO.File]::WriteAllText((Join-Path $game 'Interface/AddOns/NCore/user.lua'),'user-installed')
+ $r=Run @('-AddonSuitePath',$suite,'-Action','Install','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Refusing to merge/overwrite')) {
+  throw 'Installer attempted to merge into an existing addon directory.'
+ }
+ if ([IO.File]::ReadAllText((Join-Path $game 'Interface/AddOns/NCore/user.lua')) -cne 'user-installed') {
+  throw 'Existing addon content was modified.'
+ }
  [IO.File]::WriteAllText((Join-Path $source 'Data/patch-Z.mpq'),'tampered Z')
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')
  if ($r.exit -eq 0) {throw 'Wrong checksum should prevent installation.'}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/CosmicCuddle/N-Addon-Collection",
+  "reference_release": "v2.0.0",
+  "reference_release_url": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
+  "release_archive_sha256": null,
+  "authentication": "not_verified_from_local_directory",
+  "note": "Installer alpha reads only an extracted, local addon-suite copy. It does not download or redistribute addon archives. Approval/source authentication still required before production.",
+  "required_framework": "NCore",
+  "optional_modules": [
+    "IndividualProgressionAddon",
+    "DungeonJournal",
+    "MultiBot",
+    "NaxxLootLottery"
+  ],
+  "excluded": [
+    "NClassicBattlegrounds",
+    "ServerDungeonJournal",
+    "NTalentCalculator"
+  ],
+  "protected_existing_addons": true,
+  "require_dependency_validation": true
+}

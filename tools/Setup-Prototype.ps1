@@ -9,6 +9,9 @@ param(
  [Parameter(Mandatory=$true)][string]$ClientPath,
  [ValidateSet('Plan','Install','Rollback','Recover')][string]$Action='Plan',
  [string]$PatchSourcePath,
+ [string]$AddonSuitePath,
+ [ValidateSet('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')]
+ [string[]]$Addons=@(),
  [switch]$VanillaLogin,
  [switch]$VanillaLoading,
  [switch]$Apply,
@@ -30,7 +33,15 @@ function IsInside([string]$p,[string]$parent) {
     $p.StartsWith(($parent+[IO.Path]::DirectorySeparatorChar),[StringComparison]::OrdinalIgnoreCase)
 }
 function Rel([string]$p) {
- Require (@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf') -ccontains $p) "Unsafe path: $p"
+ $allowed=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+ if (-not ($allowed -ccontains $p)) {
+  Require ($p -cmatch '^Interface/AddOns/(NCore|IndividualProgressionAddon|DungeonJournal|MultiBot|NaxxLootLottery)/[^/]+') "Unsafe path: $p"
+  foreach($part in ($p -split '/')) {
+   Require ($part -and $part -ne '.' -and $part -ne '..' -and
+      $part -notmatch '[\\:*?"<>|\x00-\x1F]' -and
+      -not $part.EndsWith('.') -and -not $part.EndsWith(' ')) "Unsafe addon path component: $part"
+  }
+ }
  return $p.Replace('/',[IO.Path]::DirectorySeparatorChar)
 }
 function NoLinks([string]$base,[string]$sub) {
@@ -116,6 +127,37 @@ function ProposedChanges {
  if ($hash -cne $before) {
   $changes.Add([pscustomobject]@{path=$p;source=$null;old_sha256=$before;new_sha256=$hash;kind='realm'})
  } else { Write-Host "CURRENT: $p" }
+ if ($addonRoot) {
+  # Only the reviewed five-folder structure. Never merge into existing addons.
+  $selected=@('NCore')+@($Addons | Select-Object -Unique)
+  foreach($oldName in @('NClassicBattlegrounds','ServerDungeonJournal')) {
+   if (Test-Path -LiteralPath (Join-Path (Join-Path $client 'Interface/AddOns') $oldName)) {
+    throw "Conflicting legacy addon is installed: $oldName. Make a backup and resolve it manually; the alpha will never delete it."
+   }
+  }
+  foreach ($addonName in $selected) {
+   $dir=Join-Path $addonRoot $addonName
+   $toc=Join-Path $dir ($addonName+'.toc')
+   Require (Test-Path -LiteralPath $toc -PathType Leaf) "Selected addon missing expected TOC: $addonName"
+   $targetDir=Join-Path (Join-Path $client 'Interface/AddOns') $addonName
+   Require (-not (Test-Path -LiteralPath $targetDir)) "Addon $addonName already exists. Refusing to merge/overwrite personal addon files."
+   $children=@(Get-ChildItem -LiteralPath $dir -Recurse -Force)
+   Require ($children.Count -le 15000) "Too many files in addon: $addonName"
+   foreach($item in $children) {
+    Require (-not ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) "Linked addon content is forbidden: $($item.Name)"
+    if ($item.PSIsContainer) { continue }
+    $sub=$item.FullName.Substring($dir.Length).TrimStart([char[]]@('\','/')).Replace('\','/')
+    $path='Interface/AddOns/'+$addonName+'/'+$sub
+    $null=Rel $path
+    $target=Destination $path
+    NoLinks $addonRoot ($addonName+'/'+$sub)
+    Require (-not (Test-Path -LiteralPath $target)) "Unexpected existing addon file: $path"
+    $hash=SHA $item.FullName
+    $changes.Add([pscustomobject]@{path=$path;source=$item.FullName;old_sha256=$null;new_sha256=$hash;kind='addon'})
+   }
+  }
+  Write-Warning 'Addon source directory has not been authenticated against an approved release ZIP. Alpha fixture testing only.'
+ }
  if ($VanillaLogin -and $VanillaLoading) { Write-Warning 'J and U overlap on loading-screen assets; test both together in-game.' }
  return @($changes.ToArray())
 }
@@ -128,7 +170,7 @@ function UndoSession {
  $file=Join-Path $session 'manifest.json'
  $j=ReadJSON $file
  Require ($j.schema -eq 1 -and $j.client -ceq $client -and $j.session -ceq $active.session) 'Invalid rollback manifest.'
- Require (@($j.operations).Count -le 5) 'Unexpected rollback operations.'
+ Require (@($j.operations).Count -le 15000) 'Unexpected rollback operations.'
  # Verify ALL backups and targets before modifying any client file.
  foreach ($op in @($j.operations)) {
   $to=Destination ([string]$op.path)
@@ -208,6 +250,24 @@ try {
   $sourceRoot=Folder $PatchSourcePath
   Require (-not (IsInside $client $sourceRoot) -and -not (IsInside $sourceRoot $client)) 'Patch source and target must be separate, non-nested folders.'
  }
+ $addonRoot=$null
+ if ($Addons.Count -gt 0 -and -not $AddonSuitePath) { throw 'Selected addon modules require -AddonSuitePath.' }
+ if ($AddonSuitePath) {
+  $suite=Folder $AddonSuitePath
+  Require (-not (IsInside $client $suite) -and -not (IsInside $suite $client)) 'Addon source and client must be separate, non-nested folders.'
+  $meta=ReadJSON (Join-Path $repo 'config/addon-suite.json')
+  Require ($meta.schema_version -eq 1 -and $meta.reference_release -ceq 'v2.0.0' -and
+   $meta.required_framework -ceq 'NCore') 'Unknown addon suite metadata.'
+  if (Test-Path -LiteralPath (Join-Path $suite 'NCore/NCore.toc') -PathType Leaf) {
+   $addonRoot=$suite
+  } elseif (Test-Path -LiteralPath (Join-Path $suite 'Interface/AddOns/NCore/NCore.toc') -PathType Leaf) {
+   $addonRoot=Join-Path (Join-Path $suite 'Interface') 'AddOns'
+  } else {
+   throw 'NCore/NCore.toc was not found in the selected addon suite.'
+  }
+  if ($addonRoot -cne $suite) { NoLinks $suite 'Interface/AddOns/NCore/NCore.toc' }
+  NoLinks $addonRoot 'NCore/NCore.toc'
+ }
  $activeFile=Join-Path $state 'active.json'
  if (Test-Path -LiteralPath $activeFile -PathType Leaf) {
   $active=ReadJSON $activeFile
@@ -222,6 +282,7 @@ try {
   throw $msg
  }
  $ops=@(ProposedChanges)
+ Require ($ops.Count -le 15000) 'Too many planned operations for this test prototype.'
  Write-Host "PATCHSET: $($policy.patch_set_version)"
  Write-Host "PLAN: $($ops.Count) file change(s)"
  foreach ($op in $ops) { Write-Host ("{0}: {1}" -f $(if ($op.old_sha256) { 'BACKUP + REPLACE' } else { 'CREATE' }),$op.path) }

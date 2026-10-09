@@ -47,7 +47,7 @@ The [patch policy manifest](config/client-patches.json) records those installer 
 
 ## Test-only local installer alpha
 
-A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes, stages files, backs up originals, and can undo an installation. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md).
+A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes and selected local N Addon Suite folders, stages files, backs up originals, and supports interrupted-session recovery and rollback in disposable test fixtures. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md).
 
 ## Read-only preflight tools
 
