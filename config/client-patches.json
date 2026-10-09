@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "design_only_not_an_installer_or_distribution_approval",
-  "note": "Owner-confirmed file requirements. SHA-256 hashes, file provenance and redistribution permissions are not yet verified. No binaries or download URLs are provided.",
+  "note": "Owner-confirmed patch roles. J/U contents and hashes inspected directly from owner-provided MPQs on 9 October 2026. V/Z hashes, client runtime behavior, file provenance, and redistribution rights remain unverified. No binaries or download URLs are provided.",
   "target_client": {
     "game": "World of Warcraft",
     "version": "3.3.5a",
@@ -28,27 +28,37 @@
     },
     {
       "path": "Data/Patch-J.mpq",
-      "role": "vanilla_screen_cosmetic",
-      "detail": "login_or_loading_not_yet_mapped",
+      "role": "vanilla_login_screen",
+      "detail": "Login-screen replacement assets: Northrend main-menu model/skins/textures, glue logo/buttons, login music; also includes some loading-screen textures. Exact appearance must be tested in-game.",
       "required": false,
       "allow_disable": true,
-      "sha256": null,
-      "public_distribution_approved": false
+      "sha256": "24385046f0db6c17db5f549fa0f418f5d5ed1d4c2100059f1db9bede709113c9",
+      "public_distribution_approved": false,
+      "size_bytes": 5739890,
+      "inspection": "archive_listfile_verified_2026-10-09"
     },
     {
       "path": "Data/Patch-U.mpq",
-      "role": "vanilla_screen_cosmetic",
-      "detail": "login_or_loading_not_yet_mapped",
+      "role": "vanilla_loading_screens",
+      "detail": "Four BLPs: Eastern Kingdoms and Kalimdor, plus widescreen variants. Two BLP paths overlap with Patch-J.mpq and have different contents.",
       "required": false,
       "allow_disable": true,
-      "sha256": null,
-      "public_distribution_approved": false
+      "sha256": "51fc8cbd1786537772ea7f59eac7be244eedabf7e6487ee41e5ce2009ecd9a6d",
+      "public_distribution_approved": false,
+      "size_bytes": 11050502,
+      "inspection": "archive_listfile_verified_2026-10-09"
     }
   ],
   "validation_policy": {
     "require_all_required_patches": true,
     "reject_incomplete_core": true,
     "do_not_delete_existing_client_files": true,
-    "backup_before_overwrite": true
+    "backup_before_overwrite": true,
+    "optional_patch_overlap_warning": true,
+    "optional_patch_overlap_paths": [
+      "Interface/GLUES/LoadingScreens/LoadScreenEasternKingdom.blp",
+      "Interface/GLUES/LoadingScreens/LoadScreenKalimdor.blp"
+    ],
+    "in_game_joint_option_test_required": true
   }
 }

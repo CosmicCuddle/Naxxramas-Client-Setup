@@ -14,12 +14,27 @@
 
 | Relative path | Displayed size | Action |
 | --- | ---: | --- |
-| `Data/Patch-J.mpq` | 5.5 MB | Optional cosmetic patch — one of Vanilla login screen / Vanilla loading screens |
-| `Data/Patch-U.mpq` | 10.5 MB | Optional cosmetic patch — the other Vanilla screen modification |
+| `Data/Patch-J.mpq` | 5.5 MB | **Optional login-screen visuals**, plus supporting login music and some loading-screen textures (contents inspected) |
+| `Data/Patch-U.mpq` | 10.5 MB | **Optional Vanilla loading-screen visuals** for Eastern Kingdoms and Kalimdor, standard and widescreen (contents inspected) |
 | `Data/patch-V.mpq` | 429.8 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
 | `Data/patch-Z.mpq` | 45.1 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
 
-**Source:** the server owner confirmed these roles on 9 October 2026. We have not determined whether J or U is specifically the login-screen patch (rather than loading-screen patch). Both are optional. The exact contents and dependencies of V and Z remain uninspected.
+**Source:** The server owner confirmed the optional/mandatory split, and both J/U MPQ archives were inspected directly from copies supplied on 9 October 2026. The analysis confirms J includes login-screen model, textures, and music; U includes only four loading-screen BLP files. The exact visual appearance and combined in-game behavior have not been tested. The contents and dependencies of core V and Z remain uninspected.
+
+### J and U archive inspection
+
+**Patch-J.mpq:** 5,739,890 bytes (39 named game assets, excluding MPQ bookkeeping files). Includes the model `Interface/GLUES/MODELS/UI_MainMenu_Northrend/UI_MainMenu_Northrend.m2`, associated `.skin` and `.blp` files, `Sound/Music/GlueScreenMusic/Wotlk_Main_title.mp3`, several glue screen buttons/logos, and several loading-screen textures.
+
+**Patch-U.mpq:** 11,050,502 bytes (four named game assets, excluding MPQ bookkeeping files):
+
+- `Interface/GLUES/LOADINGSCREENS/LoadScreenEasternKingdom.blp`
+- `Interface/GLUES/LOADINGSCREENS/LoadScreenEasternKingdomWide.blp`
+- `Interface/GLUES/LOADINGSCREENS/LoadScreenKalimdor.blp`
+- `Interface/GLUES/LOADINGSCREENS/LoadScreenKalimdorWide.blp`
+
+**Interaction:** J and U both contain `LoadScreenEasternKingdom.blp` and `LoadScreenKalimdor.blp`, with **different file contents**. The installer's UI must mention this, and all combinations (neither, J only, U only, both) must be tested in-game before publishing. MPQ load precedence has not been validated. Neither patch should be merged with the other automatically.
+
+SHA-256 integrity checks for the uploaded copies are recorded in [`config/client-patches.json`](../config/client-patches.json). These reference hashes **are not** evidence of licensing, origin, or visual quality.
 
 **Do not merge, delete, rename, disable, or silently replace either mandatory core patch.** Setup is invalid if either V or Z is absent or fails verification. J and U must never be enforced as mandatory. All four patches still require content/provenance and redistribution-rights review before public packaging.
 
@@ -58,7 +73,7 @@ Investigate before using or distributing `Customsounds`, `Battle.net.dll`, `ReSh
 - For connection setup, update `Data/enUS/realmlist.wtf` (or the selected locale's corresponding file) **after** receiving the server's public realmlist address from the owner.
 - Installer should prompt to work on a **separate copy**, check free space, and confirm each write before proceeding.
 - Install validation must require both `Data/patch-V.mpq` and `Data/patch-Z.mpq` and verify them against trusted checksums once established. There must be no option to omit/disable either patch in a complete Naxxramas setup.
-- `Data/Patch-J.mpq` and `Data/Patch-U.mpq` are independent optional selections for Vanilla login/loading presentation. Which filename maps to which option still requires confirmation.
+- `Data/Patch-J.mpq` is the optional login-screen visual patch (with additional loading-screen data); `Data/Patch-U.mpq` is the optional loading-screen patch. Warn that they have two conflicting texture paths; validate both-together behavior in-game.
 - Do not accidentally remove the core patches during updates or optional-feature changes; explicit uninstall/rollback must restore the player's prior state, never delete pre-existing files owned by the player.
 - All changed local files must be backed up, logged in an install manifest, and restorable on uninstall.
 - Optional N Addon Suite should be obtained from **its published approved release**, with version pinning, hash verification, and correct folder layout.
@@ -66,7 +81,7 @@ Investigate before using or distributing `Customsounds`, `Battle.net.dll`, `ReSh
 
 ## Next information needed
 
-1. Confirm whether `Patch-J.mpq` is the Vanilla login screen or loading screens (and thus the role of `Patch-U.mpq`); inspect content lists for provenance and redistribution rights without uploading whole MPQs.
+1. Confirm the in-game appearance of J only, U only, and both together; establish patch origin and redistribution rights before public packaging.
 2. The realmlist **public DNS name or IP** players should use; do not confuse this with the owner's private network address.
 3. Version metadata for `Wow.exe` to verify build 12340.
 4. A final decision on whether the standalone Talent Calculator and any other non-suite addons belong in the *optional* installer catalog.
