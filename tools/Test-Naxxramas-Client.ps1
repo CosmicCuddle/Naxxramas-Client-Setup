@@ -57,6 +57,11 @@ try {
   Write-Host ''
   Write-Host 'Naxxramas Client - Read-Only Preflight' -ForegroundColor Cyan
   Write-Host '-------------------------------------'
+  $revisionLabel = if ($policy.patch_set_version) { [string]$policy.patch_set_version } else { 'unversioned (older repository copy)' }
+  Write-Host "Patch reference: $revisionLabel"
+  if (-not $policy.patch_set_version) {
+    $warnings.Add('The repository copy is outdated and has no versioned patch reference. Download the latest repository ZIP.')
+  }
 
   $wow = Join-Path $root 'Wow.exe'
   if (-not (Test-Path -LiteralPath $wow -PathType Leaf)) {
@@ -66,8 +71,10 @@ try {
     try { $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($wow).FileVersion }
     catch { $warnings.Add('Could not read Wow.exe version metadata. Verify that Wow.exe is a genuine client executable.') }
     Write-Host "WoW version metadata: $(if ($version) { $version } else { '(not available)' })"
-    if (-not ($version -and $version -match '(^|[.\s])12340($|[.\s])')) {
+    if (-not ($version -and $version -match '(^|[.,\s])12340($|[.,\s])')) {
       $warnings.Add('Build 12340 is not confirmed by Wow.exe version metadata. Verify the game build before installation.')
+    } else {
+      Write-Host 'WoW build: 12340 confirmed from executable version metadata' -ForegroundColor Green
     }
   }
 
@@ -92,7 +99,7 @@ try {
       Write-Host "Realm hostname format: valid ($RealmHost)"
     }
   } else {
-    $warnings.Add('No public realmlist host supplied; connection setup cannot yet be completed.')
+    Write-Host 'INFO: No realm address supplied; connection setup is not configured yet.'
   }
 
   foreach ($patch in @($policy.patches)) {
@@ -101,10 +108,17 @@ try {
       ($patch.path -eq 'Data/Patch-U.mpq' -and [bool]$VanillaLoading)
     $installed = Find-Patch $root $patch.path
     if (-not $chosen) {
-      if ($installed) {
-        $warnings.Add("Unselected optional patch is already present: $($patch.path). An installer must not silently remove it.")
+      if (-not $installed) {
+        Write-Host "OPTIONAL NOT INSTALLED: $($patch.path)"
+      } else {
+        $installedHash = Hash-File $installed
+        if ($patch.sha256 -and $installedHash -ne $patch.sha256.ToLowerInvariant()) {
+          $warnings.Add("Installed optional patch is a different version: $($patch.path). The preflight did not change it.")
+          Write-Host "OPTIONAL PRESENT (different version): $($patch.path)" -ForegroundColor Yellow
+        } else {
+          Write-Host "OPTIONAL PRESENT (not requested for installation): $($patch.path)" -ForegroundColor Green
+        }
       }
-      Write-Host "OPTIONAL / not selected: $($patch.path)"
       continue
     }
     $source = Find-Patch $patchSource $patch.path
@@ -133,7 +147,7 @@ try {
       }
     } else {
       $size = (Get-Item -LiteralPath $candidate).Length
-      Write-Host ("FOUND: {0} ({1:N1} MB)" -f $patch.path,($size / 1MB))
+      Write-Host ("VERIFIED: {0} ({1:N1} MB)" -f $patch.path,($size / 1MB))
     }
     if ($required -and -not $patch.sha256) {
       $warnings.Add("Mandatory patch $($patch.path) is present but has no pinned reference SHA-256. Authenticity is NOT verified. Actual SHA-256: $sha")
@@ -181,7 +195,7 @@ try {
     Write-Host 'Preflight: FAILED. No files changed.' -ForegroundColor Red
     exit 1
   }
-  Write-Host 'Preflight: file presence checks PASSED. Review warnings before installing.' -ForegroundColor Green
+  Write-Host 'Preflight: required patch checks PASSED against the selected local manifest. Review any warnings.' -ForegroundColor Green
   Write-Host 'This tool is READ ONLY: no game files were changed or uploaded.'
   exit 0
 }

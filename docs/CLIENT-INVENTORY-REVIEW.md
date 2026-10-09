@@ -7,7 +7,7 @@
 - WoW locale: enUS (inferred from the locale MPQ archive names).
 - 22 MPQ archives, approximately **16.56 GiB** total using the scanner's displayed rounded MB sizes.
 - 174 addon directories, including bundled Blizzard UI modules, third-party addons, and Naxxramas-specific addons.
-- `Wow.exe` is present; **build 12340 has not been independently verified** because the inventory does not include executable version metadata.
+- `Wow.exe` is present. The owner subsequently provided a read-only preflight screenshot showing executable version metadata **3, 3, 5, 12340**. This confirms the reported executable file version, but the full game's runtime compatibility is not independently tested.
 - The archive's full ZIP size (18.6 GB, supplied separately by the owner) is **not** evidence that its contents are redistributable.
 
 ## Custom MPQ requirements confirmed by the server owner
@@ -83,7 +83,7 @@ Investigate before using or distributing `Customsounds`, `Battle.net.dll`, `ReSh
 
 1. Confirm the in-game appearance of J only, U only, and both together; establish patch origin and redistribution rights before public packaging. Owner-reported V/Z hashes are pinned in `patchset-0001`, but contents and provenance have not been inspected.
 2. The realmlist **public DNS name or IP** players should use; do not confuse this with the owner's private network address.
-3. Version metadata for `Wow.exe` to verify build 12340.
+3. **Completed:** the owner-supplied preflight screenshot reports `Wow.exe` file version `3, 3, 5, 12340`; runtime compatibility remains to be tested.
 4. A final decision on whether the standalone Talent Calculator and any other non-suite addons belong in the *optional* installer catalog.
 
 No cleanup, modification, or client installation has been performed by this review.

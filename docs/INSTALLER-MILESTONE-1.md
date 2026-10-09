@@ -10,7 +10,7 @@ The client archive is ~18.6 GB, but the planned setup tool does **not** distribu
 - Check that mandatory Data/patch-V.mpq and Data/patch-Z.mpq are present, or available from an explicitly selected local patch source.
 - Support optional Vanilla login visuals (Patch-J.mpq) and optional Vanilla loading screens (Patch-U.mpq).
 - Verify optional MPQs against their recorded SHA-256 fingerprints.
-- Validate V/Z and J/U against pinned reference fingerprints (patchset-0001; V/Z values supplied by the server owner). Build 12340 still requires independent confirmation.
+- Validate V/Z and J/U against pinned reference fingerprints (patchset-0001; V/Z values supplied by the server owner). The owner has now supplied an executable-version screenshot reporting 3.3.5 build 12340; independent executable/runtime verification remains outside the scope of this read-only tool.
 - Check optional extracted N Addon Suite folder layout: NCore is required within the suite; other suite modules are individually selectable.
 - Validate an optionally supplied realm hostname without writing realmlist.wtf.
 - Never modify, copy, upload, rename, or remove game files.
@@ -20,7 +20,7 @@ The client archive is ~18.6 GB, but the planned setup tool does **not** distribu
 1. Download and extract this repository ZIP **outside** your WoW folder.
 2. Open the tools folder.
 3. Drag the folder containing Wow.exe onto **Check-Naxxramas-Client.bat**.
-4. Read the results. Warnings may still appear for unconfirmed client build metadata, missing realmlist address, or optional patches.
+4. Read the results. The checker now prints the reference patch set and clearly distinguishes installed optional patches from installation selections. If a client lacks version metadata or has an unrecognised patch hash, the checker will warn or reject it as appropriate. The public realmlist host remains to be provided.
 
 The check may calculate file hashes, so large patches can take time to read. It never edits the original client.
 

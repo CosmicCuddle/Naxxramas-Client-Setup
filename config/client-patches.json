@@ -7,7 +7,8 @@
     "version": "3.3.5a",
     "build": 12340,
     "locale": "enUS",
-    "build_verified": false
+    "build_verified": true,
+    "build_verification_source": "owner screenshot of read-only preflight 2026-10-09: Wow.exe file version metadata 3, 3, 5, 12340"
   },
   "patches": [
     {
