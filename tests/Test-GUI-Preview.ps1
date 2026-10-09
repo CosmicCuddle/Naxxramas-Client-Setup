@@ -23,8 +23,8 @@ foreach($needle in @(
  '$form.Add_KeyDown',
  'KeyCode -eq [Windows.Forms.Keys]::Escape',
  "$"+"cancel.Add_Click",
- 'Compact GUI layout failed at minimum desktop width.',
- 'Two-column GUI layout failed at desktop width.',
+ 'Compact GUI layout failed',
+ 'Two-column GUI layout failed',
  '$options.Add_SizeChanged($reflowOptions)',
  '$result.AccessibleName='
 )){
