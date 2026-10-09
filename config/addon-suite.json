@@ -4,8 +4,8 @@
   "reference_release": "v2.0.0",
   "reference_release_url": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
   "release_archive_sha256": "07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324",
-  "authentication": "archive_sha256_reference_pinned_but_extracted_folder_not_authenticated",
-  "note": "The ZIP fingerprint comes from the project's GitHub release metadata. Test-Addon-Release.ps1 can compare a locally obtained archive with this reference. Setup-Prototype.ps1 still accepts only local extracted folders in disposable tests and does not cryptographically bind these directories to the ZIP. No downloads or public distribution of Blizzard assets.",
+  "authentication": "pinned_zip_verified_at_source_stream_in_disposable_fixture_alpha",
+  "note": "Direct ZIP source in Setup-Prototype.ps1 validates SHA-256, size, ZIP member paths and required TOCs, streams selected files from the open verified archive to journaled staging and verifies their per-file digests. Arbitrary extracted folders are still not trusted. This is a fixture-only prototype and does not confer distribution rights or proof of origin beyond pinned GitHub asset metadata.",
   "required_framework": "NCore",
   "optional_modules": [
     "IndividualProgressionAddon",

@@ -19,6 +19,7 @@ param(
  [switch]$ConfirmDisposableFixture,
  [ValidateRange(0,5)][int]$SimulateFailureAfter=0,
  [ValidateRange(0,5)][int]$SimulateCrashAfter=0,
+ [ValidateRange(0,5)][int]$SimulateStagingFailureAfter=0,
  [ValidateRange(-1,9223372036854775807)][long]$SimulateFreeBytes=-1
 )
 $ErrorActionPreference='Stop'
@@ -375,6 +376,8 @@ try {
  New-Item -ItemType Directory -Path $stage -Force | Out-Null
  New-Item -ItemType Directory -Path $backups -Force | Out-Null
  $entries=New-Object 'System.Collections.Generic.List[object]'
+ $stagedCount=0
+ try {
  foreach($op in $ops) {
   $rel=Rel ([string]$op.path)
   $to=Destination ([string]$op.path)
@@ -392,6 +395,20 @@ try {
    SafeCopy $to $backup $op.old_sha256
   } else { Require (-not (Test-Path -LiteralPath $to)) "New destination appeared since preview: $($op.path)" }
   $entries.Add([pscustomobject]@{path=$op.path;old_sha256=$op.old_sha256;new_sha256=$op.new_sha256})
+  $stagedCount++
+  if ($SimulateStagingFailureAfter -gt 0 -and $stagedCount -eq $SimulateStagingFailureAfter) {
+   throw "Simulated staging permission failure after $stagedCount files."
+  }
+ }
+ } catch {
+  $stagingError=$_.Exception.Message
+  # No active transaction or game-file writes have happened at this point.
+  # Clean only the new, session-specific temporary directory.
+  if (-not (Test-Path -LiteralPath (Join-Path $state 'active.json'))) {
+   try { Remove-Item -LiteralPath $session -Recurse -Force -ErrorAction Stop }
+   catch { Write-Warning "Could not clean unused staging directory: $($_.Exception.Message)" }
+  }
+  throw $stagingError
  }
  $j=[pscustomobject]@{schema=1;client=$client;session=$sid;patchset=$policy.patch_set_version;status='prepared';operations=@($entries.ToArray())}
  $jpath=Join-Path $session 'manifest.json'

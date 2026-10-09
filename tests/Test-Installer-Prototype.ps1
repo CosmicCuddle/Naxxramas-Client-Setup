@@ -82,6 +82,21 @@ try {
  if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {
   throw 'A rejected non-fixture install unexpectedly created setup state.'
  }
+ $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-SimulateStagingFailureAfter','2')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Simulated staging permission failure')) {
+  throw ("Synthetic staging failure was not handled: "+$r.text)
+ }
+ if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash.ToLowerInvariant() -ne $originalV -or
+     (Test-Path -LiteralPath (Join-Path $game 'Data/patch-Z.mpq')) -or
+     [IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {
+  throw 'Staging failure modified existing game files.'
+ }
+ if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup/active.json')) {
+  throw 'A staging-only failure created an active installation.'
+ }
+ if (@(Get-ChildItem -LiteralPath (Join-Path $game '.naxxramas-setup/sessions') -ErrorAction SilentlyContinue).Count -ne 0) {
+  throw 'A staging-only failure left a partial session folder.'
+ }
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-SimulateFailureAfter','2')
  if ($r.exit -eq 0 -or -not $r.text.Contains('Simulated failure')) {throw ("Simulated failure test did not fail: "+$r.text)}
  if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash.ToLowerInvariant() -ne $originalV) {throw 'V was not restored on failure.'}

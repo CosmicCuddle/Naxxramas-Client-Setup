@@ -57,7 +57,7 @@ Drag the **locally downloaded official ZIP** onto `tools/Verify-Addon-Release.ba
 
 ## Offline verified addon ZIP extraction
 
-The [Milestone 4 extractor](docs/INSTALLER-MILESTONE-4.md) validates the approved v2.0.0 addon archive and can extract only the five approved folders to a **new folder outside the WoW client**. Default is a read-only preview; extraction requires `-Extract`. A verification report is recorded for inspection, but the folder is not automatically trusted as a future installation source.
+The [Milestone 4 extractor](docs/INSTALLER-MILESTONE-4.md) validates the approved v2.0.0 addon archive and can extract only the five approved folders to a **new folder outside the WoW client**. Default is a read-only preview; extraction requires `-Extract`. A verification report is recorded for inspection, but the folder is not automatically trusted as a future installation source. The [Milestone 5 test installer](docs/INSTALLER-MILESTONE-5.md) can now take the **verified ZIP directly** and stage selected addons from it, without relying on an extracted directory.
 
 ## Read-only preflight tools
 
