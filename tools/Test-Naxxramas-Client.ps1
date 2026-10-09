@@ -2,7 +2,7 @@
 <#
   Naxxramas client preflight (READ ONLY).
   Checks required core patches, optional visual patches, WoW build metadata,
-  local N Addon Suite layout and realm hostname syntax.
+  local N Addon Suite layout and realm hostname/current realmlist comparison.
   Does not install, copy, delete, download or edit game files.
 #>
 [CmdletBinding()]
@@ -50,6 +50,15 @@ try {
   $configPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config/client-patches.json'
   $policy = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
   if ($policy.schema_version -ne 1) { throw 'Unsupported patch policy manifest.' }
+  $realmConfigPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config/realm.json'
+  if (-not (Test-Path -LiteralPath $realmConfigPath -PathType Leaf)) {
+    throw 'Missing config/realm.json. Download the latest repository ZIP.'
+  }
+  $realmPolicy = Get-Content -LiteralPath $realmConfigPath -Raw | ConvertFrom-Json
+  if ([int]$realmPolicy.schema_version -ne 1 -or [string]$realmPolicy.locale -ne 'enUS' -or
+      [string]$realmPolicy.relative_path -ne 'Data/enUS/realmlist.wtf') {
+    throw 'Unsupported realm configuration schema, locale or target path.'
+  }
   $patchSource = if ($PatchSourcePath) { Require-Folder $PatchSourcePath } else { $root }
   $issues = New-Object 'System.Collections.Generic.List[string]'
   $warnings = New-Object 'System.Collections.Generic.List[string]'
@@ -92,14 +101,34 @@ try {
     }
   }
 
-  if ($RealmHost) {
-    if ($RealmHost.Length -gt 253 -or $RealmHost -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$' -or $RealmHost.Contains('..')) {
-      $issues.Add('RealmHost must be a hostname or IPv4 address without a scheme, spaces, port or commands.')
-    } else {
-      Write-Host "Realm hostname format: valid ($RealmHost)"
-    }
+  $expectedHost = if ($RealmHost) { $RealmHost } else { [string]$realmPolicy.host }
+  if (-not $expectedHost -or $expectedHost.Length -gt 253 -or
+      $expectedHost -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$' -or
+      $expectedHost.Contains('..')) {
+    $issues.Add('Realm host must be a hostname or IPv4 address without a URL scheme, spaces, port or commands.')
   } else {
-    Write-Host 'INFO: No realm address supplied; connection setup is not configured yet.'
+    Write-Host "Configured realm host: $expectedHost"
+    $realmFile = Join-Path $root 'Data/enUS/realmlist.wtf'
+    if (-not (Test-Path -LiteralPath $realmFile -PathType Leaf)) {
+      Write-Host 'REALMLIST NOT PRESENT: the future installer will offer to configure Data/enUS/realmlist.wtf.'
+    } else {
+      $foundHost = $null
+      foreach ($line in @(Get-Content -LiteralPath $realmFile -TotalCount 50)) {
+        if ($line -match '^\s*set\s+realmlist\s+(\S+)\s*(?:#.*)?$') {
+          $foundHost = [string]$Matches[1]
+          break
+        }
+      }
+      if (-not $foundHost) {
+        $warnings.Add('Existing Data/enUS/realmlist.wtf has no recognised set realmlist entry. No changes were made.')
+        Write-Host 'REALMLIST UNRECOGNISED' -ForegroundColor Yellow
+      } elseif ($foundHost -ne $expectedHost) {
+        $warnings.Add("Existing realmlist points to $foundHost rather than $expectedHost. Back up the file before any later modification.")
+        Write-Host 'REALMLIST DIFFERENT: the future installer can offer to update it after backup.' -ForegroundColor Yellow
+      } else {
+        Write-Host 'REALMLIST MATCH: existing client uses the configured Naxxramas address.' -ForegroundColor Green
+      }
+    }
   }
 
   foreach ($patch in @($policy.patches)) {

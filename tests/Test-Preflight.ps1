@@ -44,6 +44,8 @@ try {
   }
   Copy-Item -LiteralPath (Join-Path $repo 'tools/Test-Naxxramas-Client.ps1') -Destination (Join-Path $testRepo 'tools/Test-Naxxramas-Client.ps1')
   Copy-Item -LiteralPath (Join-Path $repo 'tools/Prepare-Patch-Update.ps1') -Destination (Join-Path $testRepo 'tools/Prepare-Patch-Update.ps1')
+  Copy-Item -LiteralPath (Join-Path $repo 'config/realm.json') -Destination (Join-Path $testRepo 'config/realm.json')
+  Set-Content -LiteralPath (Join-Path $client 'Data/enUS/realmlist.wtf') -Value 'set realmlist 85.190.254.242' -Encoding ASCII
   [IO.File]::WriteAllBytes((Join-Path $client 'Wow.exe'),[byte[]]@())
   $v = Join-Path $client 'Data/patch-V.mpq'
   $z = Join-Path $client 'Data/patch-Z.mpq'
@@ -70,6 +72,9 @@ try {
   }
   $r = Invoke-Fixture $preflight @()
   if ($r.Code -ne 0) { throw "Matching fake core patches should pass preflight: $($r.Output)" }
+  if (-not $r.Output.Contains('REALMLIST MATCH')) { throw 'Existing correct realm was not recognised.' }
+  $r = Invoke-Fixture $preflight @('-RealmHost','example.org')
+  if ($r.Code -ne 0 -or -not $r.Output.Contains('REALMLIST DIFFERENT')) { throw 'Realm override mismatch was not reported safely.' }
   $r = Invoke-Fixture $preflight @('-VanillaLogin')
   if ($r.Code -eq 0 -or -not $r.Output.Contains('Missing selected optional patch')) {
     throw 'Missing selected optional patch was not rejected.'

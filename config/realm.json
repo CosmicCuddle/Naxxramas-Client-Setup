@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "realm_name": "Naxxramas",
+  "host": "85.190.254.242",
+  "line": "set realmlist 85.190.254.242",
+  "locale": "enUS",
+  "relative_path": "Data/enUS/realmlist.wtf",
+  "source": "Owner-provided realmlist.wtf, reviewed 2026-10-09",
+  "reachability_verified": false,
+  "status": "owner_reported_default_not_network_verified",
+  "note": "This is a public player-facing realmlist setting, not a password. Keep independently configurable from patchset V/Z. This file does not write the user's game client."
+}
