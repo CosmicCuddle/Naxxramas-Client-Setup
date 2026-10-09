@@ -124,3 +124,6 @@ try {
 finally {
   if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
+
+# Clear the last expected failure code from child PowerShell smoke tests.
+exit 0

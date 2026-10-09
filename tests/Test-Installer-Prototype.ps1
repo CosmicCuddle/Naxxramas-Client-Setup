@@ -82,3 +82,6 @@ try {
  Write-Host 'ALL INSTALLER ALPHA FIXTURE TESTS PASSED' -ForegroundColor Green
 }
 finally { if (Test-Path -LiteralPath $root) {Remove-Item -LiteralPath $root -Recurse -Force} }
+
+# Clear the last expected failure code from child PowerShell smoke tests.
+exit 0
