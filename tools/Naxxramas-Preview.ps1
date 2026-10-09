@@ -349,7 +349,15 @@ try{
     throw "Classic launcher layout failed at width $($size.Width)."
    }
   }
+  # Render the illustration in CI; constructing a control alone does not test Paint.
+  $drawing=[Drawing.Bitmap]::new([int][math]::Max(80,$art.ClientSize.Width),[int][math]::Max(80,$art.ClientSize.Height))
+  try{
+   $art.DrawToBitmap($drawing,[Drawing.Rectangle]::new(0,0,$drawing.Width,$drawing.Height))
+  }catch{
+   throw ("Classic launcher artwork rendering failed: "+$_.Exception.Message)
+  }finally{$drawing.Dispose()}
   Write-Host 'GUI PREVIEW WINDOW CONSTRUCTED; NO CLIENT WRITES'
+  Write-Host 'CLASSIC LAUNCHER ART RENDERED'
   Write-Host 'CLASSIC LAUNCHER LAYOUT TEST PASSED'
  }else{[void]$form.ShowDialog()}
 }finally{
