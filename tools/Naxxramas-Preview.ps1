@@ -140,7 +140,7 @@ for($i=0;$i -lt $definitions.Count;$i++){
 # Row heights stay fixed for a chosen layout so the outer panel can scroll normally.
 $reflowOptions={
  $available=$options.ClientSize.Width
- $compact=$available -lt 830
+ $compact=$available -lt 880
  if($compact) {
   $loading.Location=New-Object Drawing.Point(19,76)
   $loading.Size=New-Object Drawing.Size(([math]::Max(320,$available-40)),27)
@@ -302,14 +302,14 @@ if($SmokeTest) {
  $stack.PerformLayout()
  & $reflowOptions
  if($stack.RowStyles[2].Height -ne 314 -or $loading.Top -ne 76) {
-  throw 'Compact GUI layout failed at minimum desktop width.'
+  throw ('Compact GUI layout failed at minimum desktop width (options width={0}, row height={1}, loading top={2}).' -f $options.ClientSize.Width,$stack.RowStyles[2].Height,$loading.Top)
  }
  $form.ClientSize=New-Object Drawing.Size(1000,850)
  $scroll.PerformLayout()
  $stack.PerformLayout()
  & $reflowOptions
  if($stack.RowStyles[2].Height -ne 223 -or $loading.Top -ne 46) {
-  throw 'Two-column GUI layout failed at desktop width.'
+  throw ('Two-column GUI layout failed at desktop width (options width={0}, row height={1}, loading top={2}).' -f $options.ClientSize.Width,$stack.RowStyles[2].Height,$loading.Top)
  }
  if($null -eq $client -or $null -eq $preview -or $null -eq $inspect -or
     $null -eq $result -or $null -eq $zip -or $null -eq $cancel -or
