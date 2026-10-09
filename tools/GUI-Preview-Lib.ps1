@@ -1,0 +1,68 @@
+#requires -Version 5.1
+<#
+Pure argument-building helpers for the read-only Windows preview GUI.
+No file operations or actual installer writes are performed here.
+#>
+Set-StrictMode -Version Latest
+function New-NaxxPreviewRequest {
+ [CmdletBinding()]
+ param(
+  [Parameter(Mandatory=$true)][ValidateSet('Plan','Inspect')][string]$Mode,
+  [Parameter(Mandatory=$true)][string]$ClientPath,
+  [string]$PatchSourcePath,
+  [string]$AddonSuiteArchivePath,
+  [bool]$VanillaLogin=$false,
+  [bool]$VanillaLoading=$false,
+  [string[]]$Addons=@(),
+  [string]$RepositoryPath=(Split-Path -Parent $PSScriptRoot)
+ )
+ $client=$ClientPath.Trim()
+ if (-not $client -or -not (Test-Path -LiteralPath $client -PathType Container)) {
+  throw 'Choose an existing WoW client folder.'
+ }
+ $client=(Resolve-Path -LiteralPath $client).ProviderPath
+ if (-not (Test-Path -LiteralPath (Join-Path $client 'Wow.exe') -PathType Leaf)) {
+  throw 'The selected folder must contain Wow.exe.'
+ }
+ $script=Join-Path (Join-Path $RepositoryPath 'tools') 'Setup-Prototype.ps1'
+ if (-not (Test-Path -LiteralPath $script -PathType Leaf)) {
+  throw 'Setup-Prototype.ps1 is missing. Download a complete repository ZIP.'
+ }
+ # Intentionally never accept Apply, ConfirmDisposableFixture, Install, Rollback,
+ # Recover, or any simulated failure switches from the GUI.
+ $arguments=@{Action=$Mode;ClientPath=$client}
+ if ($Mode -ceq 'Plan') {
+  if (-not [string]::IsNullOrWhiteSpace($PatchSourcePath)) {
+   if (-not (Test-Path -LiteralPath $PatchSourcePath -PathType Container)) {
+    throw 'Patch source must be an existing separate folder.'
+   }
+   $arguments.PatchSourcePath=(Resolve-Path -LiteralPath $PatchSourcePath).ProviderPath
+  }
+  if (-not [string]::IsNullOrWhiteSpace($AddonSuiteArchivePath)) {
+   if (-not (Test-Path -LiteralPath $AddonSuiteArchivePath -PathType Leaf)) {
+    throw 'Select an existing N Addon Suite ZIP file.'
+   }
+   if ([IO.Path]::GetExtension($AddonSuiteArchivePath) -ine '.zip') {
+    throw 'The addon source must be a .zip archive.'
+   }
+   $arguments.AddonSuiteArchivePath=(Resolve-Path -LiteralPath $AddonSuiteArchivePath).ProviderPath
+  }
+  if ($VanillaLogin) { $arguments.VanillaLogin=$true }
+  if ($VanillaLoading) { $arguments.VanillaLoading=$true }
+  $allowed=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
+  $chosen=New-Object 'System.Collections.Generic.List[string]'
+  foreach($name in @($Addons)) {
+   if ($allowed -cnotcontains $name) { throw "Unrecognised addon: $name" }
+   if (-not $chosen.Contains($name)) { $chosen.Add($name) }
+  }
+  if ($chosen.Count -gt 0 -and -not $arguments.ContainsKey('AddonSuiteArchivePath')) {
+   throw 'Choose an official N Addon Suite ZIP before selecting optional addons.'
+  }
+  if ($chosen.Count -gt 0) { $arguments.Addons=@($chosen.ToArray()) }
+ }
+ return [pscustomobject]@{
+  ScriptPath=$script
+  Parameters=$arguments
+  Mode=$Mode
+ }
+}

@@ -24,3 +24,6 @@ jobs:
       - name: Verified addon ZIP extraction fixture tests
         shell: powershell
         run: .\tests\Test-Verified-Extraction.ps1
+      - name: Headless Windows GUI preview safety tests
+        shell: powershell
+        run: .\tests\Test-GUI-Preview.ps1

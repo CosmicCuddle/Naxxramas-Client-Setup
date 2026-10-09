@@ -63,6 +63,12 @@ The [Milestone 4 extractor](docs/INSTALLER-MILESTONE-4.md) validates the approve
 
 The [Milestone 6 recovery inspection](docs/INSTALLER-MILESTONE-6.md) adds read-only diagnostics for damaged or incomplete installation journals. Drag an existing WoW client folder onto `tools/Inspect-Naxxramas-State.bat` to inspect recorded setup state without modifying it. File-writing operations remain restricted to disposable fixtures.
 
+## Windows graphical preview (development only)
+
+A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla visuals and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface does **not** offer Install, Apply, Rollback, downloading or any operation that modifies a WoW client.
+
+See [Milestone 7: Windows GUI preview](docs/INSTALLER-MILESTONE-7.md). This is a **development preview**, not a finished player installer. It uses Windows PowerShell 5.1 and WinForms; Windows CI validates window construction without showing it.
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are now recorded as `patchset-0001` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/U patches separately from selected installation options.
