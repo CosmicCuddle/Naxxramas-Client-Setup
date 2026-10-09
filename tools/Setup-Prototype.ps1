@@ -208,6 +208,17 @@ function UndoSession {
   }
   Write-Host "RESTORED: $($op.path)"
  }
+ # Remove only empty addon folders after deleting installer-created files.
+ # Never remove a folder that contains any player-created content.
+ foreach($addonName in @('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')) {
+  $dir=Join-Path $client ('Interface/AddOns/'+$addonName)
+  if (Test-Path -LiteralPath $dir -PathType Container) {
+   NoLinks $client ('Interface/AddOns/'+$addonName)
+   if (@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0) {
+    Remove-Item -LiteralPath $dir -Force
+   }
+  }
+ }
  $j.status='rolled_back'
  SaveJSON $file $j
  Remove-Item -LiteralPath $activePath -Force
@@ -325,6 +336,10 @@ try {
   foreach($op in $ops) {
    $to=Destination ([string]$op.path)
    $tmp=Join-Path $stage (Rel ([string]$op.path))
+   $parentDir=Split-Path -Parent $to
+   if (-not (Test-Path -LiteralPath $parentDir -PathType Container)) {
+    New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+   }
    Move-Item -LiteralPath $tmp -Destination $to -Force
    Require ((SHA $to) -ceq $op.new_sha256) "Installed data mismatch: $($op.path)"
    $done++
