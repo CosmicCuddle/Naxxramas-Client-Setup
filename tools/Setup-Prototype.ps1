@@ -7,7 +7,7 @@ No downloads, game files, or patch binaries are distributed by this tool.
 [CmdletBinding()]
 param(
  [Parameter(Mandatory=$true)][string]$ClientPath,
- [ValidateSet('Plan','Install','Rollback','Recover')][string]$Action='Plan',
+ [ValidateSet('Plan','Install','Rollback','Recover','Inspect')][string]$Action='Plan',
  [string]$PatchSourcePath,
  [string]$AddonSuitePath,
  [string]$AddonSuiteArchivePath,
@@ -74,10 +74,79 @@ function ReadJSON([string]$p) {
  return Get-Content -LiteralPath $p -Raw | ConvertFrom-Json
 }
 function SaveJSON([string]$p,[object]$data) {
+ # A same-folder temp file prevents truncation of a previously valid journal.
  $tmp=$p+'.writing'
- Require (-not (Test-Path -LiteralPath $tmp)) 'Interrupted state write requires inspection.'
- [IO.File]::WriteAllText($tmp,($data | ConvertTo-Json -Depth 12),[Text.UTF8Encoding]::new($false))
- Move-Item -LiteralPath $tmp -Destination $p -Force
+ Require (-not (Test-Path -LiteralPath $tmp)) "Interrupted journal write requires inspection: $tmp"
+ $bytes=[Text.UTF8Encoding]::new($false).GetBytes([string]($data | ConvertTo-Json -Depth 12))
+ $stream=[IO.File]::Open($tmp,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+ try { $stream.Write($bytes,0,$bytes.Length); $stream.Flush($true) }
+ finally { $stream.Dispose() }
+ if (Test-Path -LiteralPath $p -PathType Leaf) {
+  [IO.File]::Replace($tmp,$p,$null)
+ } else {
+  [IO.File]::Move($tmp,$p)
+ }
+}
+function Inspect-TransactionState {
+ # This command must not alter any game or transaction files.
+ if (-not (Test-Path -LiteralPath $state -PathType Container)) {
+  Write-Host 'STATE: NONE. No transaction has been recorded.'
+  Write-Host 'READ-ONLY INSPECTION COMPLETE. No files changed.'
+  return
+ }
+ NoLinks $client '.naxxramas-setup'
+ $residue=@(Get-ChildItem -LiteralPath $state -Recurse -File -Filter '*.writing' -ErrorAction Stop)
+ foreach($f in $residue) { Write-Warning "Incomplete journal write retained: $($f.FullName)" }
+ $activePath=Join-Path $state 'active.json'
+ if (-not (Test-Path -LiteralPath $activePath -PathType Leaf)) {
+  Write-Host 'STATE: NO ACTIVE SESSION.'
+  $sessionsDir=Join-Path $state 'sessions'
+  if (Test-Path -LiteralPath $sessionsDir -PathType Container) {
+   foreach ($item in @(Get-ChildItem -LiteralPath $sessionsDir -Directory -Force)) {
+    NoLinks $state ('sessions/'+$item.Name)
+    $file=Join-Path $item.FullName 'manifest.json'
+    if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+     Write-Warning "Untracked session has no manifest: $($item.Name)"
+     continue
+    }
+    try {
+     $old=ReadJSON $file
+     if ([string]$old.status -cne 'rolled_back') {
+      Write-Warning "Untracked session requires review: $($item.Name) ($($old.status))"
+     }
+    } catch { Write-Warning "Unreadable session $($item.Name): $($_.Exception.Message)" }
+   }
+  }
+ } else {
+  try {
+   $active=ReadJSON $activePath
+   Require ($active.schema -eq 1 -and $active.client -ceq $client -and
+    [string]$active.session -cmatch '^[0-9a-f]{32}$') 'Active pointer is invalid.'
+   NoLinks $state ('sessions/'+[string]$active.session+'/manifest.json')
+   $file=Join-Path (Join-Path (Join-Path $state 'sessions') ([string]$active.session)) 'manifest.json'
+   $journal=ReadJSON $file
+   Require ($journal.schema -eq 1 -and $journal.client -ceq $client -and
+    $journal.session -ceq $active.session -and
+    @('prepared','applying','restoring','installed') -ccontains [string]$journal.status) 'Session journal is invalid.'
+   Write-Host "STATE: $($journal.status.ToUpperInvariant()) (session $($active.session))"
+   Write-Host "TRACKED FILES: $(@($journal.operations).Count)"
+   if (@('prepared','applying','restoring') -ccontains [string]$journal.status) {
+    Write-Warning 'Interrupted installation: use guarded recovery after confirming integrity.'
+   } else {
+    Write-Host 'Completed installation: guarded Rollback is available.'
+   }
+  } catch { Write-Warning "UNTRUSTED OR DAMAGED JOURNAL: $($_.Exception.Message)" }
+ }
+ if ($residue.Count -gt 0) {
+  Write-Warning 'Any recovery or install is BLOCKED until journal residue is reviewed manually.'
+ }
+ Write-Host 'READ-ONLY INSPECTION COMPLETE. No files changed.'
+}
+function Assert-JournalClean {
+ if (-not (Test-Path -LiteralPath $state -PathType Container)) { return }
+ NoLinks $client '.naxxramas-setup'
+ $residue=@(Get-ChildItem -LiteralPath $state -Recurse -File -Filter '*.writing' -ErrorAction Stop)
+ Require ($residue.Count -eq 0) 'Incomplete .writing journal found; use -Action Inspect and review it before any write or recovery.'
 }
 function SafeCopy([string]$from,[string]$to,[string]$hash) {
  $dir=Split-Path -Parent $to
@@ -281,6 +350,8 @@ try {
  Require (Test-Path -LiteralPath (Join-Path $client 'Wow.exe') -PathType Leaf) 'Wow.exe missing.'
  Require (Test-Path -LiteralPath (Join-Path $client 'Data/enUS') -PathType Container) 'Data/enUS missing.'
  $state=Join-Path $client '.naxxramas-setup'
+ if ($Action -eq 'Inspect') { Inspect-TransactionState; exit 0 }
+ Assert-JournalClean
  if ($Action -eq 'Rollback' -or $Action -eq 'Recover') {
   FixtureGuard
   $activePath=Join-Path $state 'active.json'

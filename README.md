@@ -59,6 +59,10 @@ Drag the **locally downloaded official ZIP** onto `tools/Verify-Addon-Release.ba
 
 The [Milestone 4 extractor](docs/INSTALLER-MILESTONE-4.md) validates the approved v2.0.0 addon archive and can extract only the five approved folders to a **new folder outside the WoW client**. Default is a read-only preview; extraction requires `-Extract`. A verification report is recorded for inspection, but the folder is not automatically trusted as a future installation source. The [Milestone 5 test installer](docs/INSTALLER-MILESTONE-5.md) can now take the **verified ZIP directly** and stage selected addons from it, without relying on an extracted directory.
 
+## Transaction state inspection
+
+The [Milestone 6 recovery inspection](docs/INSTALLER-MILESTONE-6.md) adds read-only diagnostics for damaged or incomplete installation journals. Drag an existing WoW client folder onto `tools/Inspect-Naxxramas-State.bat` to inspect recorded setup state without modifying it. File-writing operations remain restricted to disposable fixtures.
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are now recorded as `patchset-0001` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/U patches separately from selected installation options.

@@ -53,6 +53,8 @@ try {
   $message=(& powershell.exe @a 2>&1 | Out-String)
   return [pscustomobject]@{exit=$LASTEXITCODE;text=$message}
  }
+ $r=Run @('-Action','Inspect')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('STATE: NONE')) {throw ('Read-only empty state inspection failed: '+$r.text)}
  $r=Run @()
  if ($r.exit -ne 0 -or -not $r.text.Contains('PLAN: 3 file change(s)')) { throw ("Plan failed: "+$r.text) }
  if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {throw 'Read-only plan made client changes.'}
@@ -111,6 +113,42 @@ try {
  if (-not (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup/active.json'))) {
   throw 'Hard interruption did not preserve recovery state.'
  }
+ $r=Run @('-Action','Inspect')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('STATE: APPLYING')) {
+  throw ("Interrupted session was not reported read-only: "+$r.text)
+ }
+ # A crash can leave a .writing file while the last committed journal is intact.
+ # Do not guess whether to ignore or delete it: block all recovery writes.
+ $activePointer=Get-Content -LiteralPath (Join-Path $game '.naxxramas-setup/active.json') -Raw | ConvertFrom-Json
+ $incomplete=Join-Path $game ('.naxxramas-setup/sessions/'+$activePointer.session+'/manifest.json.writing')
+ [IO.File]::WriteAllText($incomplete,'{"partial":')
+ $beforeCrashV=(Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash
+ $r=Run @('-Action','Inspect')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('Incomplete journal write retained')) {
+  throw ("Partial journal was not reported: "+$r.text)
+ }
+ $r=Run @('-Action','Recover','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Incomplete .writing journal')) {
+  throw 'A partial journal did not block all recovery.'
+ }
+ if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash -ne $beforeCrashV) {
+  throw 'Journal inspection or refusal modified the client.'
+ }
+ Remove-Item -LiteralPath $incomplete -Force # Fixture-only cleanup after checking expected contents.
+ # Corrupt the last committed manifest to ensure recovery refuses invalid JSON.
+ $committed=Join-Path $game ('.naxxramas-setup/sessions/'+$activePointer.session+'/manifest.json')
+ $originalJournal=[IO.File]::ReadAllText($committed)
+ [IO.File]::WriteAllText($committed,'{"broken":')
+ $r=Run @('-Action','Inspect')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('UNTRUSTED OR DAMAGED JOURNAL')) {
+  throw 'Corrupted main journal was not identified.'
+ }
+ $r=Run @('-Action','Recover','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0) { throw 'Damaged committed journal was accepted for recovery.' }
+ if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash -ne $beforeCrashV) {
+  throw 'Damaged journal recovery attempt modified the client.'
+ }
+ [IO.File]::WriteAllText($committed,$originalJournal)
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')
  if ($r.exit -eq 0 -or -not $r.text.Contains('interrupted installation')) {
   throw 'A second installation was allowed while recovery was pending.'
