@@ -100,7 +100,7 @@ function ProposedChanges {
   if (Test-Path -LiteralPath $target -PathType Leaf) { $before=SHA $target }
   if ($before -ceq $hash -and (Get-Item -LiteralPath $target).Length -eq $size) { Write-Host "CURRENT: $path"; continue }
   $source=PatchSource $path
-  Require ($source) "Required or selected patch cannot be verified locally; supply a separate authorised source with Data folder: $path"
+  Require ([bool]$source) "Required or selected patch cannot be verified locally; supply a separate authorised source with Data folder: $path"
   Check $source $hash $size
   $changes.Add([pscustomobject]@{path=$path;source=$source;old_sha256=$before;new_sha256=$hash;kind='patch'})
  }
