@@ -49,6 +49,19 @@ try {
  if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {throw 'Read-only plan made client changes.'}
  $r=Run @('-Action','Install','-Apply')
  if ($r.exit -eq 0) {throw 'Missing fixture confirmation was not rejected.'}
+ $marker=Join-Path $game '.naxx-test-fixture'
+ Move-Item -LiteralPath $marker -Destination ($marker+'.held')
+ try {
+  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')
+  if ($r.exit -eq 0 -or -not $r.text.Contains('only disposable test clients')) {
+   throw 'The installer did not block a folder lacking its disposable fixture marker.'
+  }
+ } finally {
+  Move-Item -LiteralPath ($marker+'.held') -Destination $marker
+ }
+ if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {
+  throw 'A rejected non-fixture install unexpectedly created setup state.'
+ }
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-SimulateFailureAfter','2')
  if ($r.exit -eq 0 -or -not $r.text.Contains('Simulated failure')) {throw ("Simulated failure test did not fail: "+$r.text)}
  if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash.ToLowerInvariant() -ne $originalV) {throw 'V was not restored on failure.'}
