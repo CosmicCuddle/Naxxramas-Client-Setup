@@ -50,6 +50,23 @@ The additional CI tests cover:
 
 A GUI that constructs successfully may still have layout, scaling, focus, or accessibility issues. Those require manual interaction testing on Windows, especially at 100%/125%/150% display scaling and with keyboard navigation.
 
+## Interface refinement — keyboard and window scaling
+
+This preview now adapts to narrower / high-DPI window widths. When the optional-features area does not have enough space for two columns, checkboxes are displayed vertically, and the outer window remains scrollable instead of clipping the addon choices.
+
+Keyboard controls:
+
+- **Tab / Shift+Tab**: move between the folder fields, Browse buttons, options and actions.
+- **Enter**: run the read-only Preview changes action.
+- **Alt+P**: Preview changes.
+- **Alt+I**: Inspect recovery state.
+- **Alt+L**: Clear results.
+- **Esc**: close the preview (and stop its active read-only background job).
+
+A **Cancel check** button now stops a long-running read-only hash check while leaving the selected folders and choices unchanged. The output field has an accessible name and remains selectable for copying results.
+
+The GUI tests exercise the window at a narrow width and a wider desktop width, ensure the compact layout expands vertically, and confirm the read-only buttons and keyboard hooks are present. These are *headless construction tests*, not a full human accessibility or display-scaling audit.
+
 ## What comes next
 
 1. Review the GUI visually and correct spacing, focus order and scaling.

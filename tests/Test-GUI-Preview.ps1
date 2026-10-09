@@ -16,6 +16,20 @@ if($source -match '-Action\s+(Install|Rollback|Recover)' -or
    $source -notmatch 'Start-Job'){
  throw 'GUI is not restricted to safe asynchronous plan/inspect operations.'
 }
+# Require visible keyboard navigation, cancellable background preview and responsive layout.
+$guiBlob=[IO.File]::ReadAllText($gui)
+foreach($needle in @(
+ '$form.AcceptButton=$preview',
+ '$form.Add_KeyDown',
+ 'KeyCode -eq [Windows.Forms.Keys]::Escape',
+ "$"+"cancel.Add_Click",
+ 'Compact GUI layout failed at minimum desktop width.',
+ 'Two-column GUI layout failed at desktop width.',
+ '$options.Add_SizeChanged($reflowOptions)',
+ '$result.AccessibleName='
+)){
+ if(-not $guiBlob.Contains($needle)){throw ("Missing GUI accessibility feature: "+$needle)}
+}
 . $lib
 $fixture=Join-Path ([IO.Path]::GetTempPath()) ('naxx-gui-check-'+[guid]::NewGuid().ToString('N'))
 try{
