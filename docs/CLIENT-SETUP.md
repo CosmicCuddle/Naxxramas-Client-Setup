@@ -35,6 +35,8 @@ The bypass flag applies to that PowerShell process only; inspect scripts before 
 We will identify permitted custom assets and create an installer manifest. The installer must:
 
 - Check that a compatible 3.3.5a installation is selected.
+- Require and verify `Data/patch-V.mpq` and `Data/patch-Z.mpq`; never offer to disable or skip these two core patches.
+- Offer `Data/Patch-J.mpq` and `Data/Patch-U.mpq` as optional Vanilla login/loading-screen modifications; their exact individual roles are pending confirmation.
 - Offer a separate installation copy rather than overwriting the player's only client.
 - Back up any overwritten configuration or addon files.
 - Make changes only after explicit confirmation.

@@ -10,16 +10,18 @@
 - `Wow.exe` is present; **build 12340 has not been independently verified** because the inventory does not include executable version metadata.
 - The archive's full ZIP size (18.6 GB, supplied separately by the owner) is **not** evidence that its contents are redistributable.
 
-## Custom MPQ candidates requiring inspection
+## Custom MPQ requirements confirmed by the server owner
 
 | Relative path | Displayed size | Action |
 | --- | ---: | --- |
-| `Data/Patch-J.mpq` | 5.5 MB | Identify archive contents and dependencies |
-| `Data/Patch-U.mpq` | 10.5 MB | Identify archive contents and dependencies |
-| `Data/patch-V.mpq` | 429.8 MB | Identify archive contents and dependencies |
-| `Data/patch-Z.mpq` | 45.1 MB | Identify archive contents and dependencies |
+| `Data/Patch-J.mpq` | 5.5 MB | Optional cosmetic patch — one of Vanilla login screen / Vanilla loading screens |
+| `Data/Patch-U.mpq` | 10.5 MB | Optional cosmetic patch — the other Vanilla screen modification |
+| `Data/patch-V.mpq` | 429.8 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
+| `Data/patch-Z.mpq` | 45.1 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
 
-These filenames match common custom-patch conventions; this alone **does not establish ownership, provenance, server dependency, or redistribution permission**. Do not merge, delete, rename, or publish the archives before checking their contents and compatibility.
+**Source:** the server owner confirmed these roles on 9 October 2026. We have not determined whether J or U is specifically the login-screen patch (rather than loading-screen patch). Both are optional. The exact contents and dependencies of V and Z remain uninspected.
+
+**Do not merge, delete, rename, disable, or silently replace either mandatory core patch.** Setup is invalid if either V or Z is absent or fails verification. J and U must never be enforced as mandatory. All four patches still require content/provenance and redistribution-rights review before public packaging.
 
 ## Likely standard game archives
 
@@ -55,13 +57,16 @@ Investigate before using or distributing `Customsounds`, `Battle.net.dll`, `ReSh
 - Installer starts with an existing legitimate 3.3.5a build-12340 client selected by the player, and checks compatibility.
 - For connection setup, update `Data/enUS/realmlist.wtf` (or the selected locale's corresponding file) **after** receiving the server's public realmlist address from the owner.
 - Installer should prompt to work on a **separate copy**, check free space, and confirm each write before proceeding.
+- Install validation must require both `Data/patch-V.mpq` and `Data/patch-Z.mpq` and verify them against trusted checksums once established. There must be no option to omit/disable either patch in a complete Naxxramas setup.
+- `Data/Patch-J.mpq` and `Data/Patch-U.mpq` are independent optional selections for Vanilla login/loading presentation. Which filename maps to which option still requires confirmation.
+- Do not accidentally remove the core patches during updates or optional-feature changes; explicit uninstall/rollback must restore the player's prior state, never delete pre-existing files owned by the player.
 - All changed local files must be backed up, logged in an install manifest, and restorable on uninstall.
 - Optional N Addon Suite should be obtained from **its published approved release**, with version pinning, hash verification, and correct folder layout.
-- No custom MPQ is approved to distribute until its contents, permissions, source, and relationship to Naxxramas are confirmed.
+- Owner-confirmed patch roles are recorded in [`../config/client-patches.json`](../config/client-patches.json) as a **design-only policy**, not as proof of distribution permission. No custom MPQ is approved to distribute until its contents, source, and permissions are confirmed.
 
 ## Next information needed
 
-1. Archive content listing (filenames **inside**) for `Patch-J.mpq`, `Patch-U.mpq`, `patch-V.mpq`, and `patch-Z.mpq`, using the owner's MPQ editor. Share screenshots or a list privately; do not upload full MPQs.
+1. Confirm whether `Patch-J.mpq` is the Vanilla login screen or loading screens (and thus the role of `Patch-U.mpq`); inspect content lists for provenance and redistribution rights without uploading whole MPQs.
 2. The realmlist **public DNS name or IP** players should use; do not confuse this with the owner's private network address.
 3. Version metadata for `Wow.exe` to verify build 12340.
 4. A final decision on whether the standalone Talent Calculator and any other non-suite addons belong in the *optional* installer catalog.

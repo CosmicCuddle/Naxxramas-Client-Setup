@@ -12,6 +12,7 @@ Planned features:
 
 - Guided connection setup, including a server-specific realmlist configuration.
 - Installation and updating of **redistributable** Naxxramas-specific files.
+- Validation of mandatory `patch-V.mpq` and `patch-Z.mpq`; optional Vanilla visual patches `Patch-J.mpq` and `Patch-U.mpq`.
 - Optional installation of supported Naxxramas addons.
 - Version checks, backups, and a clear way to undo installer changes.
 - Simple instructions, including support for less technical players.
@@ -33,6 +34,12 @@ The included inventory tool lists filenames and approximate sizes only. It does 
 5. Review that text file, then share it privately with the project maintainer for planning.
 
 The tool does not alter the WoW installation and does not upload any files. See [client inventory guide](docs/CLIENT-SETUP.md).
+
+## Core and optional client patches
+
+The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for a complete Naxxramas client installation. Neither may be skipped or disabled. `Data/Patch-J.mpq` and `Data/Patch-U.mpq` are optional Vanilla login/loading-screen patches (the individual filename-to-feature mapping is pending confirmation).
+
+The [patch policy manifest](config/client-patches.json) records those installer requirements. **It does not provide or license the MPQ files.** No installer has been implemented yet.
 
 ## Current client review
 

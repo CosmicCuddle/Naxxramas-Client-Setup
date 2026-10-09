@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "status": "design_only_not_an_installer_or_distribution_approval",
+  "note": "Owner-confirmed file requirements. SHA-256 hashes, file provenance and redistribution permissions are not yet verified. No binaries or download URLs are provided.",
+  "target_client": {
+    "game": "World of Warcraft",
+    "version": "3.3.5a",
+    "build": 12340,
+    "locale": "enUS",
+    "build_verified": false
+  },
+  "patches": [
+    {
+      "path": "Data/patch-V.mpq",
+      "role": "naxxramas_core",
+      "required": true,
+      "allow_disable": false,
+      "sha256": null,
+      "public_distribution_approved": false
+    },
+    {
+      "path": "Data/patch-Z.mpq",
+      "role": "naxxramas_core",
+      "required": true,
+      "allow_disable": false,
+      "sha256": null,
+      "public_distribution_approved": false
+    },
+    {
+      "path": "Data/Patch-J.mpq",
+      "role": "vanilla_screen_cosmetic",
+      "detail": "login_or_loading_not_yet_mapped",
+      "required": false,
+      "allow_disable": true,
+      "sha256": null,
+      "public_distribution_approved": false
+    },
+    {
+      "path": "Data/Patch-U.mpq",
+      "role": "vanilla_screen_cosmetic",
+      "detail": "login_or_loading_not_yet_mapped",
+      "required": false,
+      "allow_disable": true,
+      "sha256": null,
+      "public_distribution_approved": false
+    }
+  ],
+  "validation_policy": {
+    "require_all_required_patches": true,
+    "reject_incomplete_core": true,
+    "do_not_delete_existing_client_files": true,
+    "backup_before_overwrite": true
+  }
+}
