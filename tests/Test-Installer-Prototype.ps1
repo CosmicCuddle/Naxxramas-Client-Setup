@@ -14,6 +14,7 @@ try {
   New-Item -ItemType Directory -Force -Path (Join-Path $root $p) | Out-Null
  }
  Copy-Item -LiteralPath $engine -Destination (Join-Path $fakeRepo 'tools/Setup-Prototype.ps1')
+ Copy-Item -LiteralPath (Join-Path $project 'tools/Verified-Addon-Zip.ps1') -Destination (Join-Path $fakeRepo 'tools/Verified-Addon-Zip.ps1')
  Copy-Item -LiteralPath (Join-Path $project 'config/realm.json') -Destination (Join-Path $fakeRepo 'config/realm.json')
  [IO.File]::WriteAllBytes((Join-Path $game 'Wow.exe'),[byte[]]@())
  [IO.File]::WriteAllText((Join-Path $game '.naxx-test-fixture'),'NAXXRAMAS_DISPOSABLE_FIXTURE_V1')
@@ -194,6 +195,65 @@ try {
  }
  if ([IO.File]::ReadAllText((Join-Path $game 'Interface/AddOns/NCore/user.lua')) -cne 'user-installed') {
   throw 'Existing addon content was modified.'
+ }
+ # Verified ZIP direct-source integration: no separately extracted addon directory is trusted.
+ Remove-Item -LiteralPath (Join-Path $game 'Interface/AddOns/NCore') -Recurse -Force
+ foreach($name in @('IndividualProgressionAddon','NaxxLootLottery')) {
+  $d=Join-Path $suite $name
+  New-Item -ItemType Directory -Path $d -Force | Out-Null
+  [IO.File]::WriteAllText((Join-Path $d ($name+'.toc')),'## Interface: 30300')
+ }
+ Add-Type -AssemblyName System.IO.Compression.FileSystem
+ $zip=Join-Path $root 'test-n-addon-v2.zip'
+ [IO.Compression.ZipFile]::CreateFromDirectory($suite,$zip)
+ $metaPath=Join-Path $fakeRepo 'config/addon-suite.json'
+ $meta=Get-Content -LiteralPath $metaPath -Raw | ConvertFrom-Json
+ $meta.release_archive_sha256=(Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+ $meta.release_archive_size_bytes=(Get-Item -LiteralPath $zip).Length
+ $meta | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $metaPath -Encoding UTF8
+ $r=Run @('-AddonSuiteArchivePath',$zip,'-Addons','DungeonJournal')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('PLAN: 7 file change(s)') -or
+    -not $r.text.Contains('Verified addon ZIP source:')) {
+  throw ("Direct ZIP plan failed: "+$r.text)
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/NCore')) {
+  throw 'Direct ZIP plan modified the game client.'
+ }
+ $r=Run @('-AddonSuiteArchivePath',$zip,'-AddonSuitePath',$suite)
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Specify either')) {
+  throw 'Both addon sources were accepted simultaneously.'
+ }
+ $r=Run @('-AddonSuiteArchivePath',$zip,'-Addons','DungeonJournal','-Action','Install','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('TEST INSTALL COMPLETE')) {
+  throw ("Direct verified ZIP installation failed: "+$r.text)
+ }
+ foreach($name in @('NCore','DungeonJournal')) {
+  if (-not (Test-Path -LiteralPath (Join-Path $game ('Interface/AddOns/'+$name+'/'+$name+'.toc')) -PathType Leaf)) {
+   throw "Direct ZIP installation omitted the selected addon $name."
+  }
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/MultiBot')) {
+  throw 'Direct ZIP installation included an unselected optional addon.'
+ }
+ $r=Run @('-Action','Rollback','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('ROLLBACK COMPLETE')) {
+  throw ("Verified ZIP rollback failed: "+$r.text)
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Interface/AddOns/NCore/NCore.toc')) {
+  throw 'Verified ZIP rollback left addon files.'
+ }
+ # A modified archive must be blocked before creating any transaction state.
+ $tampered=Join-Path $root 'tampered-suite.zip'
+ Copy-Item -LiteralPath $zip -Destination $tampered
+ $raw=[IO.File]::ReadAllBytes($tampered)
+ $raw[$raw.Length-1]=$raw[$raw.Length-1] -bxor 1
+ [IO.File]::WriteAllBytes($tampered,$raw)
+ $r=Run @('-AddonSuiteArchivePath',$tampered,'-Action','Install','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('SHA-256 mismatch')) {
+  throw 'Installer allowed an altered ZIP.'
+ }
+ if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup/active.json')) {
+  throw 'Altered ZIP created an active install session.'
  }
  [IO.File]::WriteAllText((Join-Path $source 'Data/patch-Z.mpq'),'tampered Z')
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')

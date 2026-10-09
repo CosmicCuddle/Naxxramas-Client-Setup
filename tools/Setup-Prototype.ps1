@@ -10,6 +10,7 @@ param(
  [ValidateSet('Plan','Install','Rollback','Recover')][string]$Action='Plan',
  [string]$PatchSourcePath,
  [string]$AddonSuitePath,
+ [string]$AddonSuiteArchivePath,
  [ValidateSet('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')]
  [string[]]$Addons=@(),
  [switch]$VanillaLogin,
@@ -158,7 +159,7 @@ function ProposedChanges {
   $oldSize=if ($before) { [long](Get-Item -LiteralPath $target).Length } else { [long]0 }
   $changes.Add([pscustomobject]@{path=$p;source=$null;old_sha256=$before;new_sha256=$hash;kind='realm';size_bytes=[long]$bytes.Length;old_size_bytes=$oldSize})
  } else { Write-Host "CURRENT: $p" }
- if ($addonRoot) {
+ if ($addonRoot -or $zipInfo) {
   # Only the reviewed five-folder structure. Never merge into existing addons.
   $selected=@('NCore')+@($Addons | Select-Object -Unique)
   foreach($oldName in @('NClassicBattlegrounds','ServerDungeonJournal')) {
@@ -166,6 +167,24 @@ function ProposedChanges {
     throw "Conflicting legacy addon is installed: $oldName. Make a backup and resolve it manually; the alpha will never delete it."
    }
   }
+  if ($zipInfo) {
+   foreach ($entry in @($zipInfo.files)) {
+    if ($selected -cnotcontains [string]$entry.folder) { continue }
+    $relative='Interface/AddOns/'+[string]$entry.relative
+    $null=Rel $relative
+    $targetDir=Join-Path (Join-Path $client 'Interface/AddOns') ([string]$entry.folder)
+    Require (-not (Test-Path -LiteralPath $targetDir)) "Addon $($entry.folder) already exists. Refusing to merge/overwrite personal addon files."
+    $target=Destination $relative
+    Require (-not (Test-Path -LiteralPath $target)) "Unexpected existing addon target: $relative"
+    $sha=Hash-ArchiveEntry $entry.entry
+    $changes.Add([pscustomobject]@{
+      path=$relative;source=$null;entry_ref=$entry.entry
+      old_sha256=$null;new_sha256=$sha;kind='addonzip'
+      size_bytes=[long]$entry.size_bytes;old_size_bytes=[long]0
+    })
+   }
+   Write-Host "Verified addon ZIP source: $($zipInfo.zip_sha256)"
+  } else {
   foreach ($addonName in $selected) {
    $dir=Join-Path $addonRoot $addonName
    $toc=Join-Path $dir ($addonName+'.toc')
@@ -188,6 +207,7 @@ function ProposedChanges {
    }
   }
   Write-Warning 'Addon source directory has not been authenticated against an approved release ZIP. Alpha fixture testing only.'
+  }
  }
  if ($VanillaLogin -and $VanillaLoading) { Write-Warning 'J and U overlap on loading-screen assets; test both together in-game.' }
  return @($changes.ToArray())
@@ -278,6 +298,7 @@ try {
   exit 0
  }
  $repo=Split-Path -Parent $PSScriptRoot
+ . (Join-Path $PSScriptRoot 'Verified-Addon-Zip.ps1')
  $policy=ReadJSON (Join-Path $repo 'config/client-patches.json')
  $realm=ReadJSON (Join-Path $repo 'config/realm.json')
  Require ($policy.schema_version -eq 1 -and [bool]$policy.patch_set_version) 'Unknown patchset manifest.'
@@ -293,7 +314,15 @@ try {
   Require (-not (IsInside $client $sourceRoot) -and -not (IsInside $sourceRoot $client)) 'Patch source and target must be separate, non-nested folders.'
  }
  $addonRoot=$null
- if ($Addons.Count -gt 0 -and -not $AddonSuitePath) { throw 'Selected addon modules require -AddonSuitePath.' }
+ $zipInfo=$null
+ Require (-not ($AddonSuitePath -and $AddonSuiteArchivePath)) 'Specify either extracted addon directory or verified addon ZIP, not both.'
+ if ($Addons.Count -gt 0 -and -not $AddonSuitePath -and -not $AddonSuiteArchivePath) { throw 'Selected addon modules require -AddonSuitePath or -AddonSuiteArchivePath.' }
+ if ($AddonSuiteArchivePath) {
+  $zipPath=(Resolve-Path -LiteralPath $AddonSuiteArchivePath -ErrorAction Stop).ProviderPath
+  Require (-not (IsInside $zipPath $client)) 'Addon ZIP must be separate from the destination game folder.'
+  $meta=ReadJSON (Join-Path $repo 'config/addon-suite.json')
+  $zipInfo=Open-VerifiedAddonZip $zipPath $meta
+ }
  if ($AddonSuitePath) {
   $suite=Folder $AddonSuitePath
   Require (-not (IsInside $client $suite) -and -not (IsInside $suite $client)) 'Addon source and client must be separate, non-nested folders.'
@@ -354,6 +383,8 @@ try {
   if ($op.kind -ceq 'realm') {
    [IO.File]::WriteAllBytes($temp,[Text.Encoding]::ASCII.GetBytes([string]$realm.line))
    Require ((SHA $temp) -ceq $op.new_sha256) 'Generated realmlist mismatch.'
+  } elseif ($op.kind -ceq 'addonzip') {
+   Stage-VerifiedAddonEntry $op.entry_ref $temp ([string]$op.new_sha256) ([long]$op.size_bytes)
   } else { SafeCopy $op.source $temp $op.new_sha256 }
   if ($op.old_sha256) {
    Require ((SHA $to) -ceq $op.old_sha256) "Destination changed since preview: $($op.path)"
