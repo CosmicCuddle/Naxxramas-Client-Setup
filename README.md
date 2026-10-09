@@ -2,7 +2,7 @@
 
 Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a server**.
 
-> **Project status: read-only preflight prototype.** There is no finished installer or downloadable game client in this repository yet.
+> **Project status: preflight plus test-only backup/rollback alpha.** No production installer or downloadable game client is available yet.
 
 ## Purpose
 
@@ -44,6 +44,10 @@ The owner-provided [realmlist configuration](config/realm.json) defaults to `set
 The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for a complete Naxxramas client installation. Neither may be skipped or disabled. `Data/Patch-J.mpq` is the optional login-screen patch (also including some loading-screen assets); `Data/Patch-U.mpq` is the optional loading-screen patch. Their two overlapping loading-screen paths require in-game compatibility testing when both options are selected.
 
 The [patch policy manifest](config/client-patches.json) records those installer requirements. **It does not provide or license the MPQ files.** No installer has been implemented yet.
+
+## Test-only local installer alpha
+
+A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes, stages files, backs up originals, and can undo an installation. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md).
 
 ## Read-only preflight tools
 

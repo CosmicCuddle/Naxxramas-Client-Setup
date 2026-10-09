@@ -12,6 +12,9 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: PowerShell 5.1 syntax and smoke tests
+      - name: Preflight and patch version smoke tests
         shell: powershell
         run: .\tests\Test-Preflight.ps1
+      - name: Installer alpha fixture tests (dummy files only)
+        shell: powershell
+        run: .\tests\Test-Installer-Prototype.ps1
