@@ -7,13 +7,14 @@ No downloads, game files, or patch binaries are distributed by this tool.
 [CmdletBinding()]
 param(
  [Parameter(Mandatory=$true)][string]$ClientPath,
- [ValidateSet('Plan','Install','Rollback')][string]$Action='Plan',
+ [ValidateSet('Plan','Install','Rollback','Recover')][string]$Action='Plan',
  [string]$PatchSourcePath,
  [switch]$VanillaLogin,
  [switch]$VanillaLoading,
  [switch]$Apply,
  [switch]$ConfirmDisposableFixture,
- [ValidateRange(0,5)][int]$SimulateFailureAfter=0
+ [ValidateRange(0,5)][int]$SimulateFailureAfter=0,
+ [ValidateRange(0,5)][int]$SimulateCrashAfter=0
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -175,7 +176,23 @@ try {
  Require (Test-Path -LiteralPath (Join-Path $client 'Wow.exe') -PathType Leaf) 'Wow.exe missing.'
  Require (Test-Path -LiteralPath (Join-Path $client 'Data/enUS') -PathType Container) 'Data/enUS missing.'
  $state=Join-Path $client '.naxxramas-setup'
- if ($Action -eq 'Rollback') { FixtureGuard; UndoSession; exit 0 }
+ if ($Action -eq 'Rollback' -or $Action -eq 'Recover') {
+  FixtureGuard
+  $activePath=Join-Path $state 'active.json'
+  $active=ReadJSON $activePath
+  Require ($active.session -match '^[0-9a-f]{32}$' -and $active.client -ceq $client) 'Invalid session pointer.'
+  $sessionDir=Join-Path (Join-Path $state 'sessions') ([string]$active.session)
+  NoLinks $client ('.naxxramas-setup/sessions/'+[string]$active.session)
+  $j=ReadJSON (Join-Path $sessionDir 'manifest.json')
+  Require ($j.session -ceq $active.session -and $j.client -ceq $client) 'Invalid recovery manifest.'
+  if ($Action -eq 'Recover') {
+   Require (@('prepared','applying','restoring') -ccontains [string]$j.status) 'Recover is only for interrupted transactions. Use Rollback for a completed install.'
+  } else {
+   Require (@('installed','restoring') -ccontains [string]$j.status) 'The transaction is incomplete. Use Recover, not Rollback.'
+  }
+  UndoSession
+  exit 0
+ }
  $repo=Split-Path -Parent $PSScriptRoot
  $policy=ReadJSON (Join-Path $repo 'config/client-patches.json')
  $realm=ReadJSON (Join-Path $repo 'config/realm.json')
@@ -190,6 +207,19 @@ try {
  if ($PatchSourcePath) {
   $sourceRoot=Folder $PatchSourcePath
   Require (-not (IsInside $client $sourceRoot) -and -not (IsInside $sourceRoot $client)) 'Patch source and target must be separate, non-nested folders.'
+ }
+ $activeFile=Join-Path $state 'active.json'
+ if (Test-Path -LiteralPath $activeFile -PathType Leaf) {
+  $active=ReadJSON $activeFile
+  Require ($active.client -ceq $client -and $active.session -match '^[0-9a-f]{32}$') 'Invalid active session; manual review required.'
+  $journal=ReadJSON (Join-Path (Join-Path (Join-Path $state 'sessions') ([string]$active.session)) 'manifest.json')
+  $msg=if (@('prepared','applying','restoring') -ccontains [string]$journal.status) {
+   'An interrupted installation is recorded. Use -Action Recover (with disposable test confirmation); do not start another installation.'
+  } else {
+   'A completed installation is recorded. Use -Action Rollback (with disposable test confirmation) before reinstalling.'
+  }
+  if ($Action -eq 'Plan') { Write-Warning $msg; Write-Host 'READ-ONLY: no changes made.'; exit 0 }
+  throw $msg
  }
  $ops=@(ProposedChanges)
  Write-Host "PATCHSET: $($policy.patch_set_version)"
@@ -238,6 +268,10 @@ try {
    Require ((SHA $to) -ceq $op.new_sha256) "Installed data mismatch: $($op.path)"
    $done++
    if ($SimulateFailureAfter -gt 0 -and $done -eq $SimulateFailureAfter) { throw "Simulated failure after $done files." }
+   if ($SimulateCrashAfter -gt 0 -and $done -eq $SimulateCrashAfter) {
+    Write-Warning "Simulated HARD interruption after $done files. Recovery journal remains active."
+    exit 77
+   }
   }
   $j.status='installed'
   SaveJSON $jpath $j

@@ -68,6 +68,45 @@ try {
  if (Test-Path -LiteralPath (Join-Path $game 'Data/patch-Z.mpq')) {throw 'Failed install left new Z.'}
  if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {throw 'Failure altered realmlist.'}
  if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup/active.json')) {throw 'Failed install left active session.'}
+ # Simulate abrupt process termination; unlike an exception, it bypasses automatic catch/rollback.
+ $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-SimulateCrashAfter','2')
+ if ($r.exit -ne 77 -or -not $r.text.Contains('Simulated HARD interruption')) {
+  throw ("Hard interruption fixture did not stop as requested: "+$r.text)
+ }
+ if (-not (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup/active.json'))) {
+  throw 'Hard interruption did not preserve recovery state.'
+ }
+ $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('interrupted installation')) {
+  throw 'A second installation was allowed while recovery was pending.'
+ }
+ $r=Run @('-Action','Rollback','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Use Recover')) {
+  throw 'Rollback was permitted on an incomplete transaction.'
+ }
+ $r=Run @('-Action','Recover','-Apply')
+ if ($r.exit -eq 0) { throw 'Recovery without test fixture confirmation was permitted.' }
+ # A damaged backup MUST stop recovery before changing ANY destination.
+ $ptr=Get-Content -LiteralPath (Join-Path $game '.naxxramas-setup/active.json') -Raw | ConvertFrom-Json
+ $originalBackup=Join-Path $game ('.naxxramas-setup/sessions/'+$ptr.session+'/backups/Data/patch-V.mpq')
+ [IO.File]::WriteAllText($originalBackup,'CORRUPTED BACKUP')
+ $r=Run @('-Action','Recover','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Damaged backup')) {
+  throw 'Corrupt original backup was not detected.'
+ }
+ if ([IO.File]::ReadAllText((Join-Path $game 'Data/patch-V.mpq')) -cne 'new V') {
+  throw 'Recovery changed the client before verifying all backups.'
+ }
+ [IO.File]::WriteAllText($originalBackup,'old V')
+ $r=Run @('-Action','Recover','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('ROLLBACK COMPLETE')) {
+  throw ("Explicit crash recovery failed: "+$r.text)
+ }
+ if ((Get-FileHash -LiteralPath (Join-Path $game 'Data/patch-V.mpq')).Hash.ToLowerInvariant() -ne $originalV) {
+  throw 'Recovery did not restore original patch V.'
+ }
+ if (Test-Path -LiteralPath (Join-Path $game 'Data/patch-Z.mpq')) {throw 'Recovery left newly created patch Z.'}
+ if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {throw 'Recovery modified untouched realmlist.'}
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-VanillaLogin','-VanillaLoading')
  if ($r.exit -ne 0 -or -not $r.text.Contains('TEST INSTALL COMPLETE')) {throw ("Install failed: "+$r.text)}
  foreach($entry in $patches) {
@@ -75,6 +114,10 @@ try {
   if (-not (Test-Path -LiteralPath $p) -or (Get-FileHash -LiteralPath $p).Hash.ToLowerInvariant() -ne $entry.sha256) {throw "Missing or incorrect: $($entry.path)"}
  }
  if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist 85.190.254.242') {throw 'Realm was not configured.'}
+ $r=Run @('-Action','Recover','-Apply','-ConfirmDisposableFixture')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Recover is only for interrupted')) {
+  throw 'Recovery could overwrite an intentionally completed installation.'
+ }
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture')
  if ($r.exit -eq 0) {throw 'Repeat installation should not overwrite active session.'}
  [IO.File]::WriteAllText($realmFile,'set realmlist player-changed.example')
