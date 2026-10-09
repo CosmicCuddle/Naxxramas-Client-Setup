@@ -1,0 +1,165 @@
+#requires -Version 5.1
+<#
+  Naxxramas client preflight (READ ONLY).
+  Checks required core patches, optional visual patches, WoW build metadata,
+  local N Addon Suite layout and realm hostname syntax.
+  Does not install, copy, delete, download or edit game files.
+#>
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$true)][string]$ClientPath,
+  [string]$PatchSourcePath,
+  [switch]$VanillaLogin,
+  [switch]$VanillaLoading,
+  [string]$AddonSuitePath,
+  [ValidateSet('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')]
+  [string[]]$Addons = @(),
+  [string]$RealmHost
+)
+$ErrorActionPreference='Stop'
+Set-StrictMode -Version Latest
+
+function Require-Folder([string]$path) {
+  if (-not (Test-Path -LiteralPath $path -PathType Container)) {
+    throw "Folder does not exist: $path"
+  }
+  return (Resolve-Path -LiteralPath $path).ProviderPath
+}
+function Find-Patch([string]$root,[string]$path) {
+  if (-not $root) { return $null }
+  $suffix = ($path -replace '/', [IO.Path]::DirectorySeparatorChar)
+  $candidates = @((Join-Path $root $suffix))
+  if ($path.StartsWith('Data/')) {
+    $candidates += (Join-Path $root ($path.Substring(5) -replace '/', [IO.Path]::DirectorySeparatorChar))
+  }
+  foreach ($candidate in $candidates) {
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) {
+      if ((Get-Item -LiteralPath $candidate).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+        throw "Linked files are not supported: $candidate"
+      }
+      return $candidate
+    }
+  }
+  return $null
+}
+function Hash-File([string]$path) {
+  return (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant()
+}
+try {
+  $root = Require-Folder $ClientPath
+  $configPath = Join-Path (Split-Path -Parent $PSScriptRoot) 'config/client-patches.json'
+  $policy = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+  if ($policy.schema_version -ne 1) { throw 'Unsupported patch policy manifest.' }
+  $patchSource = if ($PatchSourcePath) { Require-Folder $PatchSourcePath } else { $root }
+  $issues = New-Object 'System.Collections.Generic.List[string]'
+  $warnings = New-Object 'System.Collections.Generic.List[string]'
+
+  Write-Host ''
+  Write-Host 'Naxxramas Client - Read-Only Preflight' -ForegroundColor Cyan
+  Write-Host '-------------------------------------'
+
+  $wow = Join-Path $root 'Wow.exe'
+  if (-not (Test-Path -LiteralPath $wow -PathType Leaf)) {
+    $issues.Add('Wow.exe is missing from the selected client folder.')
+  } else {
+    $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($wow).FileVersion
+    Write-Host "WoW version metadata: $(if ($version) { $version } else { '(not available)' })"
+    if (-not ($version -and $version -match '(^|[.\s])12340($|[.\s])')) {
+      $warnings.Add('Build 12340 is not confirmed by Wow.exe version metadata. Verify the game build before installation.')
+    }
+  }
+
+  if (-not (Test-Path -LiteralPath (Join-Path $root 'Data/enUS') -PathType Container)) {
+    $issues.Add('Data/enUS is missing. This first version supports enUS clients only.')
+  }
+  if ($RealmHost) {
+    if ($RealmHost.Length -gt 253 -or $RealmHost -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$' -or $RealmHost.Contains('..')) {
+      $issues.Add('RealmHost must be a hostname or IPv4 address without a scheme, spaces, port or commands.')
+    } else {
+      Write-Host "Realm hostname format: valid ($RealmHost)"
+    }
+  } else {
+    $warnings.Add('No public realmlist host supplied; connection setup cannot yet be completed.')
+  }
+
+  foreach ($patch in @($policy.patches)) {
+    $required = [bool]$patch.required
+    $chosen = $required -or ($patch.path -eq 'Data/Patch-J.mpq' -and [bool]$VanillaLogin) -or
+      ($patch.path -eq 'Data/Patch-U.mpq' -and [bool]$VanillaLoading)
+    $installed = Find-Patch $root $patch.path
+    if (-not $chosen) {
+      if ($installed) {
+        $warnings.Add("Unselected optional patch is already present: $($patch.path). An installer must not silently remove it.")
+      }
+      Write-Host "OPTIONAL / not selected: $($patch.path)"
+      continue
+    }
+    $source = Find-Patch $patchSource $patch.path
+    $candidate = if ($source) { $source } else { $installed }
+    if (-not $candidate) {
+      $issues.Add("Missing $(if ($required) {'mandatory'} else {'selected optional'}) patch: $($patch.path)")
+      Write-Host "MISSING: $($patch.path)" -ForegroundColor Red
+      continue
+    }
+    $sha = Hash-File $candidate
+    if ($patch.sha256 -and $sha -ne $patch.sha256.ToLowerInvariant()) {
+      $issues.Add("Checksum does not match the approved version: $($patch.path)")
+      Write-Host "MISMATCH: $($patch.path)" -ForegroundColor Red
+    } else {
+      $size = (Get-Item -LiteralPath $candidate).Length
+      Write-Host ("FOUND: {0} ({1:N1} MB)" -f $patch.path,($size / 1MB))
+    }
+    if ($required -and -not $patch.sha256) {
+      $warnings.Add("Mandatory patch $($patch.path) is present but has no pinned reference SHA-256. Authenticity is NOT verified. Actual SHA-256: $sha")
+    }
+    if ($installed -and $source -and
+        -not $installed.Equals($source,[StringComparison]::OrdinalIgnoreCase) -and
+        (Hash-File $installed) -ne $sha) {
+      $warnings.Add("The existing and proposed versions differ for $($patch.path). Backups will be necessary before any replacement.")
+    }
+  }
+
+  if ($VanillaLogin -and $VanillaLoading) {
+    $warnings.Add('Optional J and U both contain two loading-screen textures; their combined in-game precedence is not yet tested.')
+  }
+
+  if ($Addons.Count -gt 0 -and -not $AddonSuitePath) {
+    $issues.Add('Selected addons require a local extracted N Addon Suite folder.')
+  }
+  if ($AddonSuitePath) {
+    $suite = Require-Folder $AddonSuitePath
+    $suiteRoot = if (Test-Path -LiteralPath (Join-Path $suite 'NCore/NCore.toc') -PathType Leaf) {
+      $suite
+    } else {
+      Join-Path (Join-Path $suite 'Interface') 'AddOns'
+    }
+    $selected = @('NCore') + @($Addons | Select-Object -Unique)
+    foreach ($name in $selected) {
+      $toc = Join-Path $suiteRoot ($name + '/' + $name + '.toc')
+      if (-not (Test-Path -LiteralPath $toc -PathType Leaf)) {
+        $issues.Add("Addon source does not contain expected TOC: $name")
+        continue
+      }
+      if (Test-Path -LiteralPath (Join-Path $root ('Interface/AddOns/' + $name))) {
+        $warnings.Add("Addon $name already exists in the client. An installer must back it up or avoid overwriting it.")
+      }
+      Write-Host "ADDON source found: $name"
+    }
+    $warnings.Add('Addon Suite folder structure was checked; release signature, license and source revision were not authenticated.')
+  }
+
+  Write-Host ''
+  foreach ($warning in $warnings) { Write-Warning $warning }
+  if ($issues.Count -gt 0) {
+    foreach ($issue in $issues) { Write-Host "ERROR: $issue" -ForegroundColor Red }
+    Write-Host 'Preflight: FAILED. No files changed.' -ForegroundColor Red
+    exit 1
+  }
+  Write-Host 'Preflight: file presence checks PASSED. Review warnings before installing.' -ForegroundColor Green
+  Write-Host 'This tool is READ ONLY: no game files were changed or uploaded.'
+  exit 0
+}
+catch {
+  Write-Error ("Preflight could not finish: " + $_.Exception.Message)
+  exit 1
+}

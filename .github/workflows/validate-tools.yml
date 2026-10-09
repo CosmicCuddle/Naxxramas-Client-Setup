@@ -1,0 +1,17 @@
+name: Validate Naxxramas setup tools
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  preflight:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: PowerShell 5.1 syntax and smoke tests
+        shell: powershell
+        run: .\tests\Test-Preflight.ps1

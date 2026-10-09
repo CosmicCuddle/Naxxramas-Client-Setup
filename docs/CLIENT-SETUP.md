@@ -36,11 +36,11 @@ We will identify permitted custom assets and create an installer manifest. The i
 
 - Check that a compatible 3.3.5a installation is selected.
 - Require and verify `Data/patch-V.mpq` and `Data/patch-Z.mpq`; never offer to disable or skip these two core patches.
-- Offer `Data/Patch-J.mpq` and `Data/Patch-U.mpq` as optional Vanilla login/loading-screen modifications; their exact individual roles are pending confirmation.
+- Offer `Data/Patch-J.mpq` as optional Vanilla login-screen visuals and `Data/Patch-U.mpq` as optional Vanilla loading screens. Their two overlapping texture paths need in-game testing.
 - Offer a separate installation copy rather than overwriting the player's only client.
 - Back up any overwritten configuration or addon files.
 - Make changes only after explicit confirmation.
 - Support rollback/uninstall using the installation manifest.
 - Never install or bundle copyrighted game files without redistribution permission.
 
-**There is no installer yet.** Do not treat the inventory scripts as an installation package.
+**There is no installer yet.** The [read-only preflight and hash tools](INSTALLER-MILESTONE-1.md) are available; do not treat them or the inventory scanner as an installation package.

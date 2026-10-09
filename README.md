@@ -2,7 +2,7 @@
 
 Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a server**.
 
-> **Project status: planning and client inventory.** There is no finished installer or downloadable game client in this repository yet.
+> **Project status: read-only preflight prototype.** There is no finished installer or downloadable game client in this repository yet.
 
 ## Purpose
 
@@ -40,6 +40,12 @@ The tool does not alter the WoW installation and does not upload any files. See 
 The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for a complete Naxxramas client installation. Neither may be skipped or disabled. `Data/Patch-J.mpq` is the optional login-screen patch (also including some loading-screen assets); `Data/Patch-U.mpq` is the optional loading-screen patch. Their two overlapping loading-screen paths require in-game compatibility testing when both options are selected.
 
 The [patch policy manifest](config/client-patches.json) records those installer requirements. **It does not provide or license the MPQ files.** No installer has been implemented yet.
+
+## Read-only preflight tools
+
+Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. To calculate the missing V/Z integrity fingerprints, use `tools/Get-Core-Patch-Hashes.bat`. These tools only read files; **they do not install or modify anything**.
+
+See [Installer Development — Milestone 1](docs/INSTALLER-MILESTONE-1.md) for the exact steps, caveats, and the next implementation phase.
 
 ## Current client review
 
