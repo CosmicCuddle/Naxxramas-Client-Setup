@@ -55,6 +55,10 @@ The N Addon Suite v2.0.0 release metadata specifies SHA-256 `07595216ccffe4cfc75
 
 Drag the **locally downloaded official ZIP** onto `tools/Verify-Addon-Release.bat` to verify it against the pinned reference without installing anything. **An extracted folder is not yet authenticated against this ZIP**. The working installer remains limited to synthetic test fixtures.
 
+## Offline verified addon ZIP extraction
+
+The [Milestone 4 extractor](docs/INSTALLER-MILESTONE-4.md) validates the approved v2.0.0 addon archive and can extract only the five approved folders to a **new folder outside the WoW client**. Default is a read-only preview; extraction requires `-Extract`. A verification report is recorded for inspection, but the folder is not automatically trusted as a future installation source.
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are now recorded as `patchset-0001` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/U patches separately from selected installation options.

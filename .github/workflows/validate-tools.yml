@@ -21,3 +21,6 @@ jobs:
       - name: Verify addon release ZIP fingerprint tooling
         shell: powershell
         run: .\tests\Test-Addon-Release.ps1
+      - name: Verified addon ZIP extraction fixture tests
+        shell: powershell
+        run: .\tests\Test-Verified-Extraction.ps1

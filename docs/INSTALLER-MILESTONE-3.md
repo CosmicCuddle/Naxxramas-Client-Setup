@@ -46,7 +46,7 @@ The Windows GitHub Actions workflow runs preflight, reversible-installation fixt
 
 ## Remaining before player release
 
-- Verify user-downloaded real v2.0.0 ZIP in a controlled manual test and safely extract directly from that verified archive.
+- **Implemented in a standalone tool:** verified ZIP extraction to a separate new folder with path and size validation. Manual validation against the real v2.0.0 asset and binding the verified bytes to production installation remain necessary.
 - Harden post-crash journal handling and recovery around Windows ACL errors and disk-full conditions.
 - Confirm source/target filesystem constraints and rollback behavior with a non-sensitive test installation containing representative sizes.
 - Review redistribution rights and provenance of all custom MPQ files.
