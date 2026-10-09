@@ -16,19 +16,27 @@ if($source -match '-Action\s+(Install|Rollback|Recover)' -or
    $source -notmatch 'Start-Job'){
  throw 'GUI is not restricted to safe asynchronous plan/inspect operations.'
 }
-# Require visible keyboard navigation, cancellable background preview and responsive layout.
+# Verify classic launcher composition and strictly read-only controls.
 $guiBlob=[IO.File]::ReadAllText($gui)
 foreach($needle in @(
+ 'NAXXRAMAS',
+ 'INSTALLATION OPTIONS',
+ 'LATEST NEWS',
+ 'launcher-art.png',
+ 'launcher-logo.png',
+ 'assets/local',
  '$form.AcceptButton=$preview',
  '$form.Add_KeyDown',
- 'KeyCode -eq [Windows.Forms.Keys]::Escape',
- "$"+"cancel.Add_Click",
- 'Compact GUI layout failed',
- 'Two-column GUI layout failed',
- '$options.Add_SizeChanged($reflowOptions)',
- '$result.AccessibleName='
+ '$cancel.Add_Click',
+ 'CLASSIC LAUNCHER LAYOUT TEST PASSED',
+ '$result.AccessibleName=',
+ 'New-NaxxPreviewRequest'
 )){
- if(-not $guiBlob.Contains($needle)){throw ("Missing GUI accessibility feature: "+$needle)}
+ if(-not $guiBlob.Contains($needle)){throw ("Missing classic launcher feature: "+$needle)}
+}
+if($guiBlob -match '-Action\s+(Install|Rollback|Recover)' -or
+   $guiBlob -match 'Invoke-WebRequest|Start-BitsTransfer'){
+ throw 'Classic preview unexpectedly exposes installation or network commands.'
 }
 . $lib
 $fixture=Join-Path ([IO.Path]::GetTempPath()) ('naxx-gui-check-'+[guid]::NewGuid().ToString('N'))
@@ -88,6 +96,19 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $command -SmokeTest 2>&1 | Out-String)
  if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED')) {
   throw ("Window construction smoke test failed: "+$display)
+ }
+ # Test optional locally supplied art without bundling it in the repository.
+ $artDirectory=Join-Path $fixture 'personal-artwork'
+ New-Item -ItemType Directory -Force -Path $artDirectory | Out-Null
+ Add-Type -AssemblyName System.Drawing
+ foreach($name in @('launcher-art.png','launcher-logo.png')){
+  $bitmap=[Drawing.Bitmap]::new(40,20)
+  try{$bitmap.Save((Join-Path $artDirectory $name),[Drawing.Imaging.ImageFormat]::Png)}
+  finally{$bitmap.Dispose()}
+ }
+ $artOutput=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $command -SmokeTest -ArtRoot $artDirectory 2>&1 | Out-String)
+ if($LASTEXITCODE -ne 0 -or -not $artOutput.Contains('CLASSIC LAUNCHER LAYOUT TEST PASSED')){
+  throw ("Optional local artwork smoke test failed: "+$artOutput)
  }
   $inspect=New-NaxxPreviewRequest -Mode Inspect -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
  if(@($inspect.Parameters.Keys).Count -ne 2 -or $inspect.Parameters.Action -ne 'Inspect'){

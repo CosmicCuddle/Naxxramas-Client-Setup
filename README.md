@@ -69,6 +69,14 @@ A first Windows graphical interface is available at `tools/Launch-Naxxramas-Prev
 
 See [Milestone 7: Windows GUI preview](docs/INSTALLER-MILESTONE-7.md). This is a **development preview**, not a finished player installer. It uses Windows PowerShell 5.1 and WinForms; Windows CI validates window construction at narrow and wide sizes without showing it. The preview now supports Tab navigation, Alt+P / Alt+I shortcuts, Escape to close and cancelling a running check.
 
+## Classic-era launcher redesign (preview)
+
+The graphical preview now follows the familiar *classic WoW launcher* arrangement: a large hero-art panel and framed news/verification log on the left, compact setup choices on the right, and a fixed row of launcher-style controls with a prominent **PREVIEW** button. The main window no longer scrolls as a long form; the narrow right-hand options panel and verification log scroll independently when needed.
+
+Optional personal-use art can be placed in `assets/local/launcher-art.png` and `assets/local/launcher-logo.png`. These files are **read locally only**; they are ignored by Git and excluded from the downloadable preview package. Without artwork, a built-in abstract fantasy background and Naxxramas text appear instead.
+
+A Windows CI job produces a **downloadable preview ZIP artifact** once its tests pass. The ZIP includes scripts and configuration but does not contain a WoW client, MPQs, Blizzard logos or other proprietary artwork; it cannot install files. See [Milestone 8](docs/INSTALLER-MILESTONE-8.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are now recorded as `patchset-0001` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/U patches separately from selected installation options.

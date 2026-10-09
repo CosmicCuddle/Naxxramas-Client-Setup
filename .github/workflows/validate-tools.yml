@@ -27,3 +27,50 @@ jobs:
       - name: Headless Windows GUI preview safety tests
         shell: powershell
         run: .\tests\Test-GUI-Preview.ps1
+      - name: Package read-only classic launcher preview
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path $env:RUNNER_TEMP 'Naxxramas-Client-Preview'
+          New-Item -Path $stage -ItemType Directory -Force | Out-Null
+          $files = @(
+            'tools/Launch-Naxxramas-Preview.bat'
+            'tools/Naxxramas-Preview.ps1'
+            'tools/GUI-Preview-Lib.ps1'
+            'tools/Setup-Prototype.ps1'
+            'tools/Verified-Addon-Zip.ps1'
+            'config/client-patches.json'
+            'config/addon-suite.json'
+            'config/realm.json'
+            'docs/INSTALLER-MILESTONE-8.md'
+            'assets/README.md'
+          )
+          foreach ($relative in $files) {
+            if (-not (Test-Path -LiteralPath $relative -PathType Leaf)) {
+              throw "Missing expected preview component: $relative"
+            }
+            $target = Join-Path $stage $relative
+            New-Item -Path (Split-Path -Parent $target) -ItemType Directory -Force | Out-Null
+            Copy-Item -LiteralPath $relative -Destination $target
+          }
+          @'
+          NAXXRAMAS CLIENT LAUNCHER - DEVELOPMENT PREVIEW
+          ------------------------------------------------
+          Open tools\Launch-Naxxramas-Preview.bat on Windows.
+          This preview can read and check your existing client but CANNOT install it.
+          No game client or copyrighted WoW artwork is included.
+          Optional personal art can be added as assets\local\launcher-art.png
+          and assets\local\launcher-logo.png on your own computer.
+          Do not use this as a public installer.
+          '@ | Set-Content -LiteralPath (Join-Path $stage 'READ-ME-FIRST.txt') -Encoding UTF8
+          $output = Join-Path $env:GITHUB_WORKSPACE 'Naxxramas-Client-Preview.zip'
+          Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $output -CompressionLevel Optimal -Force
+          if (-not (Test-Path -LiteralPath $output -PathType Leaf)) { throw 'Preview ZIP was not created.' }
+          Write-Host ("Built preview artifact: {0} bytes" -f (Get-Item -LiteralPath $output).Length)
+      - name: Upload read-only launcher preview ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: naxxramas-launcher-preview
+          path: Naxxramas-Client-Preview.zip
+          if-no-files-found: error
+          retention-days: 14
