@@ -5,28 +5,28 @@
 ## Inventory (read-only)
 
 1. Download the repository ZIP from GitHub and extract it to a separate folder.
-2. Open its \`tools\` folder.
-3. In File Explorer, find the **folder containing \`Wow.exe\`** in your existing client.
-4. Drag that **folder** onto \`Inspect-Client.bat\`.
-5. When the black window reports completion, open \`tools/client-inventory.txt\`.
+2. Open its `tools` folder.
+3. In File Explorer, find the **folder containing `Wow.exe`** in your existing client.
+4. Drag that **folder** onto `Inspect-Client.bat`.
+5. When the black window reports completion, open `tools/client-inventory.txt`.
 
 You can share the resulting text file in our development chat after reviewing it. **Do not upload it to a public repository if it contains filenames you would rather keep private.**
 
 ### What does the inventory contain?
 
 - Filenames and folder names at the top level of the client.
-- The names and approximate sizes of MPQ files under \`Data\`.
-- The names of installed addon folders under \`Interface\AddOns\`.
+- The names and approximate sizes of MPQ files under `Data`.
+- The names of installed addon folders under `Interface\AddOns`.
 
-It intentionally **does not** collect file contents, settings, account folders inside \`WTF\`, addon SavedVariables, character names, passwords, realmlist contents, or machine-specific installation paths.
+It intentionally **does not** collect file contents, settings, account folders inside `WTF`, addon SavedVariables, character names, passwords, realmlist contents, or machine-specific installation paths.
 
 ### What if it does not run?
 
 Open PowerShell and use the script directly, substituting your own two paths:
 
-\`\`\`powershell
+```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Path\To\Naxxramas-Client-Setup\tools\Inspect-Client.ps1" -ClientPath "C:\Path\To\Your\World of Warcraft"
-\`\`\`
+```
 
 The bypass flag applies to that PowerShell process only; inspect scripts before running them. The script does not change your game's files.
 

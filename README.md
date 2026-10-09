@@ -20,16 +20,16 @@ Planned features:
 
 This repository is **not** a full World of Warcraft client download. Do not upload the original game installation, Blizzard's proprietary game archives, or modified game assets without the required redistribution rights.
 
-Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The \`.gitignore\` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
+Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The `.gitignore` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
 
 ## First step: inspect the existing client safely
 
 The included inventory tool lists filenames and approximate sizes only. It does **not** read the contents of account settings, saved variables, passwords, or realm configuration.
 
 1. Download this repository as a ZIP and extract it somewhere **outside** your game installation.
-2. In the extracted folder, open \`tools\`.
-3. **Drag your current WoW client folder onto \`Inspect-Client.bat\`.**
-4. The tool writes \`tools/client-inventory.txt\`.
+2. In the extracted folder, open `tools`.
+3. **Drag your current WoW client folder onto `Inspect-Client.bat`.**
+4. The tool writes `tools/client-inventory.txt`.
 5. Review that text file, then share it privately with the project maintainer for planning.
 
 The tool does not alter the WoW installation and does not upload any files. See [client inventory guide](docs/CLIENT-SETUP.md).
