@@ -81,7 +81,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Setup-Prototype
 
 The suite folder must contain `NCore\NCore.toc` or `Interface\AddOns\NCore\NCore.toc`. The alpha will refuse to merge or overwrite any pre-existing addon folder. In disposable fixtures only, the selected addon files are included in the staged, journalled, reversible installation.
 
-The local suite version is **not independently authenticated**: no approved release archive checksum is pinned yet. No actual addon files are downloaded or distributed by this repository.
+The GitHub Release v2.0.0 ZIP SHA-256 and byte size are now pinned, and a separate read-only ZIP verifier is provided. **An extracted directory is still not authenticated or cryptographically bound to that ZIP**, so the prototype must remain test-only. No actual addon files are downloaded or distributed by this repository.
 
 ## Next milestones
 

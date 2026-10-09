@@ -47,7 +47,13 @@ The [patch policy manifest](config/client-patches.json) records those installer 
 
 ## Test-only local installer alpha
 
-A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes and selected local N Addon Suite folders, stages files, backs up originals, and supports interrupted-session recovery and rollback in disposable test fixtures. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md).
+A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes and selected local N Addon Suite folders, stages files, backs up originals, and supports interrupted-session recovery and rollback in disposable test fixtures. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md) and [Milestone 3 safety checks](docs/INSTALLER-MILESTONE-3.md).
+
+## Approved addon ZIP fingerprint (local verification only)
+
+The N Addon Suite v2.0.0 release metadata specifies SHA-256 `07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324` for its `N-Addon-Collection-v2.0.0.zip`. The expected bytes and checksum are stored in [addon-suite.json](config/addon-suite.json).
+
+Drag the **locally downloaded official ZIP** onto `tools/Verify-Addon-Release.bat` to verify it against the pinned reference without installing anything. **An extracted folder is not yet authenticated against this ZIP**. The working installer remains limited to synthetic test fixtures.
 
 ## Read-only preflight tools
 
