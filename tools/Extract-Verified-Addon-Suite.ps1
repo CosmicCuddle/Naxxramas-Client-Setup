@@ -31,7 +31,7 @@ function Check-Parent([string]$path) {
 }
 function Check-EntryName([string]$p) {
  Assert (-not [string]::IsNullOrWhiteSpace($p)) 'ZIP contains an empty entry name.'
- Assert (-not $p.Contains('\')) 'ZIP contains a Windows-backslash entry path.'
+ $p = $p.Replace('\','/') # Canonicalise Windows and POSIX ZIP separators before validation.
  Assert (-not $p.StartsWith('/') -and -not $p.StartsWith('//') -and -not $p.Contains(':')) 'ZIP contains an absolute or drive-qualified path.'
  $clean = $p.TrimEnd('/')
  $components = $clean.Split('/')
@@ -74,7 +74,7 @@ try {
   Assert ($paths.Add($name)) "Duplicate or case-colliding ZIP path: $name"
   $unixType = ([int64]$entry.ExternalAttributes -shr 16) -band 61440
   Assert ($unixType -ne 40960) 'Archive contains a symbolic-link entry.'
-  $isDir = $entry.FullName.EndsWith('/')
+  $isDir = $entry.FullName.EndsWith('/') -or $entry.FullName.EndsWith('\')
   if ($isDir) { continue }
   Assert ([long]$entry.Length -le 157286400) 'Archive contains an excessively large single file.'
   $totalSize += [long]$entry.Length
