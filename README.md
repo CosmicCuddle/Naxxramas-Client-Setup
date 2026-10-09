@@ -34,6 +34,10 @@ The included inventory tool lists filenames and approximate sizes only. It does 
 
 The tool does not alter the WoW installation and does not upload any files. See [client inventory guide](docs/CLIENT-SETUP.md).
 
+## Current client review
+
+We reviewed the owner's read-only inventory on 9 October 2026. See [Client inventory review](docs/CLIENT-INVENTORY-REVIEW.md) for the custom patch candidates, addon selection rules, and the remaining checks before an installer can be safely built.
+
 ## Development roadmap
 
 1. Identify the working client's folder structure and required custom modifications.
