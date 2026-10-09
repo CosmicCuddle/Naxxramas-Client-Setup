@@ -57,6 +57,17 @@ try {
  if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {throw 'Read-only plan made client changes.'}
  $r=Run @('-Action','Install','-Apply')
  if ($r.exit -eq 0) {throw 'Missing fixture confirmation was not rejected.'}
+ $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-SimulateFreeBytes','0')
+ if ($r.exit -eq 0 -or -not $r.text.Contains('Insufficient free disk space')) {
+  throw ("Low-disk preflight did not block installation: "+$r.text)
+ }
+ if (Test-Path -LiteralPath (Join-Path $game '.naxxramas-setup')) {
+  throw 'Low-disk validation wrote setup state.'
+ }
+ $r=Run @('-Action','Plan','-SimulateFreeBytes','0')
+ if ($r.exit -ne 0 -or -not $r.text.Contains('Insufficient free disk space')) {
+  throw 'Read-only plan failed to warn about simulated insufficient disk space.'
+ }
  $marker=Join-Path $game '.naxx-test-fixture'
  Move-Item -LiteralPath $marker -Destination ($marker+'.held')
  try {

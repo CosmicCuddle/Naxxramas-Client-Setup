@@ -17,7 +17,8 @@ param(
  [switch]$Apply,
  [switch]$ConfirmDisposableFixture,
  [ValidateRange(0,5)][int]$SimulateFailureAfter=0,
- [ValidateRange(0,5)][int]$SimulateCrashAfter=0
+ [ValidateRange(0,5)][int]$SimulateCrashAfter=0,
+ [ValidateRange(-1,9223372036854775807)][long]$SimulateFreeBytes=-1
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -82,6 +83,34 @@ function SafeCopy([string]$from,[string]$to,[string]$hash) {
  Copy-Item -LiteralPath $from -Destination $to -ErrorAction Stop
  Require ((SHA $to) -ceq $hash) "Copied data could not be verified: $to"
 }
+# Disk usage includes full staging copies, pre-existing originals preserved as backups,
+# and space to stage the largest restoration. A safety cushion remains available.
+function DiskBudget([object[]]$ops) {
+ $staging=[long]0; $backup=[long]0; $largestBackup=[long]0
+ foreach($op in @($ops)) {
+  $staging += [long]$op.size_bytes
+  $backup += [long]$op.old_size_bytes
+  if ([long]$op.old_size_bytes -gt $largestBackup) { $largestBackup=[long]$op.old_size_bytes }
+ }
+ $headroom=[long](128*1024*1024)
+ $needed=[long]($staging+$backup+$largestBackup+$headroom)
+ $available=[long]0
+ if ($SimulateFreeBytes -ge 0) {
+  $marker=Join-Path $client '.naxx-test-fixture'
+  Require ((Test-Path -LiteralPath $marker -PathType Leaf) -and
+     ([IO.File]::ReadAllText($marker).Trim()) -ceq 'NAXXRAMAS_DISPOSABLE_FIXTURE_V1') 'Disk-space simulation is restricted to synthetic test fixtures.'
+  $available=[long]$SimulateFreeBytes
+ } else {
+  $driveRoot=[IO.Path]::GetPathRoot($client)
+  Require ([bool]$driveRoot) 'Could not identify target filesystem.'
+  $drive=[IO.DriveInfo]::new($driveRoot)
+  Require ($drive.IsReady) 'Target filesystem is not ready.'
+  $available=[long]$drive.AvailableFreeSpace
+ }
+ Write-Host ("SPACE REQUIRED: {0} bytes (staging {1}, backups {2}, rollback buffer {3}, reserve {4})" -f $needed,$staging,$backup,$largestBackup,$headroom)
+ Write-Host ("SPACE AVAILABLE: {0} bytes" -f $available)
+ return ($available -ge $needed)
+}
 function FixtureGuard {
  Require ([bool]$Apply -and [bool]$ConfirmDisposableFixture) 'Test installation requires both -Apply and -ConfirmDisposableFixture.'
  $m=Join-Path $client '.naxx-test-fixture'
@@ -114,7 +143,8 @@ function ProposedChanges {
   $source=PatchSource $path
   Require ([bool]$source) "Required or selected patch cannot be verified locally; supply a separate authorised source with Data folder: $path"
   Check $source $hash $size
-  $changes.Add([pscustomobject]@{path=$path;source=$source;old_sha256=$before;new_sha256=$hash;kind='patch'})
+  $oldSize=if ($before) { [long](Get-Item -LiteralPath $target).Length } else { [long]0 }
+  $changes.Add([pscustomobject]@{path=$path;source=$source;old_sha256=$before;new_sha256=$hash;kind='patch';size_bytes=$size;old_size_bytes=$oldSize})
  }
  $p='Data/enUS/realmlist.wtf'
  $target=Destination $p
@@ -125,7 +155,8 @@ function ProposedChanges {
  try { $hash=[BitConverter]::ToString($sha256.ComputeHash($bytes)).Replace('-','').ToLowerInvariant() }
  finally { $sha256.Dispose() }
  if ($hash -cne $before) {
-  $changes.Add([pscustomobject]@{path=$p;source=$null;old_sha256=$before;new_sha256=$hash;kind='realm'})
+  $oldSize=if ($before) { [long](Get-Item -LiteralPath $target).Length } else { [long]0 }
+  $changes.Add([pscustomobject]@{path=$p;source=$null;old_sha256=$before;new_sha256=$hash;kind='realm';size_bytes=[long]$bytes.Length;old_size_bytes=$oldSize})
  } else { Write-Host "CURRENT: $p" }
  if ($addonRoot) {
   # Only the reviewed five-folder structure. Never merge into existing addons.
@@ -153,7 +184,7 @@ function ProposedChanges {
     NoLinks $addonRoot ($addonName+'/'+$sub)
     Require (-not (Test-Path -LiteralPath $target)) "Unexpected existing addon file: $path"
     $hash=SHA $item.FullName
-    $changes.Add([pscustomobject]@{path=$path;source=$item.FullName;old_sha256=$null;new_sha256=$hash;kind='addon'})
+    $changes.Add([pscustomobject]@{path=$path;source=$item.FullName;old_sha256=$null;new_sha256=$hash;kind='addon';size_bytes=[long]$item.Length;old_size_bytes=[long]0})
    }
   }
   Write-Warning 'Addon source directory has not been authenticated against an approved release ZIP. Alpha fixture testing only.'
@@ -297,8 +328,14 @@ try {
  Write-Host "PATCHSET: $($policy.patch_set_version)"
  Write-Host "PLAN: $($ops.Count) file change(s)"
  foreach ($op in $ops) { Write-Host ("{0}: {1}" -f $(if ($op.old_sha256) { 'BACKUP + REPLACE' } else { 'CREATE' }),$op.path) }
- if ($Action -eq 'Plan') { Write-Host 'READ-ONLY PLAN COMPLETE. No files changed.' -ForegroundColor Green; exit 0 }
+ if ($Action -eq 'Plan') {
+  $spaceOkay=DiskBudget $ops
+  if (-not $spaceOkay) { Write-Warning 'Insufficient free disk space for this plan. Installation would be blocked.' }
+  Write-Host 'READ-ONLY PLAN COMPLETE. No files changed.' -ForegroundColor Green
+  exit 0
+ }
  FixtureGuard
+ Require (DiskBudget $ops) 'Insufficient free disk space for staging, backups and rollback. No files were changed.'
  Require ($ops.Count -gt 0) 'Nothing to install.'
  Require (-not (Test-Path -LiteralPath (Join-Path $state 'active.json'))) 'An active installation exists; roll it back first.'
  if (Test-Path -LiteralPath $state) { NoLinks $client '.naxxramas-setup' }
