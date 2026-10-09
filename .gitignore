@@ -33,3 +33,6 @@ client-inventory.txt
 Thumbs.db
 .vscode/
 .idea/
+
+# Local patch version proposals from the owner's client; review privately.
+patch-update-proposal.json

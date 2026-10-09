@@ -74,6 +74,17 @@ try {
   if (-not (Test-Path -LiteralPath (Join-Path $root 'Data/enUS') -PathType Container)) {
     $issues.Add('Data/enUS is missing. This first version supports enUS clients only.')
   }
+  $historyDir = Join-Path (Split-Path -Parent $PSScriptRoot) 'config/patch-versions'
+  $knownOlder = @()
+  if (Test-Path -LiteralPath $historyDir -PathType Container) {
+    foreach ($historyFile in @(Get-ChildItem -LiteralPath $historyDir -Filter 'patchset-*.json' -File)) {
+      $historical = Get-Content -LiteralPath $historyFile.FullName -Raw | ConvertFrom-Json
+      if ([int]$historical.revision -lt [int]$policy.patch_set_revision) {
+        $knownOlder += $historical
+      }
+    }
+  }
+
   if ($RealmHost) {
     if ($RealmHost.Length -gt 253 -or $RealmHost -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$' -or $RealmHost.Contains('..')) {
       $issues.Add('RealmHost must be a hostname or IPv4 address without a scheme, spaces, port or commands.')
@@ -105,8 +116,21 @@ try {
     }
     $sha = Hash-File $candidate
     if ($patch.sha256 -and $sha -ne $patch.sha256.ToLowerInvariant()) {
-      $issues.Add("Checksum does not match the approved version: $($patch.path)")
-      Write-Host "MISMATCH: $($patch.path)" -ForegroundColor Red
+      $olderVersion = $null
+      foreach ($history in @($knownOlder)) {
+        foreach ($entry in @($history.patches)) {
+          if ($entry.path -eq $patch.path -and $entry.sha256 -eq $sha) {
+            $olderVersion = [string]$history.version
+          }
+        }
+      }
+      if ($olderVersion) {
+        $issues.Add("Older known patch $($patch.path) ($olderVersion) is installed; the current reference is $($policy.patch_set_version). An update is needed.")
+        Write-Host "OUTDATED: $($patch.path) ($olderVersion)" -ForegroundColor Yellow
+      } else {
+        $issues.Add("Checksum mismatch for $($patch.path). It does not match the current pinned version.")
+        Write-Host "MISMATCH: $($patch.path)" -ForegroundColor Red
+      }
     } else {
       $size = (Get-Item -LiteralPath $candidate).Length
       Write-Host ("FOUND: {0} ({1:N1} MB)" -f $patch.path,($size / 1MB))

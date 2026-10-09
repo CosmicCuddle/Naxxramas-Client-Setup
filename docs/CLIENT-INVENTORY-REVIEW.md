@@ -19,7 +19,7 @@
 | `Data/patch-V.mpq` | 429.8 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
 | `Data/patch-Z.mpq` | 45.1 MB | **Mandatory core Naxxramas patch: required for a complete client setup** |
 
-**Source:** The server owner confirmed the optional/mandatory split, and both J/U MPQ archives were inspected directly from copies supplied on 9 October 2026. The analysis confirms J includes login-screen model, textures, and music; U includes only four loading-screen BLP files. The exact visual appearance and combined in-game behavior have not been tested. The contents and dependencies of core V and Z remain uninspected.
+**Source:** The server owner confirmed the optional/mandatory split, and both J/U MPQ archives were inspected directly from copies supplied on 9 October 2026. The analysis confirms J includes login-screen model, textures, and music; U includes only four loading-screen BLP files. The exact visual appearance and combined in-game behavior have not been tested. The core V and Z archive **contents and dependencies** remain uninspected. Their owner-reported SHA-256 and byte sizes are now pinned under `patchset-0001`.
 
 ### J and U archive inspection
 
@@ -81,7 +81,7 @@ Investigate before using or distributing `Customsounds`, `Battle.net.dll`, `ReSh
 
 ## Next information needed
 
-1. Confirm the in-game appearance of J only, U only, and both together; establish patch origin and redistribution rights before public packaging.
+1. Confirm the in-game appearance of J only, U only, and both together; establish patch origin and redistribution rights before public packaging. Owner-reported V/Z hashes are pinned in `patchset-0001`, but contents and provenance have not been inspected.
 2. The realmlist **public DNS name or IP** players should use; do not confuse this with the owner's private network address.
 3. Version metadata for `Wow.exe` to verify build 12340.
 4. A final decision on whether the standalone Talent Calculator and any other non-suite addons belong in the *optional* installer catalog.

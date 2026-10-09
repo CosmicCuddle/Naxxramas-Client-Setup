@@ -10,7 +10,7 @@ The client archive is ~18.6 GB, but the planned setup tool does **not** distribu
 - Check that mandatory Data/patch-V.mpq and Data/patch-Z.mpq are present, or available from an explicitly selected local patch source.
 - Support optional Vanilla login visuals (Patch-J.mpq) and optional Vanilla loading screens (Patch-U.mpq).
 - Verify optional MPQs against their recorded SHA-256 fingerprints.
-- Warn that core V/Z fingerprints are not yet pinned and build 12340 is not necessarily verified.
+- Validate V/Z and J/U against pinned reference fingerprints (patchset-0001; V/Z values supplied by the server owner). Build 12340 still requires independent confirmation.
 - Check optional extracted N Addon Suite folder layout: NCore is required within the suite; other suite modules are individually selectable.
 - Validate an optionally supplied realm hostname without writing realmlist.wtf.
 - Never modify, copy, upload, rename, or remove game files.
@@ -20,7 +20,7 @@ The client archive is ~18.6 GB, but the planned setup tool does **not** distribu
 1. Download and extract this repository ZIP **outside** your WoW folder.
 2. Open the tools folder.
 3. Drag the folder containing Wow.exe onto **Check-Naxxramas-Client.bat**.
-4. Read the results. Warnings are expected until we verify the core patch fingerprints and client build.
+4. Read the results. Warnings may still appear for unconfirmed client build metadata, missing realmlist address, or optional patches.
 
 The check may calculate file hashes, so large patches can take time to read. It never edits the original client.
 
@@ -33,6 +33,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Test-Naxxramas-
 The example host is a placeholder. This command is a **check**, not a real server configuration. If checking a clean WoW installation, use -PatchSourcePath to point to a separate, locally held Naxxramas client containing the core patches. This does not grant permission to redistribute their contents.
 
 For an approved extracted N Addon Suite, -AddonSuitePath can point to the folder containing NCore, and -Addons can specify optional suite addons, e.g. "DungeonJournal","MultiBot". The tool checks TOC paths only and does not independently authenticate the release.
+
+## Prepare future patch revisions
+
+Run `tools/Prepare-Patch-Update.bat` against your working client after modifying any J, U, V or Z patch. The small `patch-update-proposal.json` report lets us prepare a new versioned manifest without copying MPQ binaries into GitHub. See [Patch Updates](PATCH-UPDATES.md). Do not treat this as an automatic installer or an approved public release.
 
 ## Calculate the mandatory core fingerprints
 
@@ -62,7 +66,7 @@ The full installer and public Release will not be presented as ready until these
 
 ## Known open points
 
-1. Obtain reference SHA-256 and byte sizes for mandatory V/Z.
+1. **Completed:** V/Z owner-supplied hash and byte-size references recorded as `patchset-0001`. Future versions use the proposal process.
 2. Verify the actual Wow.exe build 12340 on the owner's working client.
 3. Identify the correct **public** realmlist hostname/address.
 4. Test J and U individually and together in-game; their Eastern Kingdoms and Kalimdor loading textures overlap.

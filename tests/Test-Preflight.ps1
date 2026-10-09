@@ -1,61 +1,106 @@
 #requires -Version 5.1
+# Windows-only, disposable fixtures. No real game files used.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).ProviderPath
-$scriptPath = Join-Path $repo 'tools/Test-Naxxramas-Client.ps1'
-$hashPath = Join-Path $repo 'tools/Get-Core-Patch-Hashes.ps1'
 $policyPath = Join-Path $repo 'config/client-patches.json'
+$policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
 
-foreach ($path in @($scriptPath,$hashPath)) {
+foreach ($name in @('Test-Naxxramas-Client.ps1','Get-Core-Patch-Hashes.ps1','Prepare-Patch-Update.ps1')) {
+  $path = Join-Path (Join-Path $repo 'tools') $name
   $tokens = $null
   $parseErrors = $null
-  [Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$parseErrors) | Out-Null
-  if (@($parseErrors).Count -gt 0) {
-    throw ("PowerShell syntax errors in {0}: {1}" -f $path, ($parseErrors -join '; '))
-  }
+  [Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$parseErrors) | Out-Null
+  if (@($parseErrors).Count -ne 0) { throw ("Syntax error in {0}: {1}" -f $name, ($parseErrors -join '; ')) }
 }
-$policy = Get-Content -LiteralPath $policyPath -Raw | ConvertFrom-Json
-if (@($policy.patches).Count -ne 4) { throw 'Expected exactly four patch policy entries.' }
-foreach ($name in @('Data/patch-V.mpq','Data/patch-Z.mpq')) {
-  $patch = @($policy.patches | Where-Object { $_.path -eq $name })
-  if ($patch.Count -ne 1 -or -not $patch[0].required -or $patch[0].allow_disable) {
-    throw "Core patch policy violated for $name"
-  }
+if ($policy.schema_version -ne 1 -or [int]$policy.patch_set_revision -lt 1 -or $policy.patch_set_version -ne ('patchset-{0:D4}' -f [int]$policy.patch_set_revision)) {
+  throw 'Unexpected baseline patch version.'
 }
-foreach ($name in @('Data/Patch-J.mpq','Data/Patch-U.mpq')) {
-  $patch = @($policy.patches | Where-Object { $_.path -eq $name })
-  if ($patch.Count -ne 1 -or $patch[0].required -or -not $patch[0].allow_disable -or
-      $patch[0].sha256 -notmatch '^[a-f0-9]{64}$') {
-    throw "Optional patch policy violated for $name"
+if (@($policy.patches).Count -ne 4) { throw 'Four patch entries expected.' }
+$versionPath = Join-Path $repo ('config/patch-versions/' + $policy.patch_set_version + '.json')
+$history = Get-Content -LiteralPath $versionPath -Raw | ConvertFrom-Json
+if ($history.revision -ne $policy.patch_set_revision -or $history.version -ne $policy.patch_set_version) { throw 'Invalid current version history.' }
+foreach ($entry in @($policy.patches)) {
+  $ref = @($history.patches | Where-Object { $_.path -eq $entry.path })
+  if ($ref.Count -ne 1 -or $entry.sha256 -notmatch '^[0-9a-f]{64}$' -or
+      [long]$entry.size_bytes -le 0 -or
+      $ref[0].sha256 -ne $entry.sha256 -or
+      [long]$ref[0].size_bytes -ne [long]$entry.size_bytes) {
+    throw "Patch reference or history mismatch: $($entry.path)"
+  }
+  if ($entry.path -match '^Data/patch-[VZ]\.mpq$') {
+    if (-not $entry.required -or $entry.allow_disable) { throw "Core requirement violated: $($entry.path)" }
+  } else {
+    if ($entry.required -or -not $entry.allow_disable) { throw "Optional requirement violated: $($entry.path)" }
   }
 }
 
-$fixture = Join-Path ([IO.Path]::GetTempPath()) ('naxx-preflight-' + [guid]::NewGuid().ToString('N'))
+$fixture = Join-Path ([IO.Path]::GetTempPath()) ('naxx-version-tests-' + [guid]::NewGuid().ToString('N'))
 try {
-  New-Item -Path (Join-Path $fixture 'Data/enUS') -ItemType Directory -Force | Out-Null
-  [IO.File]::WriteAllBytes((Join-Path $fixture 'Wow.exe'), [byte[]]@())
-  function Run-Check([string[]]$extra) {
-    $arguments = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$scriptPath,'-ClientPath',$fixture) + $extra
-    & powershell.exe @arguments | Out-Null
-    return $LASTEXITCODE
+  $testRepo = Join-Path $fixture 'repo'
+  $client = Join-Path $fixture 'game'
+  foreach ($folder in @('repo/tools','repo/config','game/Data/enUS')) {
+    New-Item -ItemType Directory -Path (Join-Path $fixture $folder) -Force | Out-Null
   }
-  if ((Run-Check @()) -eq 0) { throw 'Check should fail when mandatory MPQs are missing.' }
+  Copy-Item -LiteralPath (Join-Path $repo 'tools/Test-Naxxramas-Client.ps1') -Destination (Join-Path $testRepo 'tools/Test-Naxxramas-Client.ps1')
+  Copy-Item -LiteralPath (Join-Path $repo 'tools/Prepare-Patch-Update.ps1') -Destination (Join-Path $testRepo 'tools/Prepare-Patch-Update.ps1')
+  [IO.File]::WriteAllBytes((Join-Path $client 'Wow.exe'),[byte[]]@())
+  $v = Join-Path $client 'Data/patch-V.mpq'
+  $z = Join-Path $client 'Data/patch-Z.mpq'
+  Set-Content -LiteralPath $v -Value 'fake V1 data' -Encoding ASCII
+  Set-Content -LiteralPath $z -Value 'fake Z1 data' -Encoding ASCII
+  $fakePolicy = $policy | ConvertTo-Json -Depth 12 | ConvertFrom-Json
+  foreach ($p in @($fakePolicy.patches)) {
+    if ($p.path -eq 'Data/patch-V.mpq' -or $p.path -eq 'Data/patch-Z.mpq') {
+      $f = if ($p.path -eq 'Data/patch-V.mpq') { $v } else { $z }
+      $p.sha256 = (Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash.ToLowerInvariant()
+      $p.size_bytes = (Get-Item -LiteralPath $f).Length
+    }
+  }
+  $localManifest = Join-Path $testRepo 'config/client-patches.json'
+  $fakePolicy | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $localManifest -Encoding UTF8
+  $policyHash = (Get-FileHash -LiteralPath $localManifest -Algorithm SHA256).Hash
+  $preflight = Join-Path $testRepo 'tools/Test-Naxxramas-Client.ps1'
+  $updater = Join-Path $testRepo 'tools/Prepare-Patch-Update.ps1'
 
-  Set-Content -LiteralPath (Join-Path $fixture 'Data/patch-V.mpq') -Value 'dummy V' -Encoding ASCII
-  Set-Content -LiteralPath (Join-Path $fixture 'Data/patch-Z.mpq') -Value 'dummy Z' -Encoding ASCII
-  $vBefore = (Get-FileHash -LiteralPath (Join-Path $fixture 'Data/patch-V.mpq')).Hash
-  $zBefore = (Get-FileHash -LiteralPath (Join-Path $fixture 'Data/patch-Z.mpq')).Hash
-  if ((Run-Check @()) -ne 0) { throw 'Check should succeed with both required files present (unverified fingerprints generate warnings).' }
-  if ((Run-Check @('-VanillaLogin')) -eq 0) { throw 'Check should fail when a selected optional patch is missing.' }
-  if ((Run-Check @('-RealmHost','https://bad/path')) -eq 0) { throw 'Check should reject an invalid realm hostname.' }
+  function Invoke-Fixture([string]$file,[string[]]$options) {
+    $argsList = @('-NoProfile','-ExecutionPolicy','Bypass','-File',$file,'-ClientPath',$client) + @($options)
+    $out = (& powershell.exe @argsList 2>&1 | Out-String)
+    return [pscustomobject]@{ Code=$LASTEXITCODE; Output=$out }
+  }
+  $r = Invoke-Fixture $preflight @()
+  if ($r.Code -ne 0) { throw "Matching fake core patches should pass preflight: $($r.Output)" }
+  $r = Invoke-Fixture $preflight @('-VanillaLogin')
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('Missing selected optional patch')) {
+    throw 'Missing selected optional patch was not rejected.'
+  }
+  $r = Invoke-Fixture $preflight @('-RealmHost','https://invalid/address')
+  if ($r.Code -eq 0) { throw 'Invalid realmlist format was accepted.' }
 
-  if ((Get-FileHash -LiteralPath (Join-Path $fixture 'Data/patch-V.mpq')).Hash -ne $vBefore) {
-    throw 'Preflight modified patch V.'
+  Set-Content -LiteralPath $v -Value 'fake V2 data' -Encoding ASCII
+  $r = Invoke-Fixture $preflight @()
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('MISMATCH')) {
+    throw 'Changed core patch was not rejected by preflight.'
   }
-  if ((Get-FileHash -LiteralPath (Join-Path $fixture 'Data/patch-Z.mpq')).Hash -ne $zBefore) {
-    throw 'Preflight modified patch Z.'
+
+  $r = Invoke-Fixture $updater @()
+  if ($r.Code -ne 0) { throw "Could not prepare patch proposal: $($r.Output)" }
+  $proposalFile = Join-Path $testRepo 'tools/patch-update-proposal.json'
+  if (-not (Test-Path -LiteralPath $proposalFile)) { throw 'Proposal was not saved.' }
+  $proposal = Get-Content -LiteralPath $proposalFile -Raw | ConvertFrom-Json
+  if ($proposal.base_patch_set_revision -ne $policy.patch_set_revision -or $proposal.proposed_patch_set_revision -ne ([int]$policy.patch_set_revision + 1) -or
+      @($proposal.changes).Count -ne 1 -or $proposal.changes[0].path -ne 'Data/patch-V.mpq' -or
+      $proposal.changes[0].new_sha256 -ne (Get-FileHash -LiteralPath $v -Algorithm SHA256).Hash.ToLowerInvariant()) {
+    throw 'Proposal did not accurately describe the one changed core patch.'
   }
-  Write-Host 'All read-only preflight smoke tests passed.' -ForegroundColor Green
+  $proposalText = Get-Content -LiteralPath $proposalFile -Raw
+  if ($proposalText.Contains($fixture)) { throw 'Proposal leaked an absolute local filesystem path.' }
+  if ((Get-FileHash -LiteralPath $localManifest -Algorithm SHA256).Hash -ne $policyHash) {
+    throw 'Preparing a proposal changed the local reference manifest.'
+  }
+  $r = Invoke-Fixture $updater @()
+  if ($r.Code -eq 0) { throw 'Second run overwrote a pending proposal.' }
+  Write-Host 'All version, preflight and patch-proposal fixture tests passed.' -ForegroundColor Green
 }
 finally {
   if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }

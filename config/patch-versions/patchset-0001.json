@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "revision": 1,
+  "version": "patchset-0001",
+  "recorded_on": "2026-10-09",
+  "source": "owner-provided read-only hash screenshot for V/Z; previously inspected owner-provided J/U archives",
+  "status": "reference_fingerprints_only_not_a_public_release",
+  "playable_build_verified": false,
+  "public_distribution_approved": false,
+  "changes": "Initial registered patch set: V and Z mandatory, J and U optional.",
+  "patches": [
+    {
+      "path": "Data/patch-V.mpq",
+      "required": true,
+      "sha256": "68ca0d260841a028181fdeac72db5cd96a752da9c5f2798432a065db6dcd70ff",
+      "size_bytes": 450631505
+    },
+    {
+      "path": "Data/patch-Z.mpq",
+      "required": true,
+      "sha256": "5eb17ce5dc7b87990dd173a7c3dd3ff5be7d34219be407eaa854d95625011b3a",
+      "size_bytes": 47337608
+    },
+    {
+      "path": "Data/Patch-J.mpq",
+      "required": false,
+      "sha256": "24385046f0db6c17db5f549fa0f418f5d5ed1d4c2100059f1db9bede709113c9",
+      "size_bytes": 5739890
+    },
+    {
+      "path": "Data/Patch-U.mpq",
+      "required": false,
+      "sha256": "51fc8cbd1786537772ea7f59eac7be244eedabf7e6487ee41e5ce2009ecd9a6d",
+      "size_bytes": 11050502
+    }
+  ]
+}

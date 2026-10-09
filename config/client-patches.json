@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "design_only_not_an_installer_or_distribution_approval",
-  "note": "Owner-confirmed patch roles. J/U contents and hashes inspected directly from owner-provided MPQs on 9 October 2026. V/Z hashes, client runtime behavior, file provenance, and redistribution rights remain unverified. No binaries or download URLs are provided.",
+  "note": "V/Z hashes and byte sizes pinned from the owner-supplied 2026-10-09 screenshot of the read-only tool. J/U hashes previously derived from owner-provided files. These checksums identify the expected bytes, not file provenance, redistribution rights, or runtime compatibility. No binaries or public download URLs are included.",
   "target_client": {
     "game": "World of Warcraft",
     "version": "3.3.5a",
@@ -15,16 +15,22 @@
       "role": "naxxramas_core",
       "required": true,
       "allow_disable": false,
-      "sha256": null,
-      "public_distribution_approved": false
+      "sha256": "68ca0d260841a028181fdeac72db5cd96a752da9c5f2798432a065db6dcd70ff",
+      "public_distribution_approved": false,
+      "size_bytes": 450631505,
+      "hash_reference": "owner_screenshot_2026-10-09",
+      "inspection": "sha256_and_byte_size_reported_by_owner_2026-10-09"
     },
     {
       "path": "Data/patch-Z.mpq",
       "role": "naxxramas_core",
       "required": true,
       "allow_disable": false,
-      "sha256": null,
-      "public_distribution_approved": false
+      "sha256": "5eb17ce5dc7b87990dd173a7c3dd3ff5be7d34219be407eaa854d95625011b3a",
+      "public_distribution_approved": false,
+      "size_bytes": 47337608,
+      "hash_reference": "owner_screenshot_2026-10-09",
+      "inspection": "sha256_and_byte_size_reported_by_owner_2026-10-09"
     },
     {
       "path": "Data/Patch-J.mpq",
@@ -60,5 +66,8 @@
       "Interface/GLUES/LoadingScreens/LoadScreenKalimdor.blp"
     ],
     "in_game_joint_option_test_required": true
-  }
+  },
+  "patch_set_revision": 1,
+  "patch_set_version": "patchset-0001",
+  "patch_set_updated": "2026-10-09"
 }
