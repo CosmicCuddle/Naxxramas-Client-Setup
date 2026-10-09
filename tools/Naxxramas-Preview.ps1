@@ -56,22 +56,22 @@ $stack.Controls.Add($head,0,0)
 [void](Label $head 'Choose your client, select optional features and preview changes safely.' 2 53 850 22 $f $muted)
 $paths=Card 1
 [void](Label $paths '01   CLIENT AND LOCAL SOURCES' 16 11 820 25 $h $gold)
-function Picker([Windows.Forms.Control]$host,[string]$caption,[int]$y,[bool]$zip) {
- [void](Label $host $caption 18 $y 830 20 $sm $muted)
+function Picker([Windows.Forms.Control]$pickerPanel,[string]$caption,[int]$y,[bool]$zip) {
+ [void](Label $pickerPanel $caption 18 $y 830 20 $sm $muted)
  $box=New-Object Windows.Forms.TextBox
  $box.Location=New-Object Drawing.Point(18,($y+20))
  $box.Size=New-Object Drawing.Size(620,27);$box.Anchor='Top,Left,Right'
  $box.BackColor=$field;$box.ForeColor=$white;$box.BorderStyle='FixedSingle'
- $host.Controls.Add($box)
+ $pickerPanel.Controls.Add($box)
  $browse=New-Object Windows.Forms.Button
  $browse.Text='Browse...';$browse.Size=New-Object Drawing.Size(107,28)
  $browse.FlatStyle='Flat';$browse.BackColor=Color '#304761';$browse.ForeColor=$white
- $host.Controls.Add($browse)
+ $pickerPanel.Controls.Add($browse)
  $reflow={
-  $browse.Location=New-Object Drawing.Point(([math]::Max(650,$host.ClientSize.Width-126)),($y+19))
+  $browse.Location=New-Object Drawing.Point(([math]::Max(650,$pickerPanel.ClientSize.Width-126)),($y+19))
   $box.Width=[math]::Max(490,$browse.Left-28)
  }.GetNewClosure()
- $host.Add_SizeChanged($reflow)
+ $pickerPanel.Add_SizeChanged($reflow)
  & $reflow
  $browse.Add_Click({
   if ($zip) {
