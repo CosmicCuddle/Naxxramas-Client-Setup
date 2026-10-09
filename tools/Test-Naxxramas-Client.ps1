@@ -62,7 +62,9 @@ try {
   if (-not (Test-Path -LiteralPath $wow -PathType Leaf)) {
     $issues.Add('Wow.exe is missing from the selected client folder.')
   } else {
-    $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($wow).FileVersion
+    $version = $null
+    try { $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($wow).FileVersion }
+    catch { $warnings.Add('Could not read Wow.exe version metadata. Verify that Wow.exe is a genuine client executable.') }
     Write-Host "WoW version metadata: $(if ($version) { $version } else { '(not available)' })"
     if (-not ($version -and $version -match '(^|[.\s])12340($|[.\s])')) {
       $warnings.Add('Build 12340 is not confirmed by Wow.exe version metadata. Verify the game build before installation.')
@@ -160,6 +162,6 @@ try {
   exit 0
 }
 catch {
-  Write-Error ("Preflight could not finish: " + $_.Exception.Message)
+  Write-Host ("ERROR: Preflight could not finish: " + $_.Exception.Message) -ForegroundColor Red
   exit 1
 }
