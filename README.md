@@ -172,6 +172,10 @@ A separate Windows process now runs the M15 **disposable fixture-only** copy whi
 
 The M15 **disposable fixture-only** copier now records native Windows identities of its source, destination and stage directories. Before promotion or failure cleanup, it checks that none was replaced by a different same-named directory. A new **separate-process** Windows test deliberately swaps those folders and verifies that uncertain journals and externally changed data are preserved. This is checkpoint defense, not proof of a race-free installer. [Milestone 28](docs/INSTALLER-MILESTONE-28.md).
 
+## Milestone 29 — Disposable junction-swap and rollback safeguards
+
+The M15 synthetic-only copier and rollback now receive an explicit Windows junction-swap regression: an independent process replaces a **dummy `Data` folder** with a junction during a controlled pause. Rollback also rechecks source/destination native directory identities and markers immediately before deleting disposable test files. Unknown paths and suspicious journals are retained for manual review. **This is not production-grade race protection.** [Milestone 29 details](docs/INSTALLER-MILESTONE-29.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.

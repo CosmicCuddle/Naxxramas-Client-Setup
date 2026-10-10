@@ -49,6 +49,8 @@
 
 - **Milestone 28 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075 (implementation checkpoint `01a46d529f2e8dfc1c0fceb575bbf37ee6bd5a0b`)
 
+**M29 in development (Windows CI pending):** M15 dummy-only Rollback now verifies native source/destination identities before sensitive deletions, rejects junction redirects and offers a bounded Rollback-only external pause for testing. `tests/Test-Fixture-Junction-Swaps.ps1` independently substitutes `Data` junctions during dummy Copy (source/stage) and Rollback (destination); an explicit link error and preservation of original/foreign bytes are required. No real game files touched.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -153,6 +155,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M26 — complete (CI 38066008592)** | Read-only fixture recovery decision planner, fixed review labels for interrupted copy/rollback, uncertain journal/stage and completed copy, no commands or automatic file changes. |
 | **M27 — complete (CI 38067600841)** | Separate-process mutation of disposable source, stage and destination after an applying journal is written; test-only pause, non-overwrite and guarded preservation checks. |
 | **M28 — complete (CI 38069581075)** | Native read-only Windows directory-object identity snapshots before synthetic Copy promotion and cleanup; separate-process source/destination/stage directory swaps with preserved uncertain data. |
+| **M29 — Windows CI pending** | Separate-process Windows junction substitutions on synthetic source/stage/rollback Data folders; rollback native identity checks and guarded journal cleanup, all limited to marked fake client fixtures. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -179,6 +182,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M26:** `tools/Plan-Fixture-Recovery.ps1`: developer-only *read-only* recovery decision guidance from M25 output. No report file, rollback, deletion, copy or game-client writes.
 - **M27:** `tests/Test-External-Process-Mutations.ps1` spawns another Windows PowerShell process for a confirmed tiny fixture copy and mutates one fixture file while paused after journal write. M15 adds only a bounded test pause switch. No user-facing install/write feature.
 - **M28:** native Win32 read-only directory identity checks embedded in M15 fixture-only Copy and `tests/Test-Fixture-Directory-Identity.ps1` external swaps. Uses original eight-name dummy allowlist, not game installations.
+- **M29:** `tests/Test-Fixture-Junction-Swaps.ps1` covers independent junction replacement of small fake Data paths; M15 gains rollback-only bounded pause and source/destination identity checkpoints, refusing linked routes before deletion.
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -197,7 +201,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M28 directory-object identity checks and complete Windows CI **passed** ([run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075)). No owner PC work. Next M29: isolated synthetic Windows junction/symlink swap tests, investigate retaining directory handles during sensitive operations, and harden rollback/journal updates against postcheck path changes; do not claim directory identity snapshots guarantee atomic moves or deletions. Keep exact synthetic markers, eight dummy paths, 1 MiB ceiling, disabled full-client source, privacy protections, draft PR and explicit owner permission before merge.
+**Current next task:** M29 test-only junction swaps and rollback identity checks implemented; Windows CI pending. Run new three-scenario PowerShell fixture tests and all previous M15–M28 suites. Fix failures before marking verified. Next investigate held directory handles, atomic journal sidecars and adversarial path changes only in disposable Windows fixtures; link identity snapshots and checks do not guarantee race freedom. Keep M15 fixed eight dummy names, exact markers, 1 MiB total, private data/MPQ restrictions, disabled full-client source and unmerged draft PR; require owner approval for any merge.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -218,7 +222,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 28 Windows tests passed. A replaced, same-named synthetic directory was detected before copying and the original or unexpected data was preserved. No client action or hash scan is required; next development focuses on junction swaps and stronger filesystem handle protection.”
+**Owner-facing next instruction:** “No PC actions are needed for Milestone 29. The Windows tests will attempt junction redirection of fake Data folders during synthetic copy/rollback and verify that unexpected files are preserved. Full-client installation remains disabled.”
 
 ---
 
