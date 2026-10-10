@@ -237,7 +237,12 @@ try{
  $rows=@($data.files)
  $journalPath=Join-Path $dest $stateFile
  if($Action -eq 'Rollback'){
-  Require ($SimulateFailureAfter -eq 0) 'Copy failure injection is not valid during rollback.'
+  Require ($SimulateFailureAfter -eq 0 -and $SimulateAvailableDiskBytes -eq -1 -and
+   $SimulateDiskWriteFailureAfterStagedFiles -eq 0 -and
+   -not [bool]$SimulateStagedFileMutationBeforePromotion -and
+   -not [bool]$SimulateInterruptedStageOwnerWrite -and
+   -not [bool]$SimulateInterruptedJournalWrite -and
+   -not [bool]$SimulateDestinationCollisionBeforePromotion) 'Copy fault switches are not valid during rollback.'
   Require ([bool]$ConfirmDisposableFixture) 'Rollback requires -ConfirmDisposableFixture.'
   Require (Test-Path -LiteralPath $journalPath -PathType Leaf) 'No fixture copy journal exists.'
   NoLinkAncestors $journalPath
