@@ -300,6 +300,95 @@ public static class FixtureClient {
     Check ((Snapshot $client) -ceq $beforeSpaceClient) 'Space failure tests do not alter client'
     Check ((Snapshot $source) -ceq $beforeSpaceSource) 'Space failure tests do not alter source'
 
+    # Backup drive planning is a READ-ONLY preview. Synthetic probe changes
+    # live only in throwaway script copies; no production bypass option exists.
+    $backup = Join-Path $work 'private-backups'
+    $null = New-Item -ItemType Directory -Path $backup -Force
+    $beforeBackup = Snapshot $backup
+    $backupParams = @{
+        ClientPath = $client
+        PatchSourcePath = $source
+        BackupRoot = $backup
+        VanillaLogin = $true
+        Json = $true
+    }
+    $backupPlan = (& $planner @backupParams | Out-String) | ConvertFrom-Json
+    Check ($backupPlan.status -eq 'review_only_no_blockers') 'Backup directory preview does not introduce a blocker'
+    Check ($backupPlan.space_budget.mode -eq 'shared_volume') ("Folders on same test drive share the storage budget (actual: {0}; client root: {1}; backup root: {2})" -f $backupPlan.space_budget.mode,[IO.Path]::GetPathRoot($client),[IO.Path]::GetPathRoot($backup))
+    Check ($backupPlan.space_budget.backup_location_selected) 'Preview records separate backup location was selected'
+    Check ($backupPlan.space_budget.backup_volume_required_bytes -gt 0) 'Backup budget contains a reserve for journal metadata'
+    Check ($backupPlan.space_budget.combined_volume_required_bytes -eq $backupPlan.estimated_space_bytes) 'Same-volume budget combines staging and backup needs'
+
+    $backupBudgetRealm = Join-Path $client 'Data/enUS/realmlist.wtf'
+    $unchangedRealmBytes = [IO.File]::ReadAllBytes($backupBudgetRealm)
+    try {
+        Save $backupBudgetRealm 'set realmlist old.example.test'
+        $changedBytes = [int64](Get-Item -LiteralPath $backupBudgetRealm).Length
+        $replaceBudget = (& $planner @backupParams | Out-String) | ConvertFrom-Json
+        Check ((Item $replaceBudget 'Data/enUS/realmlist.wtf').action -eq 'replace_after_backup') 'Existing different realmlist is included in the backup estimate'
+        Check ($replaceBudget.space_budget.backup_volume_required_bytes -eq (67108864 + $changedBytes)) 'Original realmlist size is reserved on the backup drive'
+        Check ($replaceBudget.space_budget.combined_volume_required_bytes -eq $replaceBudget.estimated_space_bytes) 'Same-drive replacement budgets still sum without double-counting'
+    } finally {
+        [IO.File]::WriteAllBytes($backupBudgetRealm,$unchangedRealmBytes)
+    }
+
+    $missingBackupRejected = $false
+    try {
+        $null = & $planner -ClientPath $client -BackupRoot (Join-Path $work 'missing-backups') -Json 2>&1 | Out-String
+    } catch { $missingBackupRejected = $true }
+    Check $missingBackupRejected 'Missing backup directory is rejected'
+
+    $nestedBackupRejected = $false
+    try {
+        $null = & $planner -ClientPath $client -BackupRoot (Join-Path $client 'Data') -Json 2>&1 | Out-String
+    } catch { $nestedBackupRejected = $true }
+    Check $nestedBackupRejected 'Backup inside client folder is rejected'
+
+    $nestedSourceBackupRejected = $false
+    try {
+        $null = & $planner -ClientPath $client -PatchSourcePath $source -BackupRoot (Join-Path $source 'Data') -Json 2>&1 | Out-String
+    } catch { $nestedSourceBackupRejected = $true }
+    Check $nestedSourceBackupRejected 'Backup inside source folder is rejected'
+
+    $rootBackupRejected = $false
+    try {
+        $null = & $planner -ClientPath $client -BackupRoot ([IO.Path]::GetPathRoot($client)) -Json 2>&1 | Out-String
+    } catch { $rootBackupRejected = $true }
+    Check $rootBackupRejected 'A whole drive cannot be a backup root'
+
+    $storageProbe = 'return ([IO.Path]::GetPathRoot($Directory)).ToUpperInvariant()'
+    Check ($plannerOriginal.Contains($storageProbe)) 'Storage identity test insertion location is present'
+    $mockVolumes = $plannerOriginal.Replace(
+        $storageProbe,
+        'if ($Directory -eq $resolvedBackupRoot) { return ''FIXTURE-BACKUP'' } else { return ''FIXTURE-CLIENT'' }'
+    )
+    Set-Content -LiteralPath $spaceFixture -Value $mockVolumes -Encoding UTF8
+    $separatePlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
+    Check ($separatePlan.status -eq 'review_only_no_blockers') 'Two-volume fixture preview has sufficient real test disk space'
+    Check ($separatePlan.space_budget.mode -eq 'separate_volumes') 'Distinct mocked volume identities are budgeted independently'
+    Check ($null -eq $separatePlan.space_budget.combined_volume_required_bytes) 'Separate-volume preview does not claim one combined-disk requirement'
+
+    $backupLow = $mockVolumes.Replace(
+        $probe,
+        'if ($Directory -eq $resolvedBackupRoot) { return [int64]0 } else { return [int64]$drive.AvailableFreeSpace }'
+    )
+    Set-Content -LiteralPath $spaceFixture -Value $backupLow -Encoding UTF8
+    $backupLowPlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
+    Check ($backupLowPlan.status -eq 'blocked') 'Low backup capacity blocks when source and backup are on distinct volumes'
+    Check (@($backupLowPlan.blockers | Where-Object { $_ -like '*Insufficient backup drive space*' }).Count -eq 1) 'Backup shortage has a dedicated explanation'
+
+    $backupFailed = $mockVolumes.Replace(
+        $probe,
+        'if ($Directory -eq $resolvedBackupRoot) { throw ''Fixture backup probe failure'' } else { return [int64]$drive.AvailableFreeSpace }'
+    )
+    Set-Content -LiteralPath $spaceFixture -Value $backupFailed -Encoding UTF8
+    $backupFailurePlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
+    Check ($backupFailurePlan.status -eq 'blocked') 'Unavailable backup capacity blocks the preview'
+    Check (@($backupFailurePlan.blockers | Where-Object { $_ -like '*Could not verify free space on the backup drive*' }).Count -eq 1) 'Backup probe failures have an explicit reason'
+    Check ((Snapshot $backup) -ceq $beforeBackup) 'No backup directory contents were changed'
+    Check ((Snapshot $client) -ceq $beforeSpaceClient) 'Backup space tests leave all client fixture files intact'
+    Check ((Snapshot $source) -ceq $beforeSpaceSource) 'Backup space tests leave all patch source files intact'
+
     Write-Host ''
     Write-Host 'All synthetic read-only planner assertions passed.' -ForegroundColor Green
 }

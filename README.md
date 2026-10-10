@@ -55,7 +55,7 @@ See [Installer Development — Milestone 1](docs/INSTALLER-MILESTONE-1.md) for t
 
 The new **[installer-plan preview](docs/INSTALLER-PLAN.md)** describes what an eventual setup *might* need to do. Drag a WoW folder onto `tools/Plan-Naxxramas-Install.bat` to preview the existing client without changing any files. A separate local patch source and optional J/U selections are supported through `tools/Plan-Naxxramas-Install.ps1`. The preview can classify current, missing, known older or unrecognised patches, check the realmlist, and show backups and blockers.
 
-This script **does not install, download, copy, repair, replace or remove any game files**. A Windows PowerShell fixture test workflow has been added, but passing execution has not yet been independently verified in this development session. Do not treat a preview as an installation approval or distribution permission.
+This script **does not install, download, copy, repair, replace or remove any game files**. Windows PowerShell synthetic fixture tests have passed. An optional `-BackupRoot` argument can check an **existing backup folder** for safe location and estimated capacity, including separate-drive budgets; see [Installer Plan](docs/INSTALLER-PLAN.md). These checks are approximate and do not approve an installation or distribution.
 
 ## Read-only recovery preview (Milestone 3 foundation)
 
@@ -76,7 +76,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** resolve the design gates in [Journal Durability](docs/JOURNAL-DURABILITY.md)—trusted journal ownership, backup capacity on both drives, crash-safe checkpointing and per-file replacement—before proposing a separately reviewed disposable-fixture write experiment. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** review a versioned and authenticated journal format in [Journal Authority](docs/JOURNAL-AUTHORITY.md), verify authoritative Windows volume identity, and settle [Journal Durability](docs/JOURNAL-DURABILITY.md) before any separately reviewed fixture-only write experiment. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 

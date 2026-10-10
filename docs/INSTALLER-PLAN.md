@@ -24,6 +24,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Plan-Naxxramas-
 
 - `-ClientPath`: existing **destination** client to inspect.
 - `-PatchSourcePath`: **optional, separate, non-nested local folder** containing verified patch files in `Data`; never a download URL.
+- `-BackupRoot`: **optional existing private backup directory** for a read-only two-drive space and path check; does not create backups.
 - `-VanillaLogin`: select optional J for the future setup plan.
 - `-VanillaLoading`: select optional U for the future setup plan.
 - `-RealmHost`: optionally preview a different *plain host or IPv4 address* without changing the repository.
@@ -32,6 +33,22 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Plan-Naxxramas-
 The two mandatory patches V and Z are **always selected**. Without an external source, the planner can check existing correct files but cannot propose supplying missing ones. An optional patch that already exists but was **not** selected will be left alone; it is not a removal command.
 
 The script expects the same current patch SHA-256 and byte size that are recorded in `patchset-0001`. If the local file differs unexpectedly, the planner blocks or warns rather than silently replacing it.
+
+## Optional backup drive capacity preview
+
+If you have an **existing separate backup folder**, supply `-BackupRoot` to preview a second storage budget. The planner still does not create that folder or write a backup.
+
+~~~powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Plan-Naxxramas-Install.ps1" -ClientPath "D:\WoW-TEST" -PatchSourcePath "E:\My-Local-Patches" -BackupRoot "F:\Naxxramas-Backup" -VanillaLogin
+~~~
+
+**What it checks:** The backup path must already exist. It must not be the same folder as, inside, or enclosing the selected client or patch source. Whole drive roots and linked/junction paths are rejected.
+
+The JSON contains `space_budget`: `client_volume_required_bytes`, `backup_volume_required_bytes`, `mode`, and an explicit `approximation_only` flag. The planner estimates space for staging, same-volume temporary files, originals and a journal contingency. If the chosen backup directory appears to be on the *same drive*, the space requirements are added and checked together. On apparently distinct drives, it checks available capacity for both.
+
+**Critical limitation:** This preview compares drive roots, not authoritative physical volume identities. Mapped/substituted drives, mount points, filesystem-specific behaviour and changing disk capacity can defeat a simple estimate. The future writing engine must resolve true volume identity, validate the exact on-disk layout, and check both capacities again immediately before any operation. A `review_only_no_blockers` result does not authorise installation.
+
+When `-BackupRoot` is omitted, the existing drag-and-drop preview remains supported; it displays only a **provisional single-drive estimate** and warns that a separate backup location will be required for a future write-capable installer.
 
 ## How to read the results
 
@@ -66,7 +83,7 @@ Each patch entry includes `required`, `selected`, `destination_state`, `source_s
 
 The repository includes `tests/Test-InstallerPlan.ps1` and a Windows PowerShell GitHub Actions workflow. Test fixtures contain tiny generated text files pretending to be patches and a **test-only generated executable** with synthetic build-12340 metadata. No real WoW client or proprietary game assets are needed for the tests.
 
-The test script exercises: mandatory patches current/missing, verified source vs no source, unknown versions, known older versions, individual optional choices, preserving unselected optional files, J/U warning, realmlist changes, incorrect source hashes, source/destination collision and checksums of all client fixture files before/after each preview.
+The test script exercises: mandatory patches current/missing, verified source vs no source, unknown versions, known older versions, individual optional choices, preserving unselected optional files, J/U warning, realmlist changes, incorrect source hashes, source/destination collision, backup folder isolation, simulated shared/separate-volume budgets, low or unreadable backup capacity, and checksums of fixture files before/after each preview.
 
 To run from a Windows PowerShell 5.1 console in the repository directory:
 
