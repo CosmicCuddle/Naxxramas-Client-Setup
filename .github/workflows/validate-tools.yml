@@ -51,6 +51,9 @@ jobs:
       - name: Separate-process disposable source stage destination mutation tests
         shell: powershell
         run: .\tests\Test-External-Process-Mutations.ps1
+      - name: Native synthetic directory identity and external swap tests
+        shell: powershell
+        run: .\tests\Test-Fixture-Directory-Identity.ps1
       - name: Read-only interrupted fixture recovery readiness tests
         shell: powershell
         run: .\tests\Test-Fixture-Recovery.ps1
@@ -136,6 +139,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-25.md'
             'docs/INSTALLER-MILESTONE-26.md'
             'docs/INSTALLER-MILESTONE-27.md'
+            'docs/INSTALLER-MILESTONE-28.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )

@@ -168,6 +168,10 @@ The developer-only copy fixture now simulates a **partly written stage marker**,
 
 A separate Windows process now runs the M15 **disposable fixture-only** copy while the independent test harness changes dummy source, stage or destination bytes at a controlled journal barrier. Source/stage mismatches and new destination files must prevent promotion while preserving externally modified content. This is a real second-process test at a controlled checkpoint, **not** a proof of race-free installation. See [Milestone 27](docs/INSTALLER-MILESTONE-27.md).
 
+## Milestone 28 — Native directory-identity checks in synthetic-only copy
+
+The M15 **disposable fixture-only** copier now records native Windows identities of its source, destination and stage directories. Before promotion or failure cleanup, it checks that none was replaced by a different same-named directory. A new **separate-process** Windows test deliberately swaps those folders and verifies that uncertain journals and externally changed data are preserved. This is checkpoint defense, not proof of a race-free installer. [Milestone 28](docs/INSTALLER-MILESTONE-28.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
