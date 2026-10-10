@@ -32,3 +32,8 @@ A new `tests/Test-Fixture-Recovery.ps1` builds a disposable marked client fake a
 Add a dedicated safe manual cleanup/recovery process for marked fixture stages, with durable per-file journal states and interruption injection, and test concurrent filesystem modification/disk-space errors. Do not lift M15's marker requirements or 1 MiB synthetic-only cap until separately authorised production security design and rights/integrity source verification.
 
 No action or repeat scan is required from the owner. Their backed-up working WoW client is not involved.
+
+
+## Compatibility with Milestone 21
+
+M21 introduces a third M15 journal state, `rolling_back`, which permits already deleted expected test files while validating remaining file hashes and contents. The **read-only** M20 auditor now recognises this state and reports recovery readiness; it still performs no cleanup itself. See [M21](INSTALLER-MILESTONE-21.md) for the limits, specifically atomic journal-replacement residue and filesystem races.
