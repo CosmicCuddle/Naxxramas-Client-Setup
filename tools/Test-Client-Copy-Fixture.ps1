@@ -20,7 +20,8 @@ param(
  [switch]$SimulateInterruptedStageOwnerWrite,
  [switch]$SimulateInterruptedJournalWrite,
  [switch]$SimulateDestinationCollisionBeforePromotion,
- [ValidateRange(0,15)][int]$SyntheticExternalPauseBeforePromotionSeconds=0
+ [ValidateRange(0,15)][int]$SyntheticExternalPauseBeforePromotionSeconds=0,
+ [ValidateRange(0,15)][int]$SyntheticExternalPauseBeforeRollbackSeconds=0
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -281,6 +282,9 @@ try{
  $data=ReadManifest $manifestFull
  $rows=@($data.files)
  $journalPath=Join-Path $dest $stateFile
+ if($Action -ne 'Rollback'){
+  Require ($SyntheticExternalPauseBeforeRollbackSeconds -eq 0) 'Rollback-only synthetic pause is forbidden for Plan and Copy.'
+ }
  if($Action -eq 'Rollback'){
   Require ($SimulateFailureAfter -eq 0 -and $SimulateAvailableDiskBytes -eq -1 -and
    $SimulateDiskWriteFailureAfterStagedFiles -eq 0 -and
@@ -290,6 +294,8 @@ try{
    -not [bool]$SimulateDestinationCollisionBeforePromotion -and
    $SyntheticExternalPauseBeforePromotionSeconds -eq 0) 'Copy fault switches are not valid during rollback.'
   Require ([bool]$ConfirmDisposableFixture) 'Rollback requires -ConfirmDisposableFixture.'
+  $rollbackSourceIdentity=GetFixtureDirectoryIdentity $src
+  $rollbackDestinationIdentity=GetFixtureDirectoryIdentity $dest
   Require (Test-Path -LiteralPath $journalPath -PathType Leaf) 'No fixture copy journal exists.'
   NoLinkAncestors $journalPath
   $journal=Get-Content -LiteralPath $journalPath -Raw|ConvertFrom-Json
@@ -315,23 +321,43 @@ try{
    -not (Test-Path -LiteralPath $rollbackPrevious)) 'Rollback journal replacement residue requires manual review.'
   # Never trust file-only recursion: an unknown EMPTY directory also blocks.
   VerifyDestinationEntries $dest $rows
+  RequireSameFixtureDirectory $src $rollbackSourceIdentity
+  RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
   if($journal.status -cne 'rolling_back'){
    # Transition to a durable, resumable state BEFORE the first deletion.
    $journal.status='rolling_back'
    $writing=$journalPath+'.rollback-writing'
    $previous=$journalPath+'.rollback-previous'
+   RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+   NoLinkAncestors $writing
    WriteJournal $writing $journal
+   RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+   NoLinkAncestors $journalPath
+   NoLinkAncestors $writing
    [IO.File]::Replace($writing,$journalPath,$previous)
+   RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+   NoLinkAncestors $previous
    [IO.File]::Delete($previous)
+  }
+  # Separate-process tests may replace disposable folders after the durable
+  # rolling_back journal is written, but before the first test deletion.
+  if($SyntheticExternalPauseBeforeRollbackSeconds -gt 0){
+   [Threading.Thread]::Sleep($SyntheticExternalPauseBeforeRollbackSeconds*1000)
   }
   [int]$removed=0
   foreach($j in @($journal.files)){
+   RequireSameFixtureDirectory $src $rollbackSourceIdentity
+   RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+   CheckMarker $src $sourceMarker 'NAXX_SYNTHETIC_COPY_SOURCE_V1'
+   CheckMarker $dest $destMarker 'NAXX_SYNTHETIC_COPY_DESTINATION_V1'
    $target=Join-Path $dest (SafeRelative ([string]$j.relative_path))
    VerifyDestinationEntries $dest $rows
    NoLinkAncestors $target
    if(Test-Path -LiteralPath $target -PathType Leaf){
     # Recheck immediately before deletion; never delete altered fixture files.
     ProbeFile $target $j
+    RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+    NoLinkAncestors $target
     [IO.File]::Delete($target)
     $removed++
     if($SimulateRollbackInterruptionAfter -gt 0 -and $removed -eq $SimulateRollbackInterruptionAfter){
@@ -341,13 +367,19 @@ try{
     Require (-not (Test-Path -LiteralPath $target)) 'A fixture file path changed into an unexpected object.'
    }
   }
+  RequireSameFixtureDirectory $src $rollbackSourceIdentity
+  RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
   VerifyDestinationEntries $dest $rows
   foreach($sub in @('Data/enUS','Data')){
    $dir=Join-Path $dest ($sub.Replace('/',[IO.Path]::DirectorySeparatorChar))
    if(Test-Path -LiteralPath $dir -PathType Container){
+    RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+    NoLinkAncestors $dir
     if(@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0){[IO.Directory]::Delete($dir)}
    }
   }
+  RequireSameFixtureDirectory $dest $rollbackDestinationIdentity
+  NoLinkAncestors $journalPath
   [IO.File]::Delete($journalPath)
   Write-Host 'SYNTHETIC FIXTURE ROLLBACK VERIFIED. ORIGINAL SOURCE UNCHANGED.'
   exit 0
