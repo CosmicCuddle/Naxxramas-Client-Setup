@@ -1,6 +1,6 @@
 # Milestone 27 — Separate-process file mutation tests on disposable fixtures
 
-**Status: Windows CI pending.** All operations are restricted to synthetic, explicitly marked, tiny M15 test folders. This is **not** a production game installer or proof of race-free Windows filesystem operation.
+**Status: Windows CI passed** ([run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841), tested implementation checkpoint `9872b1cec15d4e0d6b176ccf93d205fb47049d01`). All operations are restricted to synthetic, explicitly marked, tiny M15 test folders. This is **not** a production game installer or proof of race-free Windows filesystem operation.
 
 ## Purpose
 
@@ -37,4 +37,4 @@ M28 should study a file-handle-based or otherwise race-resistant transaction des
 
 **Owner action:** None. Maintain the original known-good client backup.
 
-**Windows CI:** pending.
+**Windows CI passed:** [run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841). All three actual second-process source/stage/destination mutation scenarios passed, followed by the older synthetic copy/rollback, read-only recovery/status/plan, patch/addon safety tests, Windows GUI smoke tests and preview ZIP packaging. This confirms only controlled disposable fixtures, not race-free production installation.

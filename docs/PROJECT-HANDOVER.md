@@ -41,7 +41,9 @@
 
 - **Milestone 26 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066008592 (tested implementation checkpoint `a01fb5ee35720c690d478bf89e69058206cc2ffd`)
 
-**M27 (Windows CI pending):** Added M15 bounded synthetic-only pre-promotion pause and a real separate-process PowerShell regression test covering source mutation, staged-file mutation and destination-file creation after journal commit. Any changed/unknown bytes must be preserved, not overwritten. No real game files or player settings involved.
+**M27 verified (Windows [run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841) passed):** Added M15 bounded synthetic-only pre-promotion pause and a real separate-process PowerShell regression test covering source mutation, staged-file mutation and destination-file creation after journal commit. Any changed/unknown bytes must be preserved, not overwritten. No real game files or player settings involved.
+
+- **Milestone 27 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841 (tested implementation commit `9872b1cec15d4e0d6b176ccf93d205fb47049d01`)
 
 ## 1. Project and critical GitHub links
 
@@ -145,7 +147,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M24 — complete (CI 38064037936)** | Deterministic interrupted stage-owner and destination-journal writes, promotion-time dummy collision, conservative retention of uncertain state; synthetic-only fixture tests. |
 | **M25 — complete (CI 38064980775)** | Read-only synthetic transaction status overview, safe journal and stage classifications, privacy-safe console output, no modifications or automated recovery. |
 | **M26 — complete (CI 38066008592)** | Read-only fixture recovery decision planner, fixed review labels for interrupted copy/rollback, uncertain journal/stage and completed copy, no commands or automatic file changes. |
-| **M27 — Windows CI pending** | Separate-process mutation of disposable source, stage and destination after an applying journal is written; test-only pause, non-overwrite and guarded preservation checks. |
+| **M27 — complete (CI 38067600841)** | Separate-process mutation of disposable source, stage and destination after an applying journal is written; test-only pause, non-overwrite and guarded preservation checks. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -185,11 +187,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M26 read-only human recovery decision planner `tools/Plan-Fixture-Recovery.ps1` translates validated M25 synthetic state classifications into fixed review advice without any rollback, deletion, installation, network activity or saved report; every result states `PERMITTED AUTOMATIC ACTIONS: NONE`. M26 test fixtures, prior rollback and staging safety suites, addons/patches, GUI smoke tests and preview ZIP packaging passed at implementation checkpoint `a01fb5ee35720c690d478bf89e69058206cc2ffd` in [run 38066008592](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066008592). This is not a real WoW client installer. Prior M25 status inspector passed [run 38065169395](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38065169395).
+**Last verified implementation step:** M27 isolated external-process mutations during a bounded journal-to-promotion pause of confirmed M15 *disposable synthetic fixtures*. A child Windows PowerShell process copies dummy files while the independent test harness modifies source bytes, changes staged bytes or creates an unowned destination file after journal commit. Expected checks block all three and preserve externally changed data. Existing rollback/recovery/patch/addon suites, WinForms GUI smoke tests and preview ZIP passed at checkpoint `9872b1cec15d4e0d6b176ccf93d205fb47049d01` in [run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841). This is NOT proof of race-free production file copying. M26 previously passed [run 38066298922](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066298922).
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M27 test-only external-process mutation scenarios are implemented on the draft branch (Windows CI pending). Verify each isolated source, stage and destination case, then run all prior copy/rollback, read-only recovery, patch/addon and GUI smoke tests; fix any regression before marking complete. Next milestone should investigate race-resistant file handle/identity strategies and true directory/link swaps. Preserve M15 1 MiB dummy cap, fixed paths, exact markers, backups/undo, blocked real-client source and owner-approved merge gate.
+**Current next task:** M27 implementation and full Windows regression/GUI/package suite **passed** ([run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841)). Owner action: none. Next M28: research and prototype safer transaction/file-handle identity strategies against symlink and directory swaps, journal power loss, and actual concurrent mutation at narrower intervals—all only on marked tiny synthetic fixtures. Explicitly avoid claiming that one timed window makes moves/deletions atomic. Keep 1 MiB cap, eight fixed paths, exact markers, disabled complete-client downloader, no private client hashes/proprietary assets, draft PR and owner-approved merge gate.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -210,7 +212,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 27 uses a second Windows process but only with temporary dummy files. No WoW client changes or local hash scans are required. We'll check that external file changes are blocked and preserved in Windows CI.”
+**Owner-facing next instruction:** “Milestone 27 Windows tests passed. The copier detected independent dummy source/stage/destination changes and preserved altered data at the tested checkpoint. No local actions or full client scans are required. We'll continue researching stronger file identity/locking before real-client copying is even considered.”
 
 ---
 
