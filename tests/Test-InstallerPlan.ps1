@@ -347,7 +347,7 @@ public static class FixtureClient {
     Check ($plannerOriginal.Contains($storageProbe)) 'Storage identity test insertion location is present'
     $mockVolumes = $plannerOriginal.Replace(
         $storageProbe,
-        "if ($Directory -eq $resolvedBackupRoot) { return 'FIXTURE-BACKUP' } else { return 'FIXTURE-CLIENT' }"
+        'if ($Directory -eq $resolvedBackupRoot) { return ''FIXTURE-BACKUP'' } else { return ''FIXTURE-CLIENT'' }'
     )
     Set-Content -LiteralPath $spaceFixture -Value $mockVolumes -Encoding UTF8
     $separatePlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
@@ -366,7 +366,7 @@ public static class FixtureClient {
 
     $backupFailed = $mockVolumes.Replace(
         $probe,
-        "if ($Directory -eq $resolvedBackupRoot) { throw 'Fixture backup probe failure' } else { return [int64]$drive.AvailableFreeSpace }"
+        'if ($Directory -eq $resolvedBackupRoot) { throw ''Fixture backup probe failure'' } else { return [int64]$drive.AvailableFreeSpace }'
     )
     Set-Content -LiteralPath $spaceFixture -Value $backupFailed -Encoding UTF8
     $backupFailurePlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
