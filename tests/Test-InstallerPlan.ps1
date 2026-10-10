@@ -249,6 +249,25 @@ try {
         Check $linkThrown 'Junction-backed client path is rejected'
     }
 
+    # A tiny, locally compiled executable with *metadata only* is used to
+    # exercise the supported-build/no-blockers path. It is not a WoW binary.
+    $fixtureExe = Join-Path $client 'Wow.exe'
+    Remove-Item -LiteralPath $fixtureExe -Force
+    $syntheticExecutableSource = @'
+using System.Reflection;
+[assembly: AssemblyVersion("3.3.5.12340")]
+[assembly: AssemblyFileVersion("3.3.5.12340")]
+public static class FixtureClient {
+    public static int Main() { return 0; }
+}
+'@
+    Add-Type -TypeDefinition $syntheticExecutableSource -OutputAssembly $fixtureExe -OutputType ConsoleApplication -ErrorAction Stop
+    $plan = Plan
+    Check ($plan.status -eq 'review_only_no_blockers') 'Build 12340 metadata plus current patches produces a non-blocking preview'
+    Check ((Item $plan 'Data/patch-V.mpq').action -eq 'no_change') 'Verified V remains unchanged for non-blocking plan'
+    Check ((Item $plan 'Data/patch-Z.mpq').action -eq 'no_change') 'Verified Z remains unchanged for non-blocking plan'
+    Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'no_change') 'Verified realmlist remains unchanged for non-blocking plan'
+
     Write-Host ''
     Write-Host 'All synthetic read-only planner assertions passed.' -ForegroundColor Green
 }
