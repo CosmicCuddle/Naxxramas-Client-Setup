@@ -46,3 +46,7 @@ Passing a dummy-file test **does not make full-client installation ready**. Befo
 4. Safe Naxxramas patch/addon integration on a **separate disposable development client**, never directly against the owner's only working original.
 
 **Milestone 15 changes no client files, and no public game download is enabled.**
+
+## Passing Windows checkpoint
+
+The complete GitHub Actions Windows suite, including new copy/recovery synthetic tests and all previous installer and launcher tests, passed on [run 38054045414](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054045414), implementation commit `8350949c6ffde50ca10c459a6d8f7f4f3e99970c`. The launcher preview artifact also packaged successfully. **This does not validate a real game-client copy.**

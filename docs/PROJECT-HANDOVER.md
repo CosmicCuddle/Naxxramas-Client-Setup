@@ -2,7 +2,7 @@
 
 **Purpose:** Permanent continuation reference for future chats, maintainers, and development sessions. **Read this document first** when starting again after context loss. Update the *Current checkpoint*, *Completed work*, *Open decisions* and *Next steps* whenever a milestone or recovery fix is completed. Keep it in the repository, not only in a conversation.
 
-**Status as of 10 October 2026:** Milestone 14 has passed Windows CI. **Milestone 15 is implementing a strictly synthetic fixture-only copy/verify/rollback experiment.** Do not treat it as complete until the new Windows CI run is green. No full-game download, public client or production installation is enabled.
+**Status as of 10 October 2026:** **Milestone 15 is complete and passed Windows CI.** A strictly synthetic fixture-only copy/verify/rollback experiment is implemented. No full-game download, public client or production installation is enabled.
 
 ## 1. Project and critical GitHub links
 
@@ -10,6 +10,7 @@
 - **Development branch:** `feature/backup-first-installer-alpha`
 - **Draft PR #1:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/1
 - **GitHub Actions:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/workflows/validate-tools.yml
+- **Milestone 15 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054045414 (implementation commit `8350949c6ffde50ca10c459a6d8f7f4f3e99970c`)
 - **Milestone 14 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38053138014
 - **Milestone 14 tested implementation commit:** `f69aa14938d0e2fc944025afbc02176b9aaf0c22`
 - **Previous Milestone 13 passing run:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38051954866 (commit `d2016a9`)
@@ -72,7 +73,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | M12 | Sanitised read-only existing-client inspection tool; tests for privacy, build/version, V/Z integrity, J/C conflict |
 | M13 | Read-only plan for V/Z, J/C/U, NCore, optional addons and realmlist based only on a sanitised JSON; corrections for existing U and addons |
 | **M14 — complete** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, dummy-file Windows tests. **CI 38053138014 passed**. |
-| **M15 — in CI** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. Not a real WoW installer. |
+| **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -100,11 +101,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** Milestone 14, read-only allowlisted per-file game binary/MPQ inventory and privacy-focused tests, commit `f69aa149` and passing Windows Actions run `38053138014`.
+**Last verified implementation step:** Milestone 15, synthetic fixture-only copy, hash verification and rollback, implementation commit `8350949c`, fully successful Windows CI run `38054045414`.
 
-**Previous step:** Milestone 13, source classification report, commit `d2016a9`, passing Actions run `38051954866`.
+**Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** Verify the new Milestone 15 Windows CI run, record its green run and commit here, then ask the owner to scan a **separate backed-up development copy** with M14's `Inventory-Game-Files.bat` and send the private `game-files-*.json` for real-client coverage analysis. Milestone 15 copy testing uses *only generated dummy fixtures* and must not accept the owner's real-client inventory.
+**Current next task:** Ask the owner to scan a **separate backed-up development copy** with Milestone 14's `Inventory-Game-Files.bat`, producing a private `game-files-*.json`. Review its file coverage before designing large-file copy verification and full client identity checks. Milestone 15's synthetic copy tool does **not** accept the owner's real-client inventory; do not lift its fixture-only locks.
 
 **After M14 (next milestone):
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
