@@ -262,7 +262,7 @@ $items.Add([pscustomobject][ordered]@{
     backup_required = ($realmAction -eq 'replace_after_backup')
     existing_sha256 = $realmBeforeHash
     existing_size_bytes = $realmBeforeSize
-    expected_sha256 = Hash-Bytes $desired
+    expected_sha256 = (Hash-Bytes $desired)
     expected_size_bytes = [int64]$desired.Length
     reason = $realmReason
 })
