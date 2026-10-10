@@ -2,7 +2,7 @@
 
 **Purpose:** Permanent continuation reference for future chats, maintainers, and development sessions. **Read this document first** when starting again after context loss. Update the *Current checkpoint*, *Completed work*, *Open decisions* and *Next steps* whenever a milestone or recovery fix is completed. Keep it in the repository, not only in a conversation.
 
-**Status as of 10 October 2026:** Milestone 15 **passed Windows CI**. **Milestone 16** adds a read-only review of private M14 JSON inventories; **Windows CI passed** in run [38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809), including preview ZIP packaging. No full-game download, public client or production installation is enabled.
+**Status as of 10 October 2026:** Milestones 15 and 16 passed Windows CI (M16 run [38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809)). The owner has now supplied and successfully reviewed a private M14 full-hash inventory; aggregate results and two unknown MPQ follow-up documented under M17 (Windows CI pending). No full-game download, public client or production installation is enabled.
 
 ## 1. Project and critical GitHub links
 
@@ -50,6 +50,12 @@ Results of the verified sanitised JSON:
 - **21 MPQ files, total 17,773,795,353 bytes** (aggregate only; does not certify a complete base-client inventory).
 - Existing client's actual game binaries or private settings have never been uploaded to this repository.
 
+### 10 October 2026 — owner full-hash report reviewed privately
+
+The owner supplied the local M14 `game-files-*.json` in SHA-256-per-file mode. M16 reports **REPORT STRUCTURE: CONSISTENT**. Aggregate findings only (do not commit report or base-game hashes): 23 allowlisted files; 17,585,778,958 bytes across those files; 16 base archive candidates with recorded SHA-256 (not independently verified against a clean release); 4 root binary candidates; V/Z/U full pinned-reference matches; J/C absent; 2 unclassified MPQs whose names are deliberately hidden by the shared report. The 19 named MPQs plus 2 unclassified fit the earlier reported count of 21, but there is no proof that snapshots are identical. This is **not** a complete base-client file manifest or approval for redistribution.
+
+M17 adds a **local-console-only** inspection of those unclassified filenames/sizes, without writing a report or altering the client. Do not guess their names, remove them or treat them as malicious solely for being unclassified.
+
 ## 4. Pinned component and source policy
 
 Read source-of-truth manifests rather than hardcoding new fingerprints:
@@ -76,6 +82,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M14 — complete** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, dummy-file Windows tests. **CI 38053138014 passed**. |
 | **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
+| **M17 — pending CI** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -89,7 +96,8 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - `tools/Plan-Fresh-Client.ps1`: validates an empty destination and describes a blocked source; never installs anything.
 - **M14:** `tools/Inventory-Game-Files.ps1` + `.bat`: enumerates only whitelisted root game binaries and Data/enUS MPQs, hashes locally, produces a private report **outside WoW**; no game writes, no complete-client claim.
 - **M15:** `tools/Test-Client-Copy-Fixture.ps1`: tiny synthetic-only local copy/verify/rollback experiment; never expose to real WoW paths or player launcher. Requires exact marker files, synthetic-only manifest, empty destination and explicit confirmation.
-- **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files. 
+- **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files.
+- **M17:** `tools/Inspect-Unclassified-MPQs.ps1` + `.bat`: reports only the unknown Data/enUS MPQ names and byte sizes locally after explicit drag/drop. No report or network; never modify clients. 
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -108,7 +116,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** The owner scans a **separate backed-up development copy** with M14's `Inventory-Game-Files.bat`, producing a private `game-files-*.json`. Drag the JSON onto M16's `Review-Game-File-Report.bat`, then privately review file coverage and unknown MPQ counts. M15's synthetic copy tool does **not** accept real-client inventories. Keep its locks; M16's Windows CI is now passed.
+**Current next task:** The owner has **completed the M14 full-hash inventory and M16 consistency review**. Use M17's `Inspect-Unclassified-MPQs.bat` on a separate backed-up development copy to identify the 2 unclassified MPQ filenames/byte sizes locally. Review privately before sharing; do not upload MPQs, personal paths or the inventory JSON to GitHub. Then assess missing non-MPQ client support files and a separately authenticated base reference; M15's dummy-only locks stay enforced.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -129,7 +137,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Back up your working client, make a separate development copy, then drag that folder onto `tools/Inventory-Game-Files.bat`. Drag the resulting private `game-files-*.json` onto `tools/Review-Game-File-Report.bat`. Review both outputs before sending the JSON privately in chat; never commit it to GitHub.”
+**Owner-facing next instruction:** “Your full-hash JSON is received and reviewed. On a separate backed-up client copy, drag the folder containing `Wow.exe` onto `tools/Inspect-Unclassified-MPQs.bat`. The names and sizes of the two unclassified MPQs appear locally, with no report created. Only share them privately if comfortable, and do not delete any files.”
 
 ---
 
