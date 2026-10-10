@@ -29,11 +29,17 @@ Do not commit personal game settings, account data, screenshots, logs, or the ow
 
 ## Verified reference client (your working V/Z copy)
 
-Your currently working WoW 3.3.5a client **already contains required V and Z**. The optional login/loading patches J, C and U and the optional N-Addon Collection are **not installed** in that reference copy, which is entirely expected. They will remain separate choices in the finished launcher.
+The owner-provided sanitised JSON report confirms **WoW 3.3.5a build 12340**, required **Patch V and Patch Z verified**, and optional **Patch U also verified**. Optional login patches **J and C are absent**. The five inspected addon TOC files—**NCore, IndividualProgressionAddon, DungeonJournal, MultiBot and NaxxLootLottery**—are already **present**, although **their versions and package integrity are not verified**. There are 21 MPQs totalling 17,773,795,353 bytes, which is an aggregate rather than a verified clean-client file manifest.
 
 The new `tools/Inspect-Reference-Client.bat` reads the existing client, checks `Wow.exe` build 12340 and the pinned V/Z hashes, and creates a **sanitised JSON report** in the launcher `tools` folder. It records **presence only** for optional patches and NCore/addons. It never opens or exports `WTF`, SavedVariables, Cache, screenshots, account names, realmlist content or absolute client paths. It never modifies game files.
 
 **Before using it, make a separate backup of your known-working game client.** Drag the folder containing `Wow.exe` onto `Inspect-Reference-Client.bat`, then review the `client-reference-*.json` report. See [Milestone 12](docs/INSTALLER-MILESTONE-12.md). Never upload the complete game client or private settings to this repository.
+
+## Reference component separation (Milestone 13)
+
+Use `tools/Plan-Reference-Components.bat` with a sanitised `client-reference-*.json` report to generate a **read-only component plan**. It distinguishes base-game files that remain unidentified, mandatory V/Z, optional J/C/U, NCore, optional addons and the realmlist without touching the client.
+
+The planner **reuses verified patches** where appropriate, **preserves unselected existing addons and visuals**, and never treats an addon folder as proof that its release is current. If a future selection conflicts with another login MPQ or a required patch is mismatched, the plan displays a blocker rather than overwriting files. See [Milestone 13](docs/INSTALLER-MILESTONE-13.md). The tool has **no install or download action**.
 
 ## First step: inspect the existing client safely
 

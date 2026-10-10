@@ -2,9 +2,11 @@
 
 ## Confirmed reference state
 
-The owner's working **WoW 3.3.5a build 12340** client is the baseline. It already has **`Data/patch-V.mpq` and `Data/patch-Z.mpq`**. The optional visual patches **J, C and U** and the N-Addon Collection are **not installed in this copy**. Missing them is normal, not an error.
+The owner's working **WoW 3.3.5a build 12340** client is the baseline. It already has **`Data/patch-V.mpq` and `Data/patch-Z.mpq`**. The received **sanitised JSON verification report** shows optional **Patch U is already installed and verified**, while **J and C are absent**. The five inspected Naxxramas addon folders and TOC files are **present**. Their versions, file digests and equivalence to the pinned addon release **have not been established**. These details supersede the owner's earlier informal description of the client.
 
 That separation is important: a future installer should treat the original game's files, mandatory Naxxramas patches, optional visuals, NCore and selected addons as **distinct inputs**.
+
+The report also records **21 MPQ archives totalling 17,773,795,353 bytes**. This is an aggregate count and size only; it does **not** prove which archives belong to the original base client or establish a complete copyable file manifest.
 
 ## First action for the owner
 

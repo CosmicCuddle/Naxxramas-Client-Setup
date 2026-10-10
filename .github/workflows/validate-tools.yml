@@ -18,6 +18,9 @@ jobs:
       - name: Reference client sanitised inspection fixture tests
         shell: powershell
         run: .\tests\Test-Reference-Client.ps1
+      - name: Reference component separation tests (reports only)
+        shell: powershell
+        run: .\tests\Test-Component-Plan.ps1
       - name: Installer alpha fixture tests (dummy files only)
         shell: powershell
         run: .\tests\Test-Installer-Prototype.ps1
@@ -51,6 +54,8 @@ jobs:
             'tools/Plan-Fresh-Client.ps1'
             'tools/Inspect-Reference-Client.ps1'
             'tools/Inspect-Reference-Client.bat'
+            'tools/Plan-Reference-Components.ps1'
+            'tools/Plan-Reference-Components.bat'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
@@ -61,6 +66,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-10.md'
             'docs/INSTALLER-MILESTONE-11.md'
             'docs/INSTALLER-MILESTONE-12.md'
+            'docs/INSTALLER-MILESTONE-13.md'
             'assets/README.md'
           )
           foreach ($relative in $files) {
