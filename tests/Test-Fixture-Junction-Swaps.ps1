@@ -110,8 +110,9 @@ try{
    $null=Wait-Job -Job $job -Timeout 45
    if($job.State -ne 'Completed'){throw ('Junction test worker unfinished: '+$scenario)}
    $results=@(Receive-Job -Job $job)
-   if($results.Count -ne 1 -or $results[0].Code -eq 0){
-    throw ('Junction test operation did not fail closed: '+$scenario+' '+($results|Out-String))
+   if($results.Count -ne 1 -or $results[0].Code -eq 0 -or
+    -not ([string]$results[0].Output).Contains('Linked/junction paths are not supported')){
+    throw ('Junction test must refuse the linked fixture path: '+$scenario+' '+($results|Out-String))
    }
    if(-not (Test-Path -LiteralPath $sentinel) -or
     (Get-Content -LiteralPath $sentinel -Raw) -cne 'EXTERNAL DUMMY DATA MUST SURVIVE'){
