@@ -6,7 +6,9 @@
 
 **Latest M17 locale allowlist follow-up:** Windows run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710) **completed successfully** on checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`. M14 scanner, M16 reviewer and M17 classifier all recognise base-enUS/backup-enUS by filename only; synthetic fixture tests passed. No real-client installation is enabled.
 
-**Milestone 18 (Windows CI pending):** A read-only, console-only support candidate audit checks 13 fixed root-level filenames and four directory-presence statuses, with no client file contents or personal data read and no reports saved. See `docs/INSTALLER-MILESTONE-18.md`. No fresh game downloads or production installation.
+**Milestone 18 (Windows CI [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220) passed):** A read-only, console-only support candidate audit checks 13 fixed root-level filenames and four directory-presence statuses, with no client file contents or personal data read and no reports saved. See `docs/INSTALLER-MILESTONE-18.md`. No fresh game downloads or production installation.
+
+- **Latest M18 passing Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220 (implementation checkpoint `477b138e46714fcf6579cb50b205b4081f82ce0e`)
 
 ## 1. Project and critical GitHub links
 
@@ -95,7 +97,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
-| **M18 — pending CI** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
+| **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -126,11 +128,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M17 additional locale allowlist coverage and regression tests (three read-only tools), checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`, all Windows tests and preview ZIP **passed** in run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
+**Last verified implementation step:** M18 local-only non-MPQ support-file audit (13 root file candidates and four directory presence checks) with passing fixture tests, launcher preview and packaging, implementation checkpoint `477b138e46714fcf6579cb50b205b4081f82ce0e`, Windows run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M17's new MPQ allowlist passed Windows CI, but the owner has not yet rerun the 25-file scan. M18 has added a separate **read-only non-MPQ support-file metadata audit** (CI pending). The owner should run `Inspect-Client-Support-Files.bat` on a separate backed-up development client, and optionally share a local console screenshot. Absent candidates must not be assumed broken; no report is uploaded. Then decide how to document missing non-MPQ coverage and independently authenticate allowed base files. Keep all M15 dummy-only write locks and the blocked full client downloader.
+**Current next task:** M17's new MPQ allowlist passed Windows CI, but the owner has not yet rerun the 25-file scan. M18 added a separate **read-only non-MPQ support-file metadata audit**, with Windows CI [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220) **passed**. The owner should run `Inspect-Client-Support-Files.bat` on a separate backed-up development client, and optionally share a local console screenshot. Absent candidates must not be assumed broken; no report is uploaded. Then decide how to document missing non-MPQ coverage and independently authenticate allowed base files. Keep all M15 dummy-only write locks and the blocked full client downloader.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -151,7 +153,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “After M18 Windows CI passes, download the latest preview ZIP, extract it outside the client, and drag your backed-up development client folder onto `tools/Inspect-Client-Support-Files.bat`. Share only the local result screenshot if comfortable. No changes to WoW and no need to rerun the full 17+ GB hash scan for this step.”
+**Owner-facing next instruction:** “M18 Windows CI passed. Download artifact `naxxramas-launcher-preview` from run 38058231220, extract the contained preview ZIP outside WoW, and drag the separate backed-up development client onto `tools/Inspect-Client-Support-Files.bat`. Share only a screenshot of the local results if comfortable. No game files will be changed and no 17+ GB rehash is needed.”
 
 ---
 
