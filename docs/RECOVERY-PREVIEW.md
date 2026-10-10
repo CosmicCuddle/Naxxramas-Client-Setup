@@ -33,6 +33,7 @@ The session directory must contain `session.json` and any original backups refer
 | `already_absent` | A file originally absent is still absent | Leave alone |
 | `conflict_preserve_current` | Current file differs from the original and installed states, or a prior original has disappeared | Preserve current data; manual review required |
 | `blocked_backup_unavailable` | A needed original backup is missing or fails SHA-256/size verification | Do not attempt restore |
+| `blocked_incomplete_journal` | Session is not in an eligible finished state, or its individual file checkpoint was not verified | Manual review only; do not offer restoration or removal |
 
 The entire preview is tagged `read_only_recovery_preview_not_restore_authorisation`. A result of `review_only_no_conflicts` is **not** permission for automatic writes.
 
@@ -42,7 +43,8 @@ The entire preview is tagged `read_only_recovery_preview_not_restore_authorisati
 - Session contains 1–5 unique files from the exact allowed relative paths.
 - Only `install` (originally absent) and `replace_after_backup` (originally present) operations are accepted.
 - Stored pre-install and installed checksums must be 64 hex digits, and stored file sizes must be non-negative integers.
-- A replaced file must reference `originals/0001.bin`-style relative backup paths only; backups are hashed and compared to the recorded original bytes.
+- A replaced file must reference `originals/0001.bin`-style relative backup paths only; backups are hashed and compared to the recorded original bytes. Two operations cannot reuse the same original-backup path.
+- Per-file checkpoints must be recognised; the current prototype permits review suggestions only when the file checkpoint is `verified` and the overall session is `completed` or `rollback_requested`. Planned, interrupted and other incomplete sessions must not receive a destructive suggestion, even if the installed hash matches.
 - Linked folders and files, nested session/client locations, oversized session JSON (over 1 MiB), duplicate paths, unknown session states and path traversal are rejected.
 - The preview does not trust the session record enough to perform a write. Any future transaction engine must authenticate its own journals, revalidate before each change and handle interruption checkpoints.
 
@@ -58,7 +60,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-RecoveryPr
 
 The tests create a throwaway *fake* client, session and backups. They check normal restoration/removal suggestions, player-modified files, missing/corrupt backups, already-reverted states, invalid relative paths, duplicate operations, mismatched action/existence fields, invalid checksums/states and strict no-write snapshots.
 
-GitHub Actions runs these fixtures on Windows through `.github/workflows/recovery-preview-tests.yml`. CI results must be checked separately; adding a workflow file does not prove it has passed.
+GitHub Actions runs these fixtures on Windows through `.github/workflows/recovery-preview-tests.yml`. The new test cases cover incomplete journal states, unverified checkpoints and reused backup filenames. Check the associated PR workflow for current results; a committed test alone does not prove it passed.
 
 ## What comes next
 

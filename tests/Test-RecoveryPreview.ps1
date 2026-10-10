@@ -171,6 +171,42 @@ try {
     Store-Manifest $bad
     Must-Throw 'Unknown session state is rejected'
 
+    # A matching file hash does NOT prove an incomplete journal was committed.
+    $incomplete = Make-Manifest
+    $incomplete.status = 'planned'
+    Store-Manifest $incomplete
+    $report = Preview
+    Expect ((Row $report 'Data/patch-V.mpq').proposed_recovery -eq 'blocked_incomplete_journal') 'Planned session cannot offer restoration'
+    Expect ((Row $report 'Data/Patch-U.mpq').proposed_recovery -eq 'blocked_incomplete_journal') 'Planned session cannot offer removal'
+    Expect ($report.status -eq 'manual_conflict_review_required') 'Uncommitted plan requires manual review'
+
+    $incomplete = Make-Manifest
+    $incomplete.status = 'failed_recoverable'
+    Store-Manifest $incomplete
+    $report = Preview
+    Expect ((Row $report 'Data/patch-V.mpq').proposed_recovery -eq 'blocked_incomplete_journal') 'Interrupted session cannot automatically restore'
+
+    $incomplete = Make-Manifest
+    $incomplete.operations[0].checkpoint = 'write_started'
+    Store-Manifest $incomplete
+    $report = Preview
+    Expect ((Row $report 'Data/patch-V.mpq').proposed_recovery -eq 'blocked_incomplete_journal') 'Unverified file checkpoint blocks restoration'
+    Expect ((Row $report 'Data/Patch-U.mpq').proposed_recovery -eq 'remove_after_approval') 'Verified separate operation retains its review suggestion'
+
+    $bad = Make-Manifest
+    $bad.operations[0].checkpoint = 'invalid_checkpoint'
+    Store-Manifest $bad
+    Must-Throw 'Unknown checkpoint is rejected rather than interpreted'
+
+    $bad = Make-Manifest
+    $bad.operations[1].action = 'replace_after_backup'
+    $bad.operations[1].was_present = $true
+    $bad.operations[1].before_sha256 = $old.sha256
+    $bad.operations[1].before_size_bytes = $old.size_bytes
+    $bad.operations[1].backup_relative_path = 'originals/0001.bin'
+    Store-Manifest $bad
+    Must-Throw 'Shared backup alias between operations is rejected'
+
     Store-Manifest (Make-Manifest)
     $nested = Join-Path $client 'session-nested'
     $null = New-Item -ItemType Directory -Path $nested -Force

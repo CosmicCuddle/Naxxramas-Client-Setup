@@ -76,7 +76,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** finish the outstanding low-space and failure-path tests, then review journal integrity and crash-safety before any fixture-only write-capable prototype. The recovery inspector and [Transaction Design](docs/TRANSACTION-DESIGN.md) are read-only/design-only respectively. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** resolve the design gates in [Journal Durability](docs/JOURNAL-DURABILITY.md)—trusted journal ownership, backup capacity on both drives, crash-safe checkpointing and per-file replacement—before proposing a separately reviewed disposable-fixture write experiment. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 

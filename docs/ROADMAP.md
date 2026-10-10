@@ -56,7 +56,8 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Add synthetic cases for current/missing/older/unknown patches, source mismatch, J/U selection, realmlist, collisions and no-write behaviour.
 - [x] Add missing/nested-path and conditional junction rejection fixture assertions.
 - [x] Confirm Windows CI and exercise a malformed policy in synthetic fixtures, including a valid build-12340 metadata success case.
-- [ ] Add a deterministic low-free-space regression case and further fail-closed safety assertions.
+- [x] Add deterministic low-space and failed-space-query regression tests, using **fixture-only script copies** without introducing a production override; both fail closed in the real preview logic.
+- [x] Verify Windows PowerShell 5.1 CI succeeds for these planner changes (PR #5).
 - [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
@@ -68,6 +69,8 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Draft the [backup-first transaction and rollback design](TRANSACTION-DESIGN.md), including journal states and recovery tests.
 - [x] Implement the [read-only recovery preview](RECOVERY-PREVIEW.md) to evaluate synthetic journal records, original backups and player-modified files without writing.
 - [x] Verify read-only recovery preview fixture tests on GitHub Windows PowerShell 5.1 CI (10 October 2026; PR #4).
+- [x] Prevent recovery suggestions from uncommitted/unverified journals and reject duplicate backup references; verify Windows CI (PR #5).
+- [x] Draft [journal durability and ownership design](JOURNAL-DURABILITY.md) with crash-point tests, permission boundaries and unresolved authentication issues.
 - [ ] Build a transaction engine for allowlisted configuration/approved assets only after design and sources are approved.
 - [ ] Require explicit confirmation and client-closed checks before writing.
 - [ ] Stage files, verify SHA-256 and size, then commit by safe replacement.
@@ -130,6 +133,8 @@ Keep the installer independent of the AzerothCore server, individual-progression
 | Live patch policy | [../config/client-patches.json](../config/client-patches.json) | Active integrity reference |
 | History | [../config/patch-versions/patchset-0001.json](../config/patch-versions/patchset-0001.json) | Immutable initial revision |
 | Realm policy | [../config/realm.json](../config/realm.json) | Independent realm address |
+| Transaction recovery | [RECOVERY-PREVIEW.md](RECOVERY-PREVIEW.md) | Tested read-only session rollback decisions |
+| Journal durability | [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) | Design-only crash safety and ownership gates |
 
 ## Decision and progress log
 
@@ -144,4 +149,5 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - PR [#2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2) merged expanded safety fixtures and corrected legacy test exit-code handling. PR [#3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3) merged a generated versioned executable fixture to test the non-blocking preview.
 - Recorded the write-capable design separately in [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md), without introducing any installation code.
 - PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) merged a validated read-only recovery inspector, synthetic safety tests and [recovery guide](RECOVERY-PREVIEW.md). Both new recovery and existing preflight workflows passed on Windows.
-- **Next task:** finish deterministic low-space and other failure-path checks, then refine journal durability/authenticity and implement only disposable-fixture write/rollback experiments **after separate approval**. No real client writes.
+- PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5): low/unknown-space regression tests, blocked incomplete recovery journals, duplicate backup rejection and [journal durability proposal](JOURNAL-DURABILITY.md). Windows preflight, planner and recovery workflows all passed.
+- **Next task:** finalise trusted journal ownership/authentication, backup-volume capacity accounting, atomic replacement and crash-recovery protocol before any separately approved fixture-only writing prototype. **Do not modify a real client.**

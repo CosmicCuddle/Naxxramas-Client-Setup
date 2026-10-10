@@ -122,6 +122,7 @@ if ($rows.Count -lt 1 -or $rows.Count -gt 5) {
 $allowed = @('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq',
     'Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
 $seen = @{} # PowerShell hash tables use case-insensitive keys by default
+$seenBackupPaths = @{}
 $results = New-Object 'System.Collections.Generic.List[object]'
 $conflictCount = 0
 
@@ -146,6 +147,10 @@ foreach ($op in $rows) {
         (-not $wasPresent -and $action -cne 'install')) {
         throw 'Recovery action does not agree with original file existence.'
     }
+    $checkpoint = [string]$op.checkpoint
+    if ($checkpoint -cnotin @('not_started','backup_verified','write_started','verified')) {
+        throw 'Unknown or missing per-file journal checkpoint; refusing the session.'
+    }
     $afterHash = Must-Hash $op.installed_sha256 'installed'
     $afterSize = Must-Size $op.installed_size_bytes 'installed'
     $beforeHash = $null
@@ -160,6 +165,10 @@ foreach ($op in $rows) {
         if ($backupRelative -cnotmatch '^originals/[0-9]{4}\.bin$') {
             throw 'Recovery backup path is not a safe, expected relative filename.'
         }
+        if ($seenBackupPaths.ContainsKey($backupRelative)) {
+            throw 'Two recovery operations reference the same original backup.'
+        }
+        $seenBackupPaths[$backupRelative] = $true
         $backupFile = Join-Path $session ($backupRelative.Replace('/',[IO.Path]::DirectorySeparatorChar))
         $backupSignature = Signature $backupFile
         $backupState = if ($null -eq $backupSignature) { 'missing' }
@@ -199,7 +208,15 @@ foreach ($op in $rows) {
         $decision = 'conflict_preserve_current'
         $reason = 'Current contents differ from both original and installed signatures, or a prior file is now missing. Never overwrite automatically.'
     }
-    if ($decision -eq 'blocked_backup_unavailable' -or $decision -eq 'conflict_preserve_current') {
+    # Installed hashes alone cannot prove a pending or interrupted install
+    # completed a commit. Do not suggest destructive operations unless both
+    # session state and per-file checkpoint are recorded as complete.
+    if ($decision -in @('restore_after_approval','remove_after_approval') -and
+        ($manifest.status -cnotin @('completed','rollback_requested') -or $checkpoint -cne 'verified')) {
+        $decision = 'blocked_incomplete_journal'
+        $reason = 'Session or file checkpoint is incomplete; manual recovery review is required.'
+    }
+    if ($decision -in @('blocked_backup_unavailable','conflict_preserve_current','blocked_incomplete_journal')) {
         $conflictCount++
     }
 
@@ -207,6 +224,7 @@ foreach ($op in $rows) {
         relative_path = $relative
         original_existed = $wasPresent
         recorded_action = $action
+        checkpoint_state = $checkpoint
         current_state = $(if ($null -eq $current) { 'missing' }
           elseif (Signature-Matches $current $afterHash $afterSize) { 'installed_signature' }
           elseif ($wasPresent -and (Signature-Matches $current $beforeHash $beforeSize)) { 'original_signature' }

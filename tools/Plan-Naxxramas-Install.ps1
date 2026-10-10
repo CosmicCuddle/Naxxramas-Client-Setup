@@ -76,6 +76,13 @@ function Matches([object]$Actual,[object]$Expected) {
       ([string]$Actual.sha256).Equals([string]$Expected.sha256,[StringComparison]::OrdinalIgnoreCase) -and
       [int64]$Actual.size_bytes -eq [int64]$Expected.size_bytes
 }
+function Get-AvailableSpaceBytes([string]$Directory) {
+    # Kept in a tiny, isolated function so fixture tests can simulate failures
+    # without changing real disk capacity or introducing a production override.
+    $drive = New-Object System.IO.DriveInfo -ArgumentList ([IO.Path]::GetPathRoot($Directory))
+    if (-not $drive.IsReady) { throw 'Destination drive is not ready.' }
+    return [int64]$drive.AvailableFreeSpace
+}
 function Hash-Bytes([byte[]]$Bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() }
@@ -290,8 +297,10 @@ foreach ($entry in $items) {
 if ($needed -gt 0) {
     $needed += 67108864 # 64 MiB contingency; estimate, not a guarantee
     try {
-        $drive = New-Object System.IO.DriveInfo -ArgumentList ([IO.Path]::GetPathRoot($dest))
-        if ([int64]$drive.AvailableFreeSpace -lt $needed) {
+        $availableBytes = Get-AvailableSpaceBytes $dest
+        if ($availableBytes -lt 0) {
+            $blockers.Add('Available destination space was invalid; preview must be blocked.')
+        } elseif ($availableBytes -lt $needed) {
             $blockers.Add('Insufficient destination free space for estimated staging and backups.')
         }
     } catch {

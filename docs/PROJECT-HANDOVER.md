@@ -60,6 +60,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/REALMLIST.md` | Manual realmlist backup/configuration guide | N/A |
 | `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
 | `docs/TRANSACTION-DESIGN.md` | Proposed backup, journal, write-gate, rollback and recovery safety contract; no implementation | N/A |
+| `docs/JOURNAL-DURABILITY.md` | Design-only crash boundaries, journal authority and interruption safety checklist | N/A |
 | `docs/RECOVERY-PREVIEW.md` | How the read-only recovery inspector classifies safe suggestions and conflicts | N/A |
 | `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
 | `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 fixture workflow; passed on 10 October 2026 | N/A |
@@ -111,7 +112,7 @@ Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 ma
 
 ## 6. Immediate next task
 
-**Milestone 2: validate and harden the read-only installer planner**, not the write-capable installer.
+**Milestone 2: read-only planner tested on synthetic Windows fixtures.** Production client installation and write-capable rollback remain unimplemented.
 
 Current implemented slice:
 1. `tools/Plan-Naxxramas-Install.ps1` emits a console plan or optional JSON using the existing patch and realm manifests, with no writes. Windows drag-and-drop launcher added.
@@ -121,7 +122,7 @@ Current implemented slice:
 
 Next checks before leaving Milestone 2:
 1. **Completed:** Windows workflows passed; corrected the legacy preflight suite's stale subprocess exit code. Preserve those passing baseline tests.
-2. **Completed:** missing/nested-path, junction and malformed-policy fixture checks passed on Windows. **Still needed:** deterministic low-disk regression and additional fail-closed testing.
+2. **Completed:** missing/nested paths, junctions, malformed policy, low destination free space and failed free-space probes all have Windows fixture coverage. The real tool does not offer a free-space bypass.
 3. **Completed for fixture scope:** JSON does not include absolute fixture paths; source and destination snapshots remain unchanged across tested previews. Continue reviewing data privacy for any new planner fields.
 4. **Completed:** updated the owner-facing milestone documentation and verified Windows results in this handover and ROADMAP. Document any further checks with the same precision.
 5. **Completed:** [read-only recovery preview](RECOVERY-PREVIEW.md) evaluates session records and original backups and was tested against synthetic files. The [transaction design](TRANSACTION-DESIGN.md) remains design-only; no write-capable engine exists.
@@ -150,4 +151,6 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - Expanded tests merged in PR #2 and non-blocking valid-build fixture merged in PR #3. The read-only success path and core negative tests are now covered; real game runtime and installation remain untested.
 - Created [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md) with a transaction state machine, backup ownership rules, conflict-safe rollback and crash-recovery gates.
 - PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) added the read-only recovery inspector and generated-file tests for backup integrity, conflict preservation, unsafe manifest rejection and no-write guarantees. Recovery and preflight workflows both passed on Windows 10 October 2026.
-- **Next engineering action:** finish deterministic low-disk/fail-closed tests, specify atomic journal update and authentication, and only then prototype write/recovery transactions on disposable fixtures after explicit review. Never alter the only working client.
+- PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5) added low/unknown-disk-space failure tests to disposable planner copies, no public bypass option, and recovery guards against incomplete checkpoints/sessions and shared original backups. **All three Windows PowerShell suites passed** on its test commit.
+- [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) now records proposed write ordering and crash boundaries, plus outstanding filesystem durability and trusted-journal ownership decisions; **it is not implemented**.
+- **Next engineering action:** resolve journal authority/authentication, safe atomic file replacement, backing up on a potentially separate volume and crash-injection design. Only after explicit approval should development move to fixture-only writes. Never modify the working game client.

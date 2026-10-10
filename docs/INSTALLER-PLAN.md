@@ -56,7 +56,8 @@ Each patch entry includes `required`, `selected`, `destination_state`, `source_s
 - Current patch checks use both pinned SHA-256 and byte size. Known older hashes are identified from the historical patch manifest, without authorising writes.
 - Unknown existing core/selected optional patches cannot be overwritten.
 - A realmlist with a different recognised address is marked for a *potential* backup-first change. Other unrecognised realmlist content is blocked or preserved.
-- Existing files to be replaced are included in an estimate of future backup and staging space. This is a conservative **estimate**, not a guarantee.
+- Existing files to be replaced are included in an estimate of future backup and staging space. This is a conservative **estimate**, not a guarantee. If the destination drive reports too little space or free space cannot be determined, the preview must be blocked.
+- Deterministic failure-path tests substitute a disk probe **only in a temporary synthetic copy of the planner**. The shipped planner has no option to bypass its real drive-space check.
 - A failed executable-build check is blocking. A fake binary used in tests naturally fails this check while other per-file actions remain testable.
 - If J and U are both selected, the planner reports their known texture overlap. In-game precedence is **still untested**.
 - All four current MPQs have `public_distribution_approved: false`. This tool does not grant permission to share or package them.
@@ -81,4 +82,4 @@ A finished setup GUI, an installation plan approved for execution, private asset
 
 **Verified 10 October 2026:** GitHub's Windows PowerShell 5.1 fixture suite passed on [PR #3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3), including the non-blocking supported-build preview. The existing preflight tests also passed after its test-harness exit-code fix on [PR #2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2). These are **synthetic tests only**, not a demonstration against real game assets or an installer.
 
-**Next action:** add deterministic low-space and remaining failure-path tests, then build a separate **read-only** journal recovery evaluator based on [Transaction Design](TRANSACTION-DESIGN.md).
+**Next action:** confirm the deterministic low-space/failure-path tests pass on Windows. See [Recovery Preview](RECOVERY-PREVIEW.md) and [Journal Durability](JOURNAL-DURABILITY.md) for the read-only recovery checks and the unresolved safety gates for any future write-capable transaction.
