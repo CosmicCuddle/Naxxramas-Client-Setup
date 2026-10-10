@@ -37,12 +37,24 @@ function Require-Root([string]$Path) {
     Assert-NoLinks $Path
     $full = (Resolve-Path -LiteralPath $Path).ProviderPath
     Assert-NoLinks $full
-    return [IO.Path]::GetFullPath($full).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    return [IO.Path]::GetFullPath($full)
+}
+function Normalise-Directory([string]$Path) {
+    $full = [IO.Path]::GetFullPath($Path)
+    $volumeRoot = [IO.Path]::GetPathRoot($full)
+    if ($full.Equals($volumeRoot,[StringComparison]::OrdinalIgnoreCase)) { return $full }
+    return $full.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
 }
 function Is-SameOrChild([string]$One,[string]$Two) {
-    $root = $Two.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
-    return $One.Equals($root,[StringComparison]::OrdinalIgnoreCase) -or
-      $One.StartsWith($root + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)
+    $oneFull = Normalise-Directory $One
+    $twoFull = Normalise-Directory $Two
+    if ($oneFull.Equals($twoFull,[StringComparison]::OrdinalIgnoreCase)) { return $true }
+    $prefix = if ($twoFull.EndsWith([string][IO.Path]::DirectorySeparatorChar)) {
+        $twoFull
+    } else {
+        $twoFull + [IO.Path]::DirectorySeparatorChar
+    }
+    return $oneFull.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)
 }
 function Patch-At([string]$Root,[string]$Relative) {
     $candidate = Join-Path $Root ($Relative.Replace('/',[IO.Path]::DirectorySeparatorChar))
