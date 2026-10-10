@@ -35,4 +35,4 @@ Full inventory hashing can take time on a 17+ GiB game. Quick mode is sizes-only
 
 Review the owner's private scan and assess coverage/unknown MPQ counts; the M14 allowlist does not establish a complete independently verifiable base-game manifest. Investigate crash recovery, disk space, concurrent modification and source authenticity in **synthetic tests** before any real-client copy capability is considered.
 
-**CI status:** to be filled from the Windows run on the development PR. Do not claim it passed beforehand.
+**Verified Windows CI:** [run 38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809) completed successfully on implementation commit `3ab55d8791dc153b3c761d54c6d70730ae305c60`. The synthetic report review, existing fixture safety tests, launcher smoke tests and preview ZIP upload all passed. This is not a test against a full client.
