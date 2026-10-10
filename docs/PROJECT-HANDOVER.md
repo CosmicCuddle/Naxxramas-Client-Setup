@@ -70,6 +70,12 @@ The owner's local-only screenshot identifies `Data/enUS/backup-enUS.MPQ` (167,24
 
 Numerical reconciliation: the previous 23-file scan (including four binaries) plus those two files yields an **estimated** 25 allowlisted files (18 base MPQs, three Naxxramas MPQs and four binaries) and an MPQ-only total of **17,773,795,353 bytes**, exactly matching the earlier reference aggregate. This supports the count reconciliation, **not** base-client authenticity, runtime compatibility or redistribution rights. New totals remain estimates until rerun. See `docs/INSTALLER-MILESTONE-17.md`.
 
+### Owner M18 screenshot and M19 extension (10 October 2026)
+
+M18 local-only audit reports **six root support candidates present**: Wow.exe (7,699,456 bytes), Scan.dll (47,876), DivxDecoder.dll (413,696), unicows.dll (245,408), **ijl15.dll (372,736)** and **dbghelp.dll (1,039,728)**. Seven candidates were absent: Launcher.exe, Repair.exe, BackgroundDownloader.exe, Storm.dll, WowError.exe, fmod.dll and fmodex.dll. Data, Data/enUS, Interface and Interface/AddOns directory presence checks were all positive. Absence of optional candidates **does not imply broken client**, and no client repairs/copy operations were authorized.
+
+M19 extends the fixed **read-only** M14 root allowlist and M16 report validator by **exactly ijl15.dll and dbghelp.dll**. Both are \`client_binary_candidate\`, **not pinned**, not required and not approved for distribution. An unchanged development copy would therefore yield an estimated **27 allowlisted files**, 18 base MPQs, V/Z/U, six root binaries, 0 unclassified MPQs and 17,783,614,253 bytes across allowlisted files. **These are arithmetic projections, not independently verified results of a new scan.** Do not commit personal JSON, game files or hashes. M15 copy safety remains dummy-only.
+
 ## 4. Pinned component and source policy
 
 Read source-of-truth manifests rather than hardcoding new fingerprints:
@@ -98,6 +104,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 | **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
+| **M19 — awaiting Windows CI** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -113,7 +120,8 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M15:** `tools/Test-Client-Copy-Fixture.ps1`: tiny synthetic-only local copy/verify/rollback experiment; never expose to real WoW paths or player launcher. Requires exact marker files, synthetic-only manifest, empty destination and explicit confirmation.
 - **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files.
 - **M17:** `tools/Inspect-Unclassified-MPQs.ps1` + `.bat`: reports only the unknown Data/enUS MPQ names and byte sizes locally after explicit drag/drop. No report or network; never modify clients.
-- **M18:** `tools/Inspect-Client-Support-Files.ps1` + `.bat`: checks a narrow list of root file presence/size and well-known directory existence, console-only. No file content reads, recursion, writes, network or reports. 
+- **M18:** `tools/Inspect-Client-Support-Files.ps1` + `.bat`: checks a narrow list of root file presence/size and well-known directory existence, console-only. No file content reads, recursion, writes, network or reports.
+- **M19:** no additional player tool; extends M14 root allowlist and M16 JSON validator for exactly ijl15.dll/dbghelp.dll. Existing Windows dummy fixture tests expanded, no new permissions. 
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -132,7 +140,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M17's new MPQ allowlist passed Windows CI, but the owner has not yet rerun the 25-file scan. M18 added a separate **read-only non-MPQ support-file metadata audit**, with Windows CI [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220) **passed**. The owner should run `Inspect-Client-Support-Files.bat` on a separate backed-up development client, and optionally share a local console screenshot. Absent candidates must not be assumed broken; no report is uploaded. Then decide how to document missing non-MPQ coverage and independently authenticate allowed base files. Keep all M15 dummy-only write locks and the blocked full client downloader.
+**Current next task:** The owner has completed M18's read-only support audit. M19 incorporated the two additional observed DLL names into the fixed allowlist and JSON reviewer (Windows CI pending), without changing any files on the game client. The owner need not perform another 17+ GB scan now. Next engineering priorities: independently authorised/verified base-game source plus better synthetic interruption, disk-space, rollback and concurrency tests. Keep the draft PR, existing M15 fixture-only write locks, patchset versioning and disabled fresh-client source.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -153,7 +161,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “M18 Windows CI passed. Download artifact `naxxramas-launcher-preview` from run 38058231220, extract the contained preview ZIP outside WoW, and drag the separate backed-up development client onto `tools/Inspect-Client-Support-Files.bat`. Share only a screenshot of the local results if comfortable. No game files will be changed and no 17+ GB rehash is needed.”
+**Owner-facing next instruction:** “Your M18 screenshot is recorded. No corrective action is needed for the seven absent optional file candidates. M19 is expanding the read-only M14/M16 filename policy for two known DLLs. After CI we can continue synthetic recovery testing; keep your client backed up and untouched. A new full hash scan is optional only, with a new private report path.”
 
 ---
 

@@ -31,3 +31,8 @@ This feature does not prove complete game file coverage. A root-file checklist m
 Next review should compare the local presence findings with M14's root file candidates, agree a privacy-safe support-file coverage policy, and continue synthetic crash/recovery/disk/concurrent-change tests. M15's marker-locked tiny-file copy tool is **not** modified or connected to a real WoW client. Fresh full-client sources remain disabled in `config/base-client-source.json`.
 
 **Verified Windows CI:** [run 38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220) completed successfully on implementation checkpoint `477b138e46714fcf6579cb50b205b4081f82ce0e`. New synthetic non-MPQ audit tests, previous safety fixtures, GUI smoke tests and preview ZIP packaging all passed. No real-client installation or actual WoW binary execution was tested.
+
+
+## Owner's completed local audit (10 October 2026)
+
+The owner confirmed 6/13 candidate root files present and 7/13 absent, and all four directory-presence checks passed. Exact filenames and sizes, and the non-requirement of absent candidates, are documented in [Milestone 19](INSTALLER-MILESTONE-19.md). No production repair or file changes were requested. This read-only observation supports adding only `ijl15.dll` and `dbghelp.dll` to the existing private inventory allowlist; it does not authenticate those DLLs.

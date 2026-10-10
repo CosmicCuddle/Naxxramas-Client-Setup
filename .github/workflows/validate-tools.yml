@@ -96,6 +96,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-16.md'
             'docs/INSTALLER-MILESTONE-17.md'
             'docs/INSTALLER-MILESTONE-18.md'
+            'docs/INSTALLER-MILESTONE-19.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )
