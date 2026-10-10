@@ -82,6 +82,17 @@ try{
  Expect 'partially applied fixture' $true 'VERIFIED_PARTIAL_APPLYING' 'NOT_SELECTED'
  $j.status='copied';SaveJson $j $journal
  Expect 'false completed' $false 'BLOCKED_JOURNAL_OR_DESTINATION' 'NOT_SELECTED'
+ # Copied is only consistent when every fixture file exists and hashes match.
+ foreach($name in @('Data/common.mpq','Data/patch-Z.mpq','Data/enUS/locale-enUS.mpq')){
+  $to=Join-Path $dest ($name.Replace('/',[IO.Path]::DirectorySeparatorChar))
+  [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($to))|Out-Null
+  [IO.File]::Copy((Join-Path $src ($name.Replace('/',[IO.Path]::DirectorySeparatorChar))),$to)
+ }
+ Expect 'fully copied fixture' $true 'VERIFIED_COPIED' 'NOT_SELECTED'
+ foreach($name in @('Data/common.mpq','Data/patch-Z.mpq','Data/enUS/locale-enUS.mpq')){
+  [IO.File]::Delete((Join-Path $dest ($name.Replace('/',[IO.Path]::DirectorySeparatorChar))))
+ }
+ [IO.Directory]::Delete((Join-Path $dest 'Data/enUS'))
  $j.status='rolling_back';SaveJson $j $journal
  Expect 'partially rolled back' $true 'VERIFIED_PARTIAL_ROLLBACK' 'NOT_SELECTED'
  $j.status='applying';SaveJson $j $journal
