@@ -1,0 +1,27 @@
+name: Read-only client planner tests
+
+on:
+  push:
+    paths:
+      - 'tools/Plan-Naxxramas-Install.ps1'
+      - 'tests/Test-InstallerPlan.ps1'
+      - '.github/workflows/client-planner-tests.yml'
+  pull_request:
+    paths:
+      - 'tools/Plan-Naxxramas-Install.ps1'
+      - 'tests/Test-InstallerPlan.ps1'
+      - '.github/workflows/client-planner-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out scripts
+        uses: actions/checkout@v4
+      - name: Run synthetic planner fixture tests
+        shell: powershell
+        run: .\tests\Test-InstallerPlan.ps1
