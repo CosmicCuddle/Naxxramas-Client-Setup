@@ -30,6 +30,9 @@ jobs:
       - name: Local-only unknown MPQ classification fixture tests
         shell: powershell
         run: .\tests\Test-Unclassified-MPQs.ps1
+      - name: Non-MPQ support file metadata-only fixture tests
+        shell: powershell
+        run: .\tests\Test-Client-Support-Files.ps1
       - name: Disposable client copy, verified rollback, and marker security tests
         shell: powershell
         run: .\tests\Test-Client-Copy-Fixture.ps1
@@ -74,6 +77,8 @@ jobs:
             'tools/Review-Game-File-Report.bat'
             'tools/Inspect-Unclassified-MPQs.ps1'
             'tools/Inspect-Unclassified-MPQs.bat'
+            'tools/Inspect-Client-Support-Files.ps1'
+            'tools/Inspect-Client-Support-Files.bat'
             'tools/Test-Client-Copy-Fixture.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
@@ -90,6 +95,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-15.md'
             'docs/INSTALLER-MILESTONE-16.md'
             'docs/INSTALLER-MILESTONE-17.md'
+            'docs/INSTALLER-MILESTONE-18.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )

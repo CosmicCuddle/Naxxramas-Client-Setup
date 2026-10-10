@@ -128,6 +128,10 @@ The owner's private full-hash report is internally consistent: **23 allowlisted 
 
 The owner's local-only scan identified `Data/enUS/base-enUS.MPQ` and `Data/enUS/backup-enUS.MPQ`. Updated **read-only** tools recognise both as **unpinned base archive candidates**, not authenticated clean-client assets. An unchanged reference copy is now expected to have 25 allowlisted files (21 MPQs plus four binaries); this is a projection until a fresh scan. Do not delete either archive or publish a private inventory. See [Milestone 17](docs/INSTALLER-MILESTONE-17.md).
 
+## Milestone 18 — Read-only non-MPQ support-file audit
+
+Now that the MPQ filename count is reconciled, the next work is checking **non-MPQ support-file candidates**. The new `tools/Inspect-Client-Support-Files.bat` checks only 13 fixed root file names and four directory-presence flags on a **separate backed-up development client**. It reads only presence/size metadata, never file contents, addon data, account settings, paths or hashes; there is no report, network access or client write. Absent optional candidates are not automatically problems. [Milestone 18 guidance](docs/INSTALLER-MILESTONE-18.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.

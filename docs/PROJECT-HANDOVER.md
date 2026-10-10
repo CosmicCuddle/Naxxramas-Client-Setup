@@ -6,6 +6,8 @@
 
 **Latest M17 locale allowlist follow-up:** Windows run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710) **completed successfully** on checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`. M14 scanner, M16 reviewer and M17 classifier all recognise base-enUS/backup-enUS by filename only; synthetic fixture tests passed. No real-client installation is enabled.
 
+**Milestone 18 (Windows CI pending):** A read-only, console-only support candidate audit checks 13 fixed root-level filenames and four directory-presence statuses, with no client file contents or personal data read and no reports saved. See `docs/INSTALLER-MILESTONE-18.md`. No fresh game downloads or production installation.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -93,6 +95,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
+| **M18 — pending CI** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -107,7 +110,8 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M14:** `tools/Inventory-Game-Files.ps1` + `.bat`: enumerates only whitelisted root game binaries and Data/enUS MPQs, hashes locally, produces a private report **outside WoW**; no game writes, no complete-client claim.
 - **M15:** `tools/Test-Client-Copy-Fixture.ps1`: tiny synthetic-only local copy/verify/rollback experiment; never expose to real WoW paths or player launcher. Requires exact marker files, synthetic-only manifest, empty destination and explicit confirmation.
 - **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files.
-- **M17:** `tools/Inspect-Unclassified-MPQs.ps1` + `.bat`: reports only the unknown Data/enUS MPQ names and byte sizes locally after explicit drag/drop. No report or network; never modify clients. 
+- **M17:** `tools/Inspect-Unclassified-MPQs.ps1` + `.bat`: reports only the unknown Data/enUS MPQ names and byte sizes locally after explicit drag/drop. No report or network; never modify clients.
+- **M18:** `tools/Inspect-Client-Support-Files.ps1` + `.bat`: checks a narrow list of root file presence/size and well-known directory existence, console-only. No file content reads, recursion, writes, network or reports. 
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -126,7 +130,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** Owner completed M14 full-hash inventory, M16 JSON review and M17 local filename classification. Both extra enUS MPQs are identified and are now incorporated in the three read-only tool allowlists (Windows CI [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710) **passed**). Once verified, owner may optionally make a **new** full-hash inventory of their separate backed-up development client and review it. On an unchanged copy expect 25 allowlisted files, 18 base candidates and zero unclassified MPQs; confirm rather than assume. Preserve the prior private report, do not upload MPQs, and leave all M15 fixture-only write locks. Next: independently authenticated base-file reference and necessary non-MPQ support-file coverage.
+**Current next task:** M17's new MPQ allowlist passed Windows CI, but the owner has not yet rerun the 25-file scan. M18 has added a separate **read-only non-MPQ support-file metadata audit** (CI pending). The owner should run `Inspect-Client-Support-Files.bat` on a separate backed-up development client, and optionally share a local console screenshot. Absent candidates must not be assumed broken; no report is uploaded. Then decide how to document missing non-MPQ coverage and independently authenticate allowed base files. Keep all M15 dummy-only write locks and the blocked full client downloader.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -147,7 +151,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Both previously unclassified locale MPQs have been identified; keep them as they are. Once Windows CI passes, the updated scanner can include both. When convenient, drag the backed-up development client onto `tools/Inventory-Game-Files.bat` from the new preview and privately review the new report; keep the old JSON as well. Do not upload game archives or reports to public GitHub.”
+**Owner-facing next instruction:** “After M18 Windows CI passes, download the latest preview ZIP, extract it outside the client, and drag your backed-up development client folder onto `tools/Inspect-Client-Support-Files.bat`. Share only the local result screenshot if comfortable. No changes to WoW and no need to rerun the full 17+ GB hash scan for this step.”
 
 ---
 
