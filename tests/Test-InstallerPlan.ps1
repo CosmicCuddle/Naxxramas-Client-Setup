@@ -319,6 +319,19 @@ public static class FixtureClient {
     Check ($backupPlan.space_budget.backup_volume_required_bytes -gt 0) 'Backup budget contains a reserve for journal metadata'
     Check ($backupPlan.space_budget.combined_volume_required_bytes -eq $backupPlan.estimated_space_bytes) 'Same-volume budget combines staging and backup needs'
 
+    $backupBudgetRealm = Join-Path $client 'Data/enUS/realmlist.wtf'
+    $unchangedRealmBytes = [IO.File]::ReadAllBytes($backupBudgetRealm)
+    try {
+        Save $backupBudgetRealm 'set realmlist old.example.test'
+        $changedBytes = [int64](Get-Item -LiteralPath $backupBudgetRealm).Length
+        $replaceBudget = (& $planner @backupParams | Out-String) | ConvertFrom-Json
+        Check ((Item $replaceBudget 'Data/enUS/realmlist.wtf').action -eq 'replace_after_backup') 'Existing different realmlist is included in the backup estimate'
+        Check ($replaceBudget.space_budget.backup_volume_required_bytes -eq (67108864 + $changedBytes)) 'Original realmlist size is reserved on the backup drive'
+        Check ($replaceBudget.space_budget.combined_volume_required_bytes -eq $replaceBudget.estimated_space_bytes) 'Same-drive replacement budgets still sum without double-counting'
+    } finally {
+        [IO.File]::WriteAllBytes($backupBudgetRealm,$unchangedRealmBytes)
+    }
+
     $missingBackupRejected = $false
     try {
         $null = & $planner -ClientPath $client -BackupRoot (Join-Path $work 'missing-backups') -Json 2>&1 | Out-String
