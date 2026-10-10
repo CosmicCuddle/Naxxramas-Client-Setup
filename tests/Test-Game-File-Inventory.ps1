@@ -81,7 +81,7 @@ try{
    throw ('New locale candidate not correctly classified: '+$n)
   }
  }
- foreach($n in @('ijl15.dll','DBGHELP.DLL')){
+ foreach($n in @('ijl15.dll','dbghelp.dll')){
   $match=@($report.files|Where-Object {$_.relative_path -ceq $n})
   if($match.Count -ne 1 -or $match[0].component -cne 'client_binary_candidate' -or
      $match[0].integrity -cne 'not_pinned' -or [long]$match[0].byte_size -le 0 -or
@@ -100,7 +100,7 @@ try{
  $quickRun=Run $quickFile @('-Quick')
  if($quickRun.Code -ne 0){throw ('Quick inventory failed: '+$quickRun.Text)}
  $quick=Get-Content -LiteralPath $quickFile -Raw|ConvertFrom-Json
- foreach($n in @('ijl15.dll','DBGHELP.DLL')){
+ foreach($n in @('ijl15.dll','dbghelp.dll')){
   $match=@($quick.files|Where-Object {$_.relative_path -ceq $n})
   if($match.Count -ne 1 -or $null -ne $match[0].sha256 -or
      $match[0].integrity -cne 'not_pinned'){
