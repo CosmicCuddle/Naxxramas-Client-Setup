@@ -45,3 +45,7 @@ GitHub Actions runs synthetic Windows tests with tiny dummy MPQs (not game binar
 ## Next milestone
 
 Review the owner's **local** game-file report and investigate whether the limited file set is complete enough for an integrity-checked **local copy-and-verify prototype in disposable folders**. Develop a formal coverage policy first. Never publish client files or inferred private paths. Existing- and fresh-client workflows must continue to back up affected files and support rollback/uninstall; real-client installs remain disabled.
+
+## Verified Windows CI checkpoint
+
+Milestone 14's dummy-file inventory, privacy checks, pre-existing safeguards, launcher smoke tests and ZIP packaging all passed on [Windows run 38053138014](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38053138014), using implementation commit `f69aa14938d0e2fc944025afbc02176b9aaf0c22`. This is **not** an in-game compatibility or full-client completeness test.

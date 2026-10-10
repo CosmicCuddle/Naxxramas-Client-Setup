@@ -2,7 +2,7 @@
 
 **Purpose:** Permanent continuation reference for future chats, maintainers, and development sessions. **Read this document first** when starting again after context loss. Update the *Current checkpoint*, *Completed work*, *Open decisions* and *Next steps* whenever a milestone or recovery fix is completed. Keep it in the repository, not only in a conversation.
 
-**Status as of 10 October 2026:** Milestone 13 has completed and passed Windows CI. Milestone 14 introduces read-only whitelisted game-file inventory and corresponding Windows tests; its final CI result must be checked before marking the milestone fully verified.
+**Status as of 10 October 2026:** **Milestone 14 is complete and passed Windows CI.** Whitelisted, privacy-safe local per-file game inventory is available. It is still an inspection milestone: no full-client archive or production installation has been enabled.
 
 ## 1. Project and critical GitHub links
 
@@ -10,8 +10,9 @@
 - **Development branch:** `feature/backup-first-installer-alpha`
 - **Draft PR #1:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/1
 - **GitHub Actions:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/workflows/validate-tools.yml
-- **Last verified CI before Milestone 14:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38051954866
-- **Last passing commit before Milestone 14:** `d2016a963ef25ea89141c089a402615e29d7ceb2`
+- **Milestone 14 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38053138014
+- **Milestone 14 tested implementation commit:** `f69aa14938d0e2fc944025afbc02176b9aaf0c22`
+- **Previous Milestone 13 passing run:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38051954866 (commit `d2016a9`)
 - **Main branch at previous verification:** `869c9c6f2f0427e079530b8a0a2f58119d35ee50` (unchanged through Milestone 13).
 - **Patch assets repository:** https://github.com/CosmicCuddle/Naxxramas-Server-Patches
 - **Addon suite repository:** https://github.com/CosmicCuddle/N-Addon-Collection
@@ -70,7 +71,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | M11 | Existing-client and **Fresh client — planning only** modes; blocked full-game source gate; no actual fresh install |
 | M12 | Sanitised read-only existing-client inspection tool; tests for privacy, build/version, V/Z integrity, J/C conflict |
 | M13 | Read-only plan for V/Z, J/C/U, NCore, optional addons and realmlist based only on a sanitised JSON; corrections for existing U and addons |
-| **M14 — current** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, synthetic tests. **Do not treat as complete until Windows CI passes.** |
+| **M14 — complete** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, dummy-file Windows tests. **CI 38053138014 passed**. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-14.md` for detailed rationale; current Milestone 14 details are in its own file.
 
@@ -97,11 +98,13 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Previous fully verified step:** Milestone 13, source classification report and Windows fixture tests, commit `d2016a9`, CI run `38051954866` green.
+**Last verified implementation step:** Milestone 14, read-only allowlisted per-file game binary/MPQ inventory and privacy-focused tests, commit `f69aa149` and passing Windows Actions run `38053138014`.
 
-**Work currently being added:** Milestone 14 with `Inventory-Game-Files.ps1` / `.bat`, `Test-Game-File-Inventory.ps1`, documentation and this permanent handover. It must be verified on Windows Actions before requesting use against a real game.
+**Previous step:** Milestone 13, source classification report, commit `d2016a9`, passing Actions run `38051954866`.
 
-**After M14 CI is green:**
+**Current next task:** Ask the owner to run the new scanner against a **separate backed-up development copy**, producing a private `game-files-*.json` outside WoW. Review that report and improve file coverage before attempting a test-only copy/verify implementation.
+
+**After M14 (next milestone):
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
 2. Owner runs new game file inventory against the development copy. Its local JSON must be reviewed before sharing and never committed; the files aren't copied.
 3. Compare inventoried base candidates against known patchset V/Z/U; explicitly mark missing/unknown components. **Do not infer complete client validity from 21 MPQs or a partial allowlist.**
@@ -120,7 +123,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction after CI:** “Back up your working client, create a disposable development copy, then drag its containing folder onto `tools/Inventory-Game-Files.bat`. Review the local `game-files-*.json` file before sending it here.”
+**Owner-facing next instruction:** “Back up your working client, create a separate development copy, then drag its containing folder onto `tools/Inventory-Game-Files.bat`. The SHA-256 scan of the 17+ GiB client may take several minutes. Review the local `game-files-*.json` file before sending it privately here.”
 
 ---
 
