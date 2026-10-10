@@ -1,6 +1,6 @@
 # Milestone 26 — Read-only recovery decision plan for disposable fixtures
 
-**Status: Windows CI pending.** The planner handles **synthetic, intentionally marked, tiny M15 copy experiments only**. It cannot operate as a real WoW game installer, restore utility, or automatic cleanup program.
+**Status: Windows CI passed** ([run 38066008592](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066008592) at tested implementation checkpoint `a01fb5ee35720c690d478bf89e69058206cc2ffd`). The planner handles **synthetic, intentionally marked, tiny M15 copy experiments only**. It cannot operate as a real WoW game installer, restore utility, or automatic cleanup program.
 
 ## Purpose
 
@@ -47,4 +47,4 @@ The CI test suite must also pass all prior synthetic copy/rollback tests, M20/M2
 
 Add deterministic **external-process file/path mutation** tests between inspect and operation, strictly against tiny disposable fixtures, and design explicit manual recovery review screens without implementing automatic destructive cleanup.
 
-**Windows CI:** pending.
+**Windows CI passed:** [run 38066008592](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066008592). The new M26 human-review classification, fail-closed status and output-privacy tests passed alongside older synthetic copy/recovery/staging suites, addon/patch checks, GUI smoke tests and successful preview ZIP upload. It remains a read-only developer tool, not a real-client installer.
