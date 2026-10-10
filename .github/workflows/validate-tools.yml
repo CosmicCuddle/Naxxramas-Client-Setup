@@ -57,6 +57,9 @@ jobs:
       - name: Read-only synthetic transaction status tests
         shell: powershell
         run: .\tests\Test-Fixture-Transaction-Status.ps1
+      - name: Read-only synthetic recovery decision plan tests
+        shell: powershell
+        run: .\tests\Test-Fixture-Recovery-Plan.ps1
       - name: Installer alpha fixture tests (dummy files only)
         shell: powershell
         run: .\tests\Test-Installer-Prototype.ps1
@@ -104,6 +107,7 @@ jobs:
             'tools/Inspect-Fixture-Recovery.ps1'
             'tools/Inspect-Fixture-Stage.ps1'
             'tools/Inspect-Fixture-Transaction-Status.ps1'
+            'tools/Plan-Fixture-Recovery.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
@@ -127,6 +131,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-23.md'
             'docs/INSTALLER-MILESTONE-24.md'
             'docs/INSTALLER-MILESTONE-25.md'
+            'docs/INSTALLER-MILESTONE-26.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )
