@@ -207,7 +207,14 @@ try {
 
     $v = Store-Valid
     Store-Witness $v.Anchor
-    Save-Json $envelopeFile @(2,@($v.Envelope[1][0]))
+    # Preserve the exact [version, [[base64, mac]]] structure. PowerShell
+    # array arguments can otherwise flatten this singleton event pair.
+    $singleEventList = New-Object object[] 1
+    $singleEventList[0] = $v.Envelope[1][0]
+    $olderEnvelope = New-Object object[] 2
+    $olderEnvelope[0] = 2
+    $olderEnvelope[1] = $singleEventList
+    Save-Json $envelopeFile $olderEnvelope
     Save-Json $anchorFile (Make-Anchor 1 $v.FirstHash)
     $unwitnessed = (& $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -Json | Out-String) | ConvertFrom-Json
     Assert ($unwitnessed.status -eq 'fixture_chain_and_anchor_match') 'Old chain plus matching old anchor can pass unpinned fixture checks'
