@@ -19,7 +19,8 @@ param(
  [switch]$SimulateStagedFileMutationBeforePromotion,
  [switch]$SimulateInterruptedStageOwnerWrite,
  [switch]$SimulateInterruptedJournalWrite,
- [switch]$SimulateDestinationCollisionBeforePromotion
+ [switch]$SimulateDestinationCollisionBeforePromotion,
+ [ValidateRange(0,15)][int]$SyntheticExternalPauseBeforePromotionSeconds=0
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -242,7 +243,8 @@ try{
    -not [bool]$SimulateStagedFileMutationBeforePromotion -and
    -not [bool]$SimulateInterruptedStageOwnerWrite -and
    -not [bool]$SimulateInterruptedJournalWrite -and
-   -not [bool]$SimulateDestinationCollisionBeforePromotion) 'Copy fault switches are not valid during rollback.'
+   -not [bool]$SimulateDestinationCollisionBeforePromotion -and
+   $SyntheticExternalPauseBeforePromotionSeconds -eq 0) 'Copy fault switches are not valid during rollback.'
   Require ([bool]$ConfirmDisposableFixture) 'Rollback requires -ConfirmDisposableFixture.'
   Require (Test-Path -LiteralPath $journalPath -PathType Leaf) 'No fixture copy journal exists.'
   NoLinkAncestors $journalPath
@@ -313,7 +315,8 @@ try{
    -not [bool]$SimulateStagedFileMutationBeforePromotion -and
    -not [bool]$SimulateInterruptedStageOwnerWrite -and
    -not [bool]$SimulateInterruptedJournalWrite -and
-   -not [bool]$SimulateDestinationCollisionBeforePromotion) 'Fault switches are allowed only during explicitly confirmed synthetic Copy.'
+   -not [bool]$SimulateDestinationCollisionBeforePromotion -and
+   $SyntheticExternalPauseBeforePromotionSeconds -eq 0) 'Fault switches are allowed only during explicitly confirmed synthetic Copy.'
  }
  Require (-not (Test-Path -LiteralPath $journalPath)) 'Existing fixture journal must be reviewed or rolled back first.'
  $destEntries=@(Get-ChildItem -LiteralPath $dest -Force)
@@ -418,6 +421,12 @@ try{
   }
   # "applying" permits verified partial rollback after interruption.
   WriteJournal $journalPath $session
+  # M27 TEST-ONLY concurrency window: a separate out-of-process Windows
+  # PowerShell worker can mutate disposable fixture bytes after journal commit.
+  # No extra marker/signal is written, and no delay occurs by default.
+  if($SyntheticExternalPauseBeforePromotionSeconds -gt 0){
+   [Threading.Thread]::Sleep($SyntheticExternalPauseBeforePromotionSeconds*1000)
+  }
   foreach($record in $rows){
    $rel=SafeRelative ([string]$record.relative_path)
    $from=Join-Path $stage $rel
