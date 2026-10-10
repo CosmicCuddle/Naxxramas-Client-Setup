@@ -13,7 +13,10 @@ param(
  [ValidateSet('Plan','Copy','Rollback')][string]$Action='Plan',
  [switch]$ConfirmDisposableFixture,
  [ValidateRange(0,20)][int]$SimulateFailureAfter=0,
- [ValidateRange(0,20)][int]$SimulateRollbackInterruptionAfter=0
+ [ValidateRange(0,20)][int]$SimulateRollbackInterruptionAfter=0,
+ [ValidateRange(-1,104857600)][long]$SimulateAvailableDiskBytes=-1,
+ [ValidateRange(0,8)][int]$SimulateDiskWriteFailureAfterStagedFiles=0,
+ [switch]$SimulateStagedFileMutationBeforePromotion
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -296,6 +299,11 @@ try{
   exit 0
  }
  Require ($SimulateRollbackInterruptionAfter -eq 0) 'Rollback interruption injection is valid only during rollback.'
+ if($Action -ne 'Copy'){
+  Require ($SimulateAvailableDiskBytes -eq -1 -and
+   $SimulateDiskWriteFailureAfterStagedFiles -eq 0 -and
+   -not [bool]$SimulateStagedFileMutationBeforePromotion) 'Fault switches are allowed only during explicitly confirmed synthetic Copy.'
+ }
  Require (-not (Test-Path -LiteralPath $journalPath)) 'Existing fixture journal must be reviewed or rolled back first.'
  $destEntries=@(Get-ChildItem -LiteralPath $dest -Force)
  Require ($destEntries.Count -eq 1 -and $destEntries[0].Name -ceq $destMarker) 'Destination must contain only its marker. No overwrites allowed.'
@@ -310,6 +318,8 @@ try{
   exit 0
  }
  Require ([bool]$ConfirmDisposableFixture) 'Copy requires -ConfirmDisposableFixture.'
+ Require ($SimulateDiskWriteFailureAfterStagedFiles -eq 0 -or
+  $SimulateDiskWriteFailureAfterStagedFiles -le $rows.Count) 'Injected disk-write failure count is outside synthetic manifest.'
  Require ($SimulateFailureAfter -eq 0 -or $SimulateFailureAfter -le $rows.Count) 'Invalid simulated failure count.'
  $stage=Join-Path $destParent ('.naxx-test-copy-stage-'+[guid]::NewGuid().ToString('N'))
  Require (-not (Test-Path -LiteralPath $stage)) 'Unexpected stage collision.'
@@ -317,7 +327,12 @@ try{
  $bytesNeeded=[long]0
  foreach($record in $rows){$bytesNeeded += [long]$record.byte_size}
  $drive=[IO.DriveInfo]::new([IO.Path]::GetPathRoot($dest))
- Require ($drive.AvailableFreeSpace -gt ($bytesNeeded*2+1048576)) 'Insufficient disk space for stage and copy.'
+ [long]$available=[long]$drive.AvailableFreeSpace
+ if($SimulateAvailableDiskBytes -ge 0){
+  # Deterministic low-space injection only. NEVER writes large filler files.
+  $available=[Math]::Min($available,[long]$SimulateAvailableDiskBytes)
+ }
+ Require ($available -gt ($bytesNeeded*2+1048576)) 'Insufficient disk space for stage and copy.'
  [IO.Directory]::CreateDirectory($stage)|Out-Null
  $stageOwner=[ordered]@{
   schema_version=1
@@ -335,14 +350,33 @@ try{
  WriteJournal (Join-Path $stage '.naxx-fixture-stage-owner.json') $stageOwner
  $promoted=New-Object 'System.Collections.Generic.List[string]'
  try{
+  [int]$stagedCount=0
   foreach($record in $rows){
    $rel=SafeRelative ([string]$record.relative_path)
    $in=Join-Path $src $rel
    $out=Join-Path $stage $rel
    [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($out))|Out-Null
    NoLinkAncestors $in
+   ProbeFile $in $record
    [IO.File]::Copy($in,$out,$false)
    ProbeFile $out $record
+   $stagedCount++
+   if($SimulateDiskWriteFailureAfterStagedFiles -gt 0 -and
+    $stagedCount -eq $SimulateDiskWriteFailureAfterStagedFiles){
+    throw 'SIMULATED SYNTHETIC DISK WRITE FAILURE DURING STAGING'
+   }
+  }
+  if([bool]$SimulateStagedFileMutationBeforePromotion){
+   # Tamper with the throwaway staged copy only, NEVER the original source.
+   $faultPath=Join-Path $stage (SafeRelative ([string]$rows[0].relative_path))
+   [IO.File]::AppendAllText($faultPath,'SYNTHETIC STAGING MUTATION')
+  }
+  # Recheck staged data and source BEFORE any journal/promotion. A corrupt
+  # staged file remains for inspection: guarded M22 cleanup will refuse it.
+  foreach($record in $rows){
+   $rel=SafeRelative ([string]$record.relative_path)
+   ProbeFile (Join-Path $src $rel) $record
+   ProbeFile (Join-Path $stage $rel) $record
   }
   # Final destination recheck after staging and BEFORE creating any journal.
   $destEntries=@(Get-ChildItem -LiteralPath $dest -Force)
@@ -363,6 +397,8 @@ try{
    $from=Join-Path $stage $rel
    $to=Join-Path $dest $rel
    [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($to))|Out-Null
+   ProbeFile (Join-Path $src $rel) $record
+   ProbeFile $from $record
    Require (-not (Test-Path -LiteralPath $to)) 'Destination file unexpectedly appeared.'
    [IO.File]::Move($from,$to)
    $promoted.Add($to)
