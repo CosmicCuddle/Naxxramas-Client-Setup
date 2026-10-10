@@ -12,6 +12,18 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+      - name: Parse all PowerShell tests before execution
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Get-ChildItem -LiteralPath 'tests' -File -Filter '*.ps1' | ForEach-Object {
+            $tokens = $null
+            $issues = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$issues) | Out-Null
+            if (@($issues).Count -ne 0) {
+              throw ('PowerShell test syntax error in ' + $_.Name + ': ' + ($issues -join '; '))
+            }
+          }
       - name: Preflight and patch version smoke tests
         shell: powershell
         run: .\tests\Test-Preflight.ps1
