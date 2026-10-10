@@ -175,9 +175,10 @@ try{
   }
   # A previous interrupted journal transition needs explicit manual review.
   # Check this before the general unknown-destination entry scan.
-  foreach($leftover in @($journalPath+'.rollback-writing',$journalPath+'.rollback-previous')){
-   Require (-not (Test-Path -LiteralPath $leftover)) 'Rollback journal replacement residue requires manual review.'
-  }
+  $rollbackWriting=Join-Path $dest ($stateFile+'.rollback-writing')
+  $rollbackPrevious=Join-Path $dest ($stateFile+'.rollback-previous')
+  Require (-not (Test-Path -LiteralPath $rollbackWriting) -and
+   -not (Test-Path -LiteralPath $rollbackPrevious)) 'Rollback journal replacement residue requires manual review.'
   # Never trust file-only recursion: an unknown EMPTY directory also blocks.
   VerifyDestinationEntries $dest $rows
   if($journal.status -cne 'rolling_back'){
