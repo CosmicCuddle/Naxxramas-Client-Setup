@@ -124,3 +124,7 @@ try {
 finally {
   if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
+# Intentional negative child-process tests may leave LASTEXITCODE set to 1.
+# PowerShell GitHub Actions wrappers propagate it even after all checks pass.
+# This line is reached only if no assertion threw and cleanup completed.
+exit 0
