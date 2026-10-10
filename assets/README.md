@@ -1,17 +1,24 @@
-# Launcher artwork — easy to update
+# Owner-managed launcher artwork
 
-The launcher supports two image layers, and **does not copy either image into World of Warcraft**.
+The launcher loads its displayed background from exactly:
 
-1. **Packaged default**: `assets/default/launcher-art.png` is the current featured artwork. When a default file is present in the GitHub development branch, the Windows preview package automatically includes it.
-2. **Personal override**: `assets/local/launcher-art.png` takes priority over the packaged default. That folder is Git-ignored and never published.
-3. **Temporary selection**: The **Choose artwork...** button can load any personal PNG/JPEG for the current launcher session, without changing either file.
+`assets/default/launcher-art.png`
 
-Optional logos work the same way: `assets/default/launcher-logo.png` for an approved packaged logo and `assets/local/launcher-logo.png` for a personal replacement. Without any logo file, the launcher uses its normal NAXXRAMAS title.
+If a launcher logo is supplied, it loads:
 
-## How to change the image in future
+`assets/default/launcher-logo.png`
 
-Replace the file in `assets/default/launcher-art.png` and rebuild the preview ZIP. **No code changes are needed.** For a private preference, use `assets/local/launcher-art.png` instead.
+**Players have no artwork controls.** There is no artwork picker, status strip, personal override, or setting to change these files through the launcher.
 
-The picture is displayed using aspect-ratio-preserving scaling; wide artwork will not stretch. The file should be a PNG or JPEG under 30 MiB.
+## Changing the artwork in a future release
 
-Only distribute art you have permission to include. A private repository does not grant copyright permission. Do not upload game files or Blizzard assets to the repository without the appropriate rights.
+1. Make a backup of the existing `assets/default/launcher-art.png`.
+2. Replace the file with your newly chosen image, using **exactly the same filename**.
+3. Rebuild the downloadable launcher package.
+4. Test the preview and issue the updated package.
+
+No application-code changes are needed. For the logo, replace `launcher-logo.png` in the same way.
+
+If the artwork file is absent, the launcher displays `LAUNCHER ARTWORK UNAVAILABLE`. The program still runs and the preview remains read-only. Supported image files are PNG or JPEG, subject to the existing 30 MiB size limit; keep `launcher-art.png` as a valid PNG for the standard package.
+
+Only distribute artwork for which you have the appropriate rights.

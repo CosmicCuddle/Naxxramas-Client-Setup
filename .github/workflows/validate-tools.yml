@@ -70,8 +70,9 @@ jobs:
           No WoW client or proprietary MPQ archives are included.
           Optional default artwork (if present) is shipped from assets\default.
           Ensure artwork rights are reviewed before distributing to others.
-          Optional personal art can be added as assets\local\launcher-art.png
-          and assets\local\launcher-logo.png on your own computer.
+          Artwork is publisher-managed at assets\default\launcher-art.png.
+          Only the package owner updates it by replacing the file then rebuilding.
+          No artwork changing controls are available to players.
           Do not use this as a public installer.
           '@ | Set-Content -LiteralPath (Join-Path $stage 'READ-ME-FIRST.txt') -Encoding UTF8
           $output = Join-Path $env:GITHUB_WORKSPACE 'Naxxramas-Client-Preview.zip'

@@ -73,7 +73,7 @@ See [Milestone 7: Windows GUI preview](docs/INSTALLER-MILESTONE-7.md). This is a
 
 The graphical preview now follows the familiar *classic WoW launcher* arrangement: a large hero-art panel and framed news/verification log on the left, compact setup choices on the right, and a fixed row of launcher-style controls with a prominent **PREVIEW** button. The main window no longer scrolls as a long form; the narrow right-hand options panel and verification log scroll independently when needed.
 
-The featured image can be bundled as `assets/default/launcher-art.png` in a preview package. To change the default later, simply replace that image and rebuild—the launcher code does not need to change. Personal overrides in `assets/local/launcher-art.png` and `assets/local/launcher-logo.png` take precedence and are ignored by Git. Use the **Choose artwork...** button for a one-session selection. Do not distribute imagery without appropriate rights.
+The launcher displays a single owner-managed image: `assets/default/launcher-art.png` (and an optional `launcher-logo.png`). To change the artwork in a future release, replace the file using the **same filename** and rebuild the ZIP. There are no player-facing artwork buttons, overrides or status messages. Do not distribute imagery without appropriate rights.
 
 A Windows CI job produces a **downloadable preview ZIP artifact** once its tests pass. The ZIP includes scripts and configuration but does not contain a WoW client, MPQs, Blizzard logos or other proprietary artwork; it cannot install files. See [Milestone 8](docs/INSTALLER-MILESTONE-8.md).
 

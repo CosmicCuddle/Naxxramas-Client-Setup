@@ -15,22 +15,15 @@ The window now uses the structure associated with the older World of Warcraft la
 
 The bundled visual fallback is an original decorative gradient and simple line motif—not Blizzard artwork. The public development repository does not contain Blizzard logos or game images.
 
-## Personal-use artwork
+## Owner-managed artwork
 
-If you have artwork you're entitled to use locally, place it in the repository copy at:
+The preview reads `assets/default/launcher-art.png` automatically. The optional title logo is `assets/default/launcher-logo.png`.
 
-~~~text
-assets/local/launcher-art.png
-assets/local/launcher-logo.png
-~~~
+The final player interface contains **no artwork button, image picker, personal override or replaceable-art label**. A missing image shows the neutral `LAUNCHER ARTWORK UNAVAILABLE` fallback.
 
-The artwork is loaded **from disk at runtime**. The filenames are exact and case-insensitive on standard Windows filesystems. The application doesn't download or upload them and doesn't modify the user's source files.
+To update an image later, the project owner backs up the current file, replaces it with the new PNG using **the same filename**, then rebuilds and tests the downloadable ZIP. There is no need to change the program.
 
-The artwork is displayed using a standard Windows image control, preserving its aspect ratio rather than painting multiple overlapping borders. The logo, when provided, appears in the **top launcher title band**. If no artwork is present, a clearly labelled placeholder appears. Images larger than 30 MiB are rejected.
-
-**New:** Click **Choose artwork...** underneath the large image area to select a PNG or JPEG directly from your computer without manually renaming it. This file is loaded in memory for the current preview only. To keep an image as the automatic default next time, put it in the local `assets/local` folder using the filenames above. The chooser never copies the selected file into the client.
-
-The local-art folder is excluded from Git by `.gitignore`. When a release becomes downloadable, it must not automatically include third-party copyrighted assets just because development happens in a private repository.
+Art must be redistributable before being included in a player release.
 
 ## Downloadable preview ZIP
 
@@ -44,7 +37,7 @@ To test the downloadable preview:
 2. Download the `naxxramas-launcher-preview` artifact.
 3. Extract the ZIP into a folder outside World of Warcraft.
 4. Open `tools/Launch-Naxxramas-Preview.bat`.
-5. Optionally add artwork to `assets/local` inside the extracted copy.
+5. The launcher displays the built-in `assets/default/launcher-art.png` (when supplied by the publisher); players cannot change it in the interface.
 6. Choose your existing client folder and use PREVIEW to inspect the proposed changes.
 
 No automatic download, installer writes, or game file modifications are enabled.
@@ -53,6 +46,6 @@ The artifact is a **development preview** and must not be advertised as an insta
 
 ## Testing
 
-GitHub Actions runs existing patch, transaction, recovery and addon tests, then uses a headless WinForms smoke test at multiple window sizes. The GUI test also creates tiny synthetic PNGs and verifies that local-art support doesn't prevent the window from constructing.
+GitHub Actions runs existing patch, transaction, recovery and addon tests, then uses a headless WinForms smoke test at multiple window sizes. The GUI test creates synthetic default PNGs, replaces the default file with a differently coloured image, and verifies the image checksum changes without altering executable code.
 
 Human Windows testing is still needed for the visual proportions, 125%/150% DPI, accessibility and artwork choices. Before real-client writes are enabled, permission handling, rollback and source licensing remain separate blockers.

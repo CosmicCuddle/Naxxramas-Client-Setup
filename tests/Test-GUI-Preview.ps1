@@ -24,13 +24,10 @@ foreach($needle in @(
  'LATEST NEWS',
  'launcher-art.png',
  'launcher-logo.png',
- 'assets/local',
  'assets/default',
- 'Included artwork - can be replaced',
- 'Personal artwork - overrides default',
  '$artImage.SizeMode=[Windows.Forms.PictureBoxSizeMode]::Zoom',
- '$artPick.Add_Click',
- 'LAUNCHER ARTWORK NOT SELECTED',
+ '$artLayout.RowCount=1',
+ 'LAUNCHER ARTWORK UNAVAILABLE',
  '$mode.TextAlign=',
  'READ-ONLY',
  '$form.AcceptButton=$preview',
@@ -41,6 +38,18 @@ foreach($needle in @(
  'New-NaxxPreviewRequest'
 )){
  if(-not $guiBlob.Contains($needle)){throw ("Missing classic launcher feature: "+$needle)}
+}
+foreach($forbidden in @(
+ 'Choose artwork...',
+ 'Included artwork - can be replaced',
+ 'Personal artwork - overrides default',
+ 'assets/local',
+ '$artPick',
+ '$artBar',
+ '[string]$ArtRoot',
+ '$artPick.Add_Click'
+)){
+ if($guiBlob.Contains($forbidden)){throw ("Players can still select artwork: "+$forbidden)}
 }
 if($guiBlob.Contains('$art.Add_Paint')){
  throw 'Old manually painted artwork frame was not removed.'
@@ -108,18 +117,39 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED')) {
   throw ("Window construction smoke test failed: "+$display)
  }
- # Test optional locally supplied art without bundling it in the repository.
- $artDirectory=Join-Path $fixture 'personal-artwork'
- New-Item -ItemType Directory -Force -Path $artDirectory | Out-Null
- Add-Type -AssemblyName System.Drawing
- foreach($name in @('launcher-art.png','launcher-logo.png')){
-  $bitmap=[Drawing.Bitmap]::new(40,20)
-  try{$bitmap.Save((Join-Path $artDirectory $name),[Drawing.Imaging.ImageFormat]::Png)}
-  finally{$bitmap.Dispose()}
+ # Verify the fixed default image is loaded from a copy of the repository,
+ # then replace ONLY launcher-art.png and verify the executable code is unchanged.
+ $artRepo=Join-Path $fixture 'default-art-package'
+ $artTools=Join-Path $artRepo 'tools'
+ $artAssets=Join-Path $artRepo 'assets/default'
+ foreach($dir in @($artTools,$artAssets)){
+  New-Item -ItemType Directory -Path $dir -Force | Out-Null
  }
- $artOutput=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $command -SmokeTest -ArtRoot $artDirectory 2>&1 | Out-String)
- if($LASTEXITCODE -ne 0 -or -not $artOutput.Contains('CLASSIC LAUNCHER LAYOUT TEST PASSED')){
-  throw ("Optional local artwork smoke test failed: "+$artOutput)
+ Copy-Item -LiteralPath $gui -Destination (Join-Path $artTools 'Naxxramas-Preview.ps1')
+ Copy-Item -LiteralPath $lib -Destination (Join-Path $artTools 'GUI-Preview-Lib.ps1')
+ Add-Type -AssemblyName System.Drawing
+ $fixedPath=Join-Path $artAssets 'launcher-art.png'
+ $packagedGui=Join-Path $artTools 'Naxxramas-Preview.ps1'
+ $sameCode=(Get-FileHash -LiteralPath $packagedGui -Algorithm SHA256).Hash
+ $previousArtHash=$null
+ foreach($shade in @([Drawing.Color]::DarkRed,[Drawing.Color]::DarkBlue)){
+  $bitmap=[Drawing.Bitmap]::new(80,40)
+  try{
+   $drawing=[Drawing.Graphics]::FromImage($bitmap)
+   try{$drawing.Clear($shade)}finally{$drawing.Dispose()}
+   $bitmap.Save($fixedPath,[Drawing.Imaging.ImageFormat]::Png)
+  }finally{$bitmap.Dispose()}
+  $newArtHash=(Get-FileHash -LiteralPath $fixedPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  if($previousArtHash -and $previousArtHash -eq $newArtHash){throw 'Replaced artwork was identical.'}
+  $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $packagedGui -SmokeTest 2>&1 | Out-String)
+  if($LASTEXITCODE -ne 0 -or -not $display.Contains("DEFAULT ARTWORK SHA256: $newArtHash") -or
+     -not $display.Contains('CLASSIC LAUNCHER LAYOUT TEST PASSED')){
+   throw ("Fixed default artwork smoke test failed: "+$display)
+  }
+  $previousArtHash=$newArtHash
+ }
+ if((Get-FileHash -LiteralPath $packagedGui -Algorithm SHA256).Hash -ne $sameCode){
+  throw 'Artwork replacement unexpectedly changed the application code.'
  }
   $inspect=New-NaxxPreviewRequest -Mode Inspect -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
  if(@($inspect.Parameters.Keys).Count -ne 2 -or $inspect.Parameters.Action -ne 'Inspect'){
