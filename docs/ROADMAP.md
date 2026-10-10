@@ -54,7 +54,8 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Estimate staging/backup space, check local free disk and reject overlapping roots and reparse points (pending Windows validation).
 - [x] Provide text and JSON previews without uploading MPQ bytes or personal file paths.
 - [x] Add synthetic cases for current/missing/older/unknown patches, source mismatch, J/U selection, realmlist, collisions and no-write behaviour.
-- [ ] Confirm CI execution and add missing-path, junction/symlink, low-disk and malformed-policy cases.
+- [x] Add missing/nested-path and conditional junction rejection fixture assertions.
+- [ ] Confirm CI execution and add low-disk and malformed-policy regression cases.
 - [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
@@ -136,4 +137,4 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - Created a dedicated roadmap and handover as living project records.
 - Added the read-only planner, Windows launcher, synthetic test suite, CI workflow and [preview documentation](INSTALLER-PLAN.md).
 - Windows tests have been authored but **not yet confirmed passing** in the current environment.
-- **Next task:** confirm Windows CI, correct failures, extend path-safety tests and meet the preview exit gate before any write-capable installer.
+- **Next task:** confirm Windows CI, correct any failures, add remaining free-space/policy failure tests and meet the preview exit gate before any write-capable installer.
