@@ -1,5 +1,8 @@
 # Naxxramas Client Setup
 
+**[PROJECT HANDOVER — read this first when resuming development](docs/PROJECT-HANDOVER.md)**  
+This is the permanent source of truth for the aim, prior milestones, latest work, safety requirements, GitHub state, testing, and precise next steps. Update it whenever a substantial milestone is completed.
+
 Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a server**.
 
 > **Project status: preflight plus test-only backup/rollback alpha.** No production installer or downloadable game client is available yet.
@@ -34,6 +37,10 @@ The owner-provided sanitised JSON report confirms **WoW 3.3.5a build 12340**, re
 The new `tools/Inspect-Reference-Client.bat` reads the existing client, checks `Wow.exe` build 12340 and the pinned V/Z hashes, and creates a **sanitised JSON report** in the launcher `tools` folder. It records **presence only** for optional patches and NCore/addons. It never opens or exports `WTF`, SavedVariables, Cache, screenshots, account names, realmlist content or absolute client paths. It never modifies game files.
 
 **Before using it, make a separate backup of your known-working game client.** Drag the folder containing `Wow.exe` onto `Inspect-Reference-Client.bat`, then review the `client-reference-*.json` report. See [Milestone 12](docs/INSTALLER-MILESTONE-12.md). Never upload the complete game client or private settings to this repository.
+
+## Safe game-file inventory (Milestone 14)
+
+Use `tools/Inventory-Game-Files.bat` against a **backed-up development copy** of the 3.3.5a client. It produces a private per-file report of a restricted set of game executables and MPQ archives, with SHA-256 hashes by default. The game files are read-only, and the report is created outside the game. Personal directories (`WTF`, `Cache`, `Screenshots`, addon SavedVariables) are never scanned. This **is not yet a verified complete base-client inventory**; files outside the deliberately limited allowlist are not included. Use `-Quick` from PowerShell for sizes-only results, which do not prove file identity. See [Milestone 14](docs/INSTALLER-MILESTONE-14.md).
 
 ## Reference component separation (Milestone 13)
 

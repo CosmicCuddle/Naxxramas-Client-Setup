@@ -21,6 +21,9 @@ jobs:
       - name: Reference component separation tests (reports only)
         shell: powershell
         run: .\tests\Test-Component-Plan.ps1
+      - name: Whitelisted game file inventory fixture tests
+        shell: powershell
+        run: .\tests\Test-Game-File-Inventory.ps1
       - name: Installer alpha fixture tests (dummy files only)
         shell: powershell
         run: .\tests\Test-Installer-Prototype.ps1
@@ -56,6 +59,8 @@ jobs:
             'tools/Inspect-Reference-Client.bat'
             'tools/Plan-Reference-Components.ps1'
             'tools/Plan-Reference-Components.bat'
+            'tools/Inventory-Game-Files.ps1'
+            'tools/Inventory-Game-Files.bat'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
@@ -67,6 +72,8 @@ jobs:
             'docs/INSTALLER-MILESTONE-11.md'
             'docs/INSTALLER-MILESTONE-12.md'
             'docs/INSTALLER-MILESTONE-13.md'
+            'docs/INSTALLER-MILESTONE-14.md'
+            'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )
           foreach ($relative in $files) {
@@ -90,6 +97,7 @@ jobs:
           NAXXRAMAS CLIENT LAUNCHER - DEVELOPMENT PREVIEW
           ------------------------------------------------
           Open tools\Launch-Naxxramas-Preview.bat on Windows.
+          Project handover: docs\PROJECT-HANDOVER.md (read when resuming).
           This preview checks existing clients and plans fresh installations, but CANNOT install a full game client.
           No WoW client or proprietary MPQ archives are included.
           Optional default artwork (if present) is shipped from assets\default.
