@@ -1,6 +1,6 @@
 # Milestone 25 — Read-only synthetic transaction status
 
-**Status: Windows CI pending.** This milestone is restricted to marked, tiny, disposable M15 fake-game fixtures. It is **not** a repair tool, WoW installer, account scanner, or recovery authorisation.
+**Status: Windows CI passed** ([run 38064980775](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064980775) at tested implementation checkpoint `c836aa728f568bde861c85ab6239c1167303fa18`). This milestone is restricted to marked, tiny, disposable M15 fake-game fixtures. It is **not** a repair tool, WoW installer, account scanner, or recovery authorisation.
 
 ## Purpose
 
@@ -43,4 +43,4 @@ The existing PowerShell syntax gate, M15 copy/rollback, M20 and M22 read-only in
 - Do not run any fixture tools against a real WoW folder or upload private inventory reports to GitHub.
 - Next: add independent, explicitly confirmed, **non-destructive** manual recovery planning and robust tests for concurrent filesystem/path changes. Never automatically delete unknown files or journals.
 
-**CI validation:** pending.
+**Windows CI passed:** [run 38064980775](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064980775). M25 fixture classifications, output privacy checks, prior copy/rollback and staging inspections, patch/addon tests, Windows GUI smoke tests and preview ZIP packaging all passed. This is proof of disposable fixture behavior only, not production game-client installability.
