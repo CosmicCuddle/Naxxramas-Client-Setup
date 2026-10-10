@@ -1,6 +1,6 @@
 # Milestone 29 — Disposable Windows junction-swap and rollback identity safeguards
 
-**Status:** Windows CI pending. This milestone tests only the explicitly marked, tiny M15 dummy-copy experiment. It does not install or download World of Warcraft game files.
+**Status:** Windows CI passed ([run 38071718543](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38071718543), tested implementation commit `eba842f9e49ca16ab508be9738e3048b6cdbd1a1`). This milestone tests only the explicitly marked, tiny M15 dummy-copy experiment. It does not install or download World of Warcraft game files.
 
 ## Why this milestone
 
@@ -40,4 +40,4 @@ The junction target is always a folder inside the test's own newly created tempo
 
 M30 should prototype a safer held-handle/identity-aware operation model (including atomic journal updates) exclusively on disposable test paths, and document the remaining Windows filesystem race assumptions before any real-client copy could be considered.
 
-**CI result:** pending.
+**Windows CI passed:** [run 38071718543](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38071718543). The three separate-process source/stage/rollback destination junction substitutions were explicitly refused. Original synthetic dummy files, external sentinel data and rollback journal states were preserved as expected. All earlier fixture copy/rollback, M20–M28 recovery, patch/addon, WinForms smoke and preview ZIP tests also passed. These remain limited to tiny synthetic fixtures and do not establish production race freedom.
