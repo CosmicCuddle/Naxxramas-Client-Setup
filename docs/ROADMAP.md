@@ -2,7 +2,7 @@
 
 **Last reviewed:** 10 October 2026  
 **Current baseline:** `main`, `patchset-0001`  
-**Overall status:** read-only preflight prototype. **No installer, updater, uninstaller or redistributable game package is ready.**
+**Overall status:** read-only preflight and installer-plan prototypes. **No installer, updater, uninstaller or redistributable game package is ready.**
 
 This is the working plan for development, handovers and release checks. Update this file **with every meaningful project change**: mark completed work, record what was verified, explain what remains, and nominate the next task. Detailed ongoing context is in [PROJECT-HANDOVER.md](PROJECT-HANDOVER.md).
 
@@ -36,23 +36,26 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Add read-only client preflight for WoW structure, reported executable build, required/optional patches, addon layout and realmlist comparison.
 - [x] Record the owner-provided realmlist address separately in `config/realm.json` and supply a manual `realmlist.wtf` template.
 - [x] Write standalone project roadmap and handover notes for chat continuity.
-- [ ] Run a repeatable automated test suite for these scripts (current work has been reviewed manually, with limited owner-provided screenshots).
+- [x] Add synthetic PowerShell fixture tests and a Windows CI workflow for the new planner.
+- [ ] Confirm Windows execution succeeds; legacy read-only scripts still need regression tests.
 
 ## Milestone 2 — Installer planning, still READ ONLY
 
 **Goal:** produce a precise plan of actions without changing the player's client.
 
-- [ ] Define a single machine-readable operation plan: target, patchset, options, source hashes, destination state and intended writes.
-- [ ] Implement a read-only `Plan-Naxxramas-Install.ps1` with robust validation of source and destination.
-- [ ] Show which required V/Z patches are already current, absent, older, or unknown; never offer to skip V/Z.
-- [ ] Represent J/U choices independently, distinguishing 'leave existing as-is' from 'install/change this option'.
-- [ ] Compare proposed realmlist text to exact existing file, without modifying it.
-- [ ] Include an explicit action such as `no_change`, `install`, `replace_after_backup` or `blocked` for each planned file.
-- [ ] Require a complete approved source allowlist. No executable or unknown file copy.
-- [ ] Check free disk space conservatively (including staging and backups); refuse unsafe or ambiguous paths.
-- [ ] Provide clear user-facing summaries plus machine-readable output **without local personal data or MPQ bytes being uploaded**.
-- [ ] Fixture tests: clean, matching, missing V/Z, outdated known, unknown hash, optional J/U combinations, differing realmlist, nonexistent path and unsafe junction.
-- [ ] Document limits: a plan is **not** permission to redistribute or install.
+- [x] Define JSON preview with patchset, options, expected/current hashes, actions, warnings and blockers.
+- [x] Implement `tools/Plan-Naxxramas-Install.ps1` and drag-and-drop `.bat` (pending Windows execution checks).
+- [x] Classify mandatory V/Z as current, missing, known older or unknown; no skip option.
+- [x] Represent J/U independently; preserve unselected existing optional files.
+- [x] Compare the intended realmlist against exact existing bytes/recognised host without writing.
+- [x] Emit `no_change`, `install`, `replace_after_backup`, `blocked`, `not_selected` and `leave_existing` actions.
+- [x] Use an exact four-patch policy allowlist with no file copying.
+- [ ] Resolve asset provenance and approved distribution sources before any future copying.
+- [x] Estimate staging/backup space, check local free disk and reject overlapping roots and reparse points (pending Windows validation).
+- [x] Provide text and JSON previews without uploading MPQ bytes or personal file paths.
+- [x] Add synthetic cases for current/missing/older/unknown patches, source mismatch, J/U selection, realmlist, collisions and no-write behaviour.
+- [ ] Confirm CI execution and add missing-path, junction/symlink, low-disk and malformed-policy cases.
+- [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
 
@@ -131,4 +134,6 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - Re-read the README, first milestone, inventory, patch update policy, realmlist documentation and current manifest.
 - Confirmed an actual write-capable installer, updater, rollback and uninstall are **not yet present**.
 - Created a dedicated roadmap and handover as living project records.
-- **Next task:** implement and test the **read-only Milestone 2 installer planner**. Do not begin by copying files into a working client.
+- Added the read-only planner, Windows launcher, synthetic test suite, CI workflow and [preview documentation](INSTALLER-PLAN.md).
+- Windows tests have been authored but **not yet confirmed passing** in the current environment.
+- **Next task:** confirm Windows CI, correct failures, extend path-safety tests and meet the preview exit gate before any write-capable installer.
