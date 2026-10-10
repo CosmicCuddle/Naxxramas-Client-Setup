@@ -174,4 +174,6 @@ Automated **disposable fixture** tests required:
 
 ## Next implementation recommendation
 
-**Do not code the file-writing engine yet.** First add a tiny **fixture-only journal-state validator / recovery planner** that reads local fake session records and *describes* what a future rollback would do, without actually writing to the fixture. This makes recovery decisions testable before potentially destructive code exists.
+**Completed first slice:** [Recovery Preview](RECOVERY-PREVIEW.md) now reads synthetic session records and inspects current/backup file hashes without changing them. The Windows PowerShell CI fixture suite passed on 10 October 2026.
+
+**Next:** design authenticated ownership and a crash-durable journal update mechanism; complete remaining low-space/failure-path testing. Do not code a real-client write-capable engine. Any subsequent write experiments must use disposable fixtures and a separate review gate.
