@@ -57,6 +57,10 @@ The new **[installer-plan preview](docs/INSTALLER-PLAN.md)** describes what an e
 
 This script **does not install, download, copy, repair, replace or remove any game files**. A Windows PowerShell fixture test workflow has been added, but passing execution has not yet been independently verified in this development session. Do not treat a preview as an installation approval or distribution permission.
 
+## Read-only recovery preview (Milestone 3 foundation)
+
+The [Recovery Preview](docs/RECOVERY-PREVIEW.md) can inspect **synthetic development session records** and compare saved hashes, original backups and current files to show where a future rollback would encounter conflicts. The script is `tools/Review-Naxxramas-Recovery.ps1`. Windows PowerShell fixture tests passed on 10 October 2026. **It does not restore, delete, replace or change files, and no production installer creates session records yet.**
+
 ## Updating core and optional patches
 
 When patch-V, patch-Z, Patch-J or Patch-U changes, **do not rename a patch or overwrite its old version record**. Download a fresh repository copy and drag the folder containing `Wow.exe` onto `tools/Prepare-Patch-Update.bat`. This generates `tools/patch-update-proposal.json` (hashes, sizes and proposed next version only; no game binaries, personal paths or automatic uploads). Send the proposal for review, test the patched client, and then commit the new reference plus an immutable history entry. See [Patch Updates](docs/PATCH-UPDATES.md). The application updater/rollback system is **not implemented yet**.
@@ -72,7 +76,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** complete the outstanding planner failure-path checks and implement a read-only journal recovery evaluator. The proposed backup/write/rollback contract is documented in [Transaction Design](docs/TRANSACTION-DESIGN.md). Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** finish the outstanding low-space and failure-path tests, then review journal integrity and crash-safety before any fixture-only write-capable prototype. The recovery inspector and [Transaction Design](docs/TRANSACTION-DESIGN.md) are read-only/design-only respectively. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 
