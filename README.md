@@ -38,6 +38,12 @@ The new `tools/Inspect-Reference-Client.bat` reads the existing client, checks `
 
 **Before using it, make a separate backup of your known-working game client.** Drag the folder containing `Wow.exe` onto `Inspect-Reference-Client.bat`, then review the `client-reference-*.json` report. See [Milestone 12](docs/INSTALLER-MILESTONE-12.md). Never upload the complete game client or private settings to this repository.
 
+## Disposable synthetic client copy verification (Milestone 15)
+
+The new `tools/Test-Client-Copy-Fixture.ps1` is a **fixture-only** copy/verify/rollback prototype. It accepts only **purpose-made dummy files smaller than 256 KiB each**, a manifest explicitly marked synthetic, and two folders containing exact independent test markers. An empty destination and explicit confirmation are required. The tool stages into a separate temporary folder, verifies source/staged/destination SHA-256 hashes, records file ownership, refuses to overwrite any existing data, and supports verified rollback. **It cannot copy a real game client**, and is not wired to the player launcher.
+
+See [Milestone 15](docs/INSTALLER-MILESTONE-15.md). We are deliberately testing the safety mechanisms before permitting any live-client writes. The owner's private `game-files-*.json` is still needed to improve coverage of the actual local client.
+
 ## Safe game-file inventory (Milestone 14)
 
 Use `tools/Inventory-Game-Files.bat` against a **backed-up development copy** of the 3.3.5a client. It produces a private per-file report of a restricted set of game executables and MPQ archives, with SHA-256 hashes by default. The game files are read-only, and the report is created outside the game. Personal directories (`WTF`, `Cache`, `Screenshots`, addon SavedVariables) are never scanned. This **is not yet a verified complete base-client inventory**; files outside the deliberately limited allowlist are not included. Use `-Quick` from PowerShell for sizes-only results, which do not prove file identity. See [Milestone 14](docs/INSTALLER-MILESTONE-14.md).
