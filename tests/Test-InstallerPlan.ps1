@@ -314,7 +314,7 @@ public static class FixtureClient {
     }
     $backupPlan = (& $planner @backupParams | Out-String) | ConvertFrom-Json
     Check ($backupPlan.status -eq 'review_only_no_blockers') 'Backup directory preview does not introduce a blocker'
-    Check ($backupPlan.space_budget.mode -eq 'shared_volume') 'Folders on same test drive share the storage budget'
+    Check ($backupPlan.space_budget.mode -eq 'shared_volume') ("Folders on same test drive share the storage budget (actual: {0}; client root: {1}; backup root: {2})" -f $backupPlan.space_budget.mode,[IO.Path]::GetPathRoot($client),[IO.Path]::GetPathRoot($backup))
     Check ($backupPlan.space_budget.backup_location_selected) 'Preview records separate backup location was selected'
     Check ($backupPlan.space_budget.backup_volume_required_bytes -gt 0) 'Backup budget contains a reserve for journal metadata'
     Check ($backupPlan.space_budget.combined_volume_required_bytes -eq $backupPlan.estimated_space_bytes) 'Same-volume budget combines staging and backup needs'
