@@ -75,6 +75,46 @@ try{
  if($rolled.code -ne 0 -or -not $rolled.text.Contains('ROLLBACK VERIFIED')){throw ('Fixture rollback failed: '+$rolled.text)}
  if(@(Get-ChildItem -LiteralPath $dst -Recurse -File -Force).Count -ne 1 -or
     -not(Test-Path -LiteralPath $destMarker)){throw 'Rollback did not restore empty marked destination.'}
+ # M21: rollback must be resumable after interruption after two confirmed deletions.
+ $second=Call $dst 'Copy' @('-ConfirmDisposableFixture')
+ if($second.code -ne 0 -or -not $second.text.Contains('SYNTHETIC FIXTURE COPY SUCCESS')){
+  throw ('Fixture recopy for interruption test failed: '+$second.text)
+ }
+ # No unexpected empty directories: protect owner-created contents.
+ $empty=Join-Path $dst 'Data/owner-empty'
+ [IO.Directory]::CreateDirectory($empty)|Out-Null
+ $blocked=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
+ if($blocked.code -eq 0 -or -not (Test-Path -LiteralPath $empty) -or
+   -not (Test-Path -LiteralPath $journal)){
+  throw ('Unknown empty folder was not protected: '+$blocked.text)
+ }
+ [IO.Directory]::Delete($empty)
+ $halted=Call $dst 'Rollback' @('-ConfirmDisposableFixture','-SimulateRollbackInterruptionAfter','2')
+ if($halted.code -eq 0 -or -not $halted.text.Contains('SIMULATED FIXTURE ROLLBACK INTERRUPTION')){
+  throw ('Expected controlled rollback interruption: '+$halted.text)
+ }
+ $haltedState=Get-Content -LiteralPath $journal -Raw|ConvertFrom-Json
+ if($haltedState.status -cne 'rolling_back' -or -not(Test-Path -LiteralPath $destMarker)){
+  throw 'Interrupted rollback did not leave durable journal and marker.'
+ }
+ if(@(Get-ChildItem -LiteralPath $dst -Recurse -File -Force).Count -ne ($files.Count-2+2)){
+  throw 'Interrupted rollback unexpectedly changed the number of fixture files.'
+ }
+ # On resumption: tampered remaining fixture must stay, journal retained.
+ $remaining=Join-Path $dst 'Data/patch-Z.mpq'
+ [IO.File]::AppendAllText($remaining,'OWNER MODIFIED')
+ $unsafeResume=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
+ if($unsafeResume.code -eq 0 -or -not (Test-Path -LiteralPath $journal) -or
+   -not (Test-Path -LiteralPath $remaining)){
+  throw 'An altered fixture was deleted during resumed rollback.'
+ }
+ Copy-Item -LiteralPath (Join-Path $src 'Data/patch-Z.mpq') -Destination $remaining -Force
+ $resume=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
+ if($resume.code -ne 0 -or -not $resume.text.Contains('ROLLBACK VERIFIED')){
+  throw ('Resuming an interrupted fixture rollback failed: '+$resume.text)
+ }
+ if(@(Get-ChildItem -LiteralPath $dst -Recurse -File -Force).Count -ne 1 -or
+   -not (Test-Path -LiteralPath $destMarker)){throw 'Resumed rollback did not restore marker-only destination.'}
  $partial=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateFailureAfter','2')
  if($partial.code -eq 0 -or -not $partial.text.Contains('Verified partial copy rolled back')){
   throw ('Simulated failure did not clean up partial copy: '+$partial.text)

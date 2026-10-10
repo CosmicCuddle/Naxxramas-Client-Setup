@@ -61,6 +61,9 @@ try{
  $j.status='copied';SaveJson $j $journal
  ExpectBlocked 'copied-but-missing'
  $j.status='applying';SaveJson $j $journal
+ $j.status='rolling_back';SaveJson $j $journal
+ ExpectReady 'VERIFIED DESTINATION FILES: 2; MISSING TEST FILES: 3'
+ $j.status='applying';SaveJson $j $journal
  # Detect byte tampering and refuse to call rollback safe.
  [IO.File]::AppendAllText((Join-Path $dest 'Data/patch-V.mpq'),'PERSONAL MODIFICATION')
  ExpectBlocked 'tampered file'

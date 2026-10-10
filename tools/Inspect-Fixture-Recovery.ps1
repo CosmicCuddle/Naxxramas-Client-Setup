@@ -107,7 +107,7 @@ try{
  Require ([int]$j.schema_version -eq 1 -and
   [string]$j.kind -ceq 'naxx_fixture_copy_journal' -and
   [string]$j.source -ceq $src -and [string]$j.destination -ceq $dest -and
-  (@('applying','copied') -ccontains [string]$j.status)) 'Journal does not identify this exact disposable fixture.'
+  (@('applying','copied','rolling_back') -ccontains [string]$j.status)) 'Journal does not identify this exact disposable fixture.'
  $entries=@($j.files)
  Require ($entries.Count -eq $rows.Count) 'Journal file count disagrees with manifest.'
  $seenJournal=New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
@@ -150,7 +150,7 @@ try{
    $absent++
   }
  }
- Require ($j.status -ceq 'applying' -or $absent -eq 0) 'Completed journal is missing a file.'
+ Require ($j.status -cne 'copied' -or $absent -eq 0) 'Completed journal is missing a file.'
  Write-Host 'SYNTHETIC RECOVERY AUDIT: READY_FOR_MANUAL_ROLLBACK'
  Write-Host ('JOURNAL STATE: '+[string]$j.status)
  Write-Host ('VERIFIED DESTINATION FILES: '+$present+'; MISSING TEST FILES: '+$absent)
