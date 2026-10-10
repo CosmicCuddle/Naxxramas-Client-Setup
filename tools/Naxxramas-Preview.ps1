@@ -176,6 +176,18 @@ $right.Add_SizeChanged({
  $options.Width=[math]::Max(335,$right.ClientSize.Width-28)
  $options.Height=[math]::Max(305,$right.ClientSize.Height-54)
 }.GetNewClosure())
+# A fresh launcher has empty folder boxes; never pass an empty path to Test-Path.
+function Get-NaxxBrowseInitialFolder([string]$candidate){
+ if([string]::IsNullOrWhiteSpace($candidate)){return $null}
+ try{
+  if(Test-Path -LiteralPath $candidate -PathType Container -ErrorAction Stop){
+   return (Resolve-Path -LiteralPath $candidate -ErrorAction Stop).ProviderPath
+  }
+ }catch{
+  # Invalid or stale directory: let FolderBrowserDialog start normally.
+ }
+ return $null
+}
 function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
  [void](Label $options $caption 2 $y 380 20 $small $muted)
  $box=New-Object Windows.Forms.TextBox
@@ -196,16 +208,31 @@ function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
  }.GetNewClosure()
  $options.Add_SizeChanged($resize);& $resize
  $browse.Add_Click({
-  if($zipMode){
-   $dialog=New-Object Windows.Forms.OpenFileDialog
-   $dialog.Title=$caption;$dialog.Filter='ZIP archives (*.zip)|*.zip'
-   $dialog.CheckFileExists=$true
-   if($dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK){$box.Text=$dialog.FileName}
-  }else{
-   $dialog=New-Object Windows.Forms.FolderBrowserDialog
-   $dialog.Description=$caption;$dialog.ShowNewFolderButton=$false
-   if(Test-Path -LiteralPath $box.Text -PathType Container){$dialog.SelectedPath=$box.Text}
-   if($dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK){$box.Text=$dialog.SelectedPath}
+  $dialog=$null
+  try{
+   if($zipMode){
+    $dialog=New-Object Windows.Forms.OpenFileDialog
+    $dialog.Title=$caption;$dialog.Filter='ZIP archives (*.zip)|*.zip'
+    $dialog.CheckFileExists=$true
+    if($dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK){$box.Text=$dialog.FileName}
+   }else{
+    $dialog=New-Object Windows.Forms.FolderBrowserDialog
+    $dialog.Description=$caption;$dialog.ShowNewFolderButton=$false
+    $initialFolder=Get-NaxxBrowseInitialFolder $box.Text
+    if(-not [string]::IsNullOrWhiteSpace($initialFolder)){
+     $dialog.SelectedPath=$initialFolder
+    }
+    if($dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK){$box.Text=$dialog.SelectedPath}
+   }
+  }catch{
+   # Prevent the generic .NET unhandled-event exception window.
+   [void][Windows.Forms.MessageBox]::Show(
+    $form,('Unable to open the file or folder browser: '+$_.Exception.Message),
+    'Naxxramas - Browse error',
+    [Windows.Forms.MessageBoxButtons]::OK,
+    [Windows.Forms.MessageBoxIcon]::Warning)
+  }finally{
+   if($null -ne $dialog){$dialog.Dispose()}
   }
  }.GetNewClosure())
  return $box
@@ -376,6 +403,21 @@ try{
     throw "Classic launcher layout failed at width $($size.Width)."
    }
   }
+  # Regression: empty first-run path boxes and stale paths must not throw.
+  foreach($empty in @('', ' ', "`t")){
+   if($null -ne (Get-NaxxBrowseInitialFolder $empty)){
+    throw 'Empty Browse folder incorrectly returned a path.'
+   }
+  }
+  $validFolder=(Resolve-Path -LiteralPath $PSScriptRoot).ProviderPath
+  if((Get-NaxxBrowseInitialFolder $validFolder) -cne $validFolder){
+   throw 'Browse failed to recognise an existing folder.'
+  }
+  $missing=Join-Path $PSScriptRoot ('missing-naxx-browse-'+[guid]::NewGuid().ToString('N'))
+  if($null -ne (Get-NaxxBrowseInitialFolder $missing)){
+   throw 'Browse accepted a nonexistent directory.'
+  }
+  Write-Host 'EMPTY FOLDER BROWSE TEST PASSED'
   # Ensure the image placeholder and image control behave consistently.
   if(($null -eq $hero -and $artImage.Visible) -or
      ($null -ne $hero -and $artImage.Image -ne $hero)){
