@@ -45,10 +45,20 @@ try {
     $envelopeFile = Join-Path $fixture 'envelope.json'
     $anchorFile = Join-Path $fixture 'anchor.json'
     $keyFile = Join-Path $fixture 'fixture-private-key.bin'
+    # Separate synthetic witness directory and independently generated key.
+    # These are NOT DPAPI-protected and cannot anchor real production state.
+    $witnessDir = Join-Path $fixture 'fixture-independent-witness'
+    $null = New-Item -ItemType Directory -Path $witnessDir
+    $witnessFile = Join-Path $witnessDir 'latest-witness.json'
+    $witnessKeyFile = Join-Path $witnessDir 'witness-fixture-key.bin'
     $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
     $secret = New-Object byte[] 32
     try { $rng.GetBytes($secret) } finally { $rng.Dispose() }
     [IO.File]::WriteAllBytes($keyFile,$secret)
+    $witnessSecret = New-Object byte[] 32
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($witnessSecret) } finally { $rng.Dispose() }
+    [IO.File]::WriteAllBytes($witnessKeyFile,$witnessSecret)
     $sid = 'fixture-session-1234'
     $iid = 'fixture-install-123'
     $fakeOld = ('a' * 64)
@@ -70,6 +80,24 @@ try {
         $toSign = 'NXA2|' + $sid + '|' + $iid + '|' + $Sequence + '|' + $Head
         $mac = HMAC ([Text.Encoding]::ASCII.GetBytes($toSign)) $secret
         return ,@(2,$sid,$iid,$Sequence,$Head,$mac)
+    }
+    function Make-Witness([object]$LatestAnchor) {
+        $text = 'NXW2|' + $LatestAnchor[1] + '|' + $LatestAnchor[2] +
+            '|' + $LatestAnchor[3] + '|' + $LatestAnchor[4]
+        $signature = HMAC ([Text.Encoding]::ASCII.GetBytes($text)) $witnessSecret
+        return ,@(2,$LatestAnchor[1],$LatestAnchor[2],$LatestAnchor[3],$LatestAnchor[4],$signature)
+    }
+    function Store-Witness([object]$LatestAnchor) {
+        Save-Json $witnessFile (Make-Witness $LatestAnchor)
+    }
+    function Inspect-WithWitness {
+        $output = & $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -FixtureWitnessPath $witnessFile -FixtureWitnessKeyPath $witnessKeyFile -Json | Out-String
+        return ($output | ConvertFrom-Json)
+    }
+    function Witness-Failure([string]$Message) {
+        $failed = $false
+        try { $null = Inspect-WithWitness } catch { $failed = $true }
+        Assert $failed $Message
     }
     function Make-Valid {
         $first = Make-Event 1 $zero 'planned'
@@ -168,7 +196,79 @@ try {
     Save-Json $envelopeFile $v.Envelope
     Verify-ExpectedFailure 'Extra event array fields are rejected'
 
+    # Independently keyed witness is a *separate synthetic fixture*. A
+    # coordinated replay of old journal+matching anchor can otherwise pass.
     $v = Store-Valid
+    Store-Witness $v.Anchor
+    $witnessBaseline = Snap $fixture
+    $withWitness = Inspect-WithWitness
+    Assert ($withWitness.witness_status -eq 'matches_independent_fixture') 'Independent fixture witness matches latest chain'
+    Assert ((Snap $fixture) -ceq $witnessBaseline) 'Witness inspection does not modify any input'
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
+    # Preserve the exact [version, [[base64, mac]]] structure. PowerShell
+    # array arguments can otherwise flatten this singleton event pair.
+    $singleEventList = [Array]::CreateInstance([object],1)
+    $singleEventList[0] = $v.Envelope[1][0]
+    $olderEnvelope = [Array]::CreateInstance([object],2)
+    $olderEnvelope[0] = 2
+    $olderEnvelope[1] = $singleEventList
+    Save-Json $envelopeFile $olderEnvelope
+    Save-Json $anchorFile (Make-Anchor 1 $v.FirstHash)
+    $unwitnessed = (& $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -Json | Out-String) | ConvertFrom-Json
+    Assert ($unwitnessed.status -eq 'fixture_chain_and_anchor_match') 'Old chain plus matching old anchor can pass unpinned fixture checks'
+    Assert ($unwitnessed.witness_status -eq 'not_supplied') 'Unwitnessed inspection explicitly reports absent external state'
+    Witness-Failure 'Independent newer witness rejects coordinated replay of signed journal AND anchor'
+
+    # Known limitation: if the entire fixture state is rolled back,
+    # including the independently keyed witness, it is internally valid.
+    # A production engine needs protected external monotonic state.
+    $olderAnchor = Make-Anchor 1 $v.FirstHash
+    Store-Witness $olderAnchor
+    $allOld = Inspect-WithWitness
+    Assert ($allOld.witness_status -eq 'matches_independent_fixture') 'Full coordinated replay including the witness is NOT prevented by caller-controlled fixture files'
+
+    $v = Store-Valid
+    Store-Witness (Make-Anchor 1 $v.FirstHash)
+    Witness-Failure 'Older but valid witness is rejected when journal is newer'
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
+    $wrongWitness = Make-Witness $v.Anchor
+    $wrongWitness[4] = ('e' * 64)
+    Save-Json $witnessFile $wrongWitness
+    Witness-Failure 'Modified independent witness digest fails HMAC verification'
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
+    $differentSession = Make-Witness $v.Anchor
+    $differentSession[1] = 'another-session-11'
+    $payload = 'NXW2|' + $differentSession[1] + '|' + $differentSession[2] + '|' +
+        $differentSession[3] + '|' + $differentSession[4]
+    $differentSession[5] = HMAC ([Text.Encoding]::ASCII.GetBytes($payload)) $witnessSecret
+    Save-Json $witnessFile $differentSession
+    Witness-Failure 'Validly signed independent witness for another session is rejected'
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
+    $otherWitnessKey = New-Object byte[] 32
+    $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $rng.GetBytes($otherWitnessKey) } finally { $rng.Dispose() }
+    [IO.File]::WriteAllBytes($witnessKeyFile,$otherWitnessKey)
+    Witness-Failure 'Wrong independent witness key is rejected'
+    [IO.File]::WriteAllBytes($witnessKeyFile,$witnessSecret)
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
+    $witnessMissingKeyRejected = $false
+    try {
+        $null = & $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -FixtureWitnessPath $witnessFile -Json 2>&1 | Out-String
+    } catch { $witnessMissingKeyRejected = $true }
+    Assert $witnessMissingKeyRejected 'Witness must have its own independently supplied fixture key'
+
+    $v = Store-Valid
+    Store-Witness $v.Anchor
     $oldSnapshot = Snap $fixture
     $result = (& $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -Json | Out-String) | ConvertFrom-Json
     Assert ($result.status -eq 'fixture_chain_and_anchor_match') 'Valid fixture still accepted after negative tests'

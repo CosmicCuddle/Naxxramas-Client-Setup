@@ -10,6 +10,8 @@ param(
     [Parameter(Mandatory=$true)][string]$EnvelopePath,
     [Parameter(Mandatory=$true)][string]$AnchorPath,
     [Parameter(Mandatory=$true)][string]$FixtureKeyPath,
+    [string]$FixtureWitnessPath,
+    [string]$FixtureWitnessKeyPath,
     [switch]$Json
 )
 $ErrorActionPreference = 'Stop'
@@ -101,6 +103,9 @@ function Decode-AsciiPayload([string]$Encoded) {
     return ,$bytes
 }
 
+if ([bool]$FixtureWitnessPath -ne [bool]$FixtureWitnessKeyPath) {
+    throw 'Fixture witness and independent witness key must be supplied together.'
+}
 $envelope = Read-FixtureJson $EnvelopePath
 $anchor = Read-FixtureJson $AnchorPath
 $keyFile = Check-Path $FixtureKeyPath
@@ -186,6 +191,41 @@ for ($i=0; $i -lt $events.Count; $i++) {
 if ($anchorSequence -ne $events.Count -or $anchorHead -cne $previous) {
     throw 'Stale, truncated or mismatched signed fixture anchor/head.'
 }
+
+# Optional INDEPENDENT FIXTURE WITNESS. This is caller-supplied test data,
+# not a protected Windows trust anchor. The witness key is deliberately
+# separate from the journal HMAC key to exercise independent trust paths.
+$witnessStatus = 'not_supplied'
+if ($FixtureWitnessPath) {
+    $witness = Read-FixtureJson $FixtureWitnessPath
+    if ($witness.Count -ne 6 -or [string]$witness[0] -cne '2') {
+        throw 'Unknown independent fixture witness version.'
+    }
+    $witnessSession = [string]$witness[1]
+    $witnessInstallation = [string]$witness[2]
+    Require-Id $witnessSession
+    Require-Id $witnessInstallation
+    $witnessSequence = Require-Number ([string]$witness[3])
+    $witnessHead = Require-Hex ([string]$witness[4])
+    $witnessSignature = Require-Hex ([string]$witness[5])
+    $witnessKeyFile = Check-Path $FixtureWitnessKeyPath
+    $witnessKey = [IO.File]::ReadAllBytes($witnessKeyFile)
+    if ($witnessKey.Length -ne 32) { throw 'Independent fixture witness key must be 32 bytes.' }
+    $witnessPayload = 'NXW2|' + $witnessSession + '|' + $witnessInstallation +
+        '|' + $witnessSequence + '|' + $witnessHead
+    $witnessComputed = Mac $witnessKey ([Text.Encoding]::ASCII.GetBytes($witnessPayload))
+    if (-not (Compare-Hex $witnessSignature $witnessComputed)) {
+        throw 'Independent fixture witness signature verification failed.'
+    }
+    if ($witnessSession -cne $expectedSession -or
+        $witnessInstallation -cne $expectedInstallation) {
+        throw 'Fixture witness belongs to a different session or installation.'
+    }
+    if ($witnessSequence -ne $anchorSequence -or $witnessHead -cne $anchorHead) {
+        throw 'Signed journal and anchor disagree with independently supplied latest fixture witness; possible coordinated replay or stale witness.'
+    }
+    $witnessStatus = 'matches_independent_fixture'
+}
 $summary = [pscustomobject][ordered]@{
     kind = 'synthetic_hmac_chain_fixture_not_production_authority'
     schema_version = 2
@@ -195,11 +235,13 @@ $summary = [pscustomobject][ordered]@{
     installation_id = $expectedInstallation
     patchset = $sessionPatchset
     last_checkpoint = $lastState
-    limitations = 'Caller-provided fixture key and anchor are not a trusted Windows identity, protected latest-state anchor, or permission for installer/rollback writes.'
+    witness_status = $witnessStatus
+    limitations = 'Fixture witness and keys are caller-supplied, not a protected monotonic Windows trust anchor; replay safety is not established for a real installer, and no writes are authorised.'
 }
 if ($Json) { $summary | ConvertTo-Json -Depth 4 }
 else {
     Write-Host 'Naxxramas signed journal — SYNTHETIC FIXTURE CHECK' -ForegroundColor Cyan
     Write-Host "Validated $($summary.event_count) event(s) against the supplied fixture key and anchor."
+    Write-Host "Independent fixture witness: $($summary.witness_status)"
     Write-Host 'NO FILES WERE CHANGED. Not a production journal trust decision.' -ForegroundColor Yellow
 }
