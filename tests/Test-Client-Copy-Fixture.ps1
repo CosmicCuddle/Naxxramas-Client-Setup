@@ -175,6 +175,78 @@ try{
  if($outOfRange.code -eq 0 -or -not $outOfRange.text.Contains('outside synthetic manifest')){
   throw 'Fault count beyond the synthetic manifest was not refused.'
  }
+ # M24: a partially written stage-owner marker is UNTRUSTED.
+ # Existing M23 altered-stage orphan is preserved; do not delete it.
+ $existingStages=@(Get-ChildItem -LiteralPath $base -Directory -Force |
+  Where-Object {$_.Name -match '^\.naxx-test-copy-stage-[0-9a-f]{32}$'})
+ $beforeStages=$existingStages.Count
+ $brokenOwner=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateInterruptedStageOwnerWrite')
+ if($brokenOwner.code -eq 0 -or -not $brokenOwner.text.Contains('STAGE OWNER MARKER INTERRUPTION')){
+  throw ('Stage owner partial-write injection did not fail closed: '+$brokenOwner.text)
+ }
+ $afterOwner=@(Get-ChildItem -LiteralPath $base -Directory -Force |
+  Where-Object {$_.Name -match '^\.naxx-test-copy-stage-[0-9a-f]{32}$'})
+ if($afterOwner.Count -ne ($beforeStages+1) -or
+  @(Get-ChildItem -LiteralPath $dst -Force).Count -ne 1){
+  throw 'Interrupted stage-owner record was not safely retained without destination writes.'
+ }
+ $orphan=@($afterOwner|Where-Object {
+  $p=Join-Path $_.FullName '.naxx-fixture-stage-owner.json'
+  (Test-Path -LiteralPath $p) -and
+  ((Get-Content -LiteralPath $p -Raw).Trim() -ceq '{')
+ })
+ if($orphan.Count -ne 1){throw 'Partially written stage owner marker is not present.'}
+ $ownerAudit=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $stageAuditor -SourcePath $src -DestinationPath $dst -ManifestPath $manifestFile -StagePath $orphan[0].FullName 2>&1|Out-String)
+ if($LASTEXITCODE -eq 0 -or -not $ownerAudit.Contains('SYNTHETIC STAGE AUDIT: BLOCKED')){
+  throw 'Read-only stage inspector accepted an incomplete owner marker.'
+ }
+ # An interrupted destination journal write must remain for investigation;
+ # it must not be deleted by the copy failure catch.
+ $brokenJournal=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateInterruptedJournalWrite')
+ if($brokenJournal.code -eq 0 -or
+    -not $brokenJournal.text.Contains('JOURNAL WRITE INTERRUPTION') -or
+    -not $brokenJournal.text.Contains('Manual intervention required')){
+  throw ('Interrupted journal write was not safely preserved: '+$brokenJournal.text)
+ }
+ if(-not (Test-Path -LiteralPath $journal) -or
+   (Get-Content -LiteralPath $journal -Raw) -cnotmatch '"schema_version"'){
+  throw 'Interrupted destination journal was incorrectly removed.'
+ }
+ if(@(Get-ChildItem -LiteralPath $dst -Force).Count -ne 2){
+  throw 'Interrupted journal write changed expected destination contents.'
+ }
+ $blockedCopy=Call $dst 'Copy' @('-ConfirmDisposableFixture')
+ if($blockedCopy.code -eq 0){throw 'Copy accepted an uncertain partial journal.'}
+ $blockedRollback=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
+ if($blockedRollback.code -eq 0){throw 'Rollback accepted an incomplete journal.'}
+ # Only the disposable TEST HARNESS removes the deliberately truncated journal.
+ [IO.File]::Delete($journal)
+ # M24: inject an unexpected destination file after staged verification.
+ # The collision must NEVER be overwritten or erased.
+ $collision=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateDestinationCollisionBeforePromotion')
+ if($collision.code -eq 0 -or -not $collision.text.Contains('Destination file unexpectedly appeared.')){
+  throw ('Synthetic destination collision was not refused: '+$collision.text)
+ }
+ $collisionPath=Join-Path $dst 'Wow.exe'
+ $collisionText='UNOWNED SYNTHETIC COLLISION; NEVER OVERWRITE'
+ if(-not (Test-Path -LiteralPath $collisionPath) -or
+   (Get-Content -LiteralPath $collisionPath -Raw) -cne $collisionText -or
+   (Test-Path -LiteralPath $journal)){
+  throw 'Destination collision bytes were changed, erased, or committed into journal.'
+ }
+ $rejected=Call $dst 'Copy' @('-ConfirmDisposableFixture')
+ if($rejected.code -eq 0){throw 'Copy accepted the occupied destination after collision.'}
+ # A second process does NOT run in this test; these are deterministic checkpoints.
+ # Test harness cleanup of the disposable collision is intentionally explicit.
+ [IO.File]::Delete($collisionPath)
+ if(@(Get-ChildItem -LiteralPath $dst -Force).Count -ne 1){
+  throw 'M24 scenarios failed to leave an otherwise clean fixture destination.'
+ }
+ $rollbackFlag=Call $dst 'Rollback' @('-ConfirmDisposableFixture','-SimulateInterruptedJournalWrite')
+ if($rollbackFlag.code -eq 0 -or
+   -not $rollbackFlag.text.Contains('Copy fault switches are not valid during rollback')){
+  throw 'Copy-only M24 fault switches were accepted by rollback.'
+ }
  $populated=Join-Path $base 'dest-populated'
  [IO.File]::WriteAllText((Join-Path $populated '.naxx-copy-test-destination'),'NAXX_SYNTHETIC_COPY_DESTINATION_V1')
  [IO.File]::WriteAllText((Join-Path $populated 'personal-file.txt'),'SAVE THIS FILE')
