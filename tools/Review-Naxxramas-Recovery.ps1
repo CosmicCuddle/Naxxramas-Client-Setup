@@ -121,7 +121,7 @@ if ($rows.Count -lt 1 -or $rows.Count -gt 5) {
 }
 $allowed = @('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq',
     'Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
-$seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+$seen = @{} # PowerShell hash tables use case-insensitive keys by default
 $results = New-Object 'System.Collections.Generic.List[object]'
 $conflictCount = 0
 
@@ -130,9 +130,10 @@ foreach ($op in $rows) {
     if ($allowed -cnotcontains $relative) {
         throw 'Session lists a file outside the exact five-path Naxxramas recovery allowlist.'
     }
-    if (-not $seen.Add($relative)) {
+    if ($seen.ContainsKey($relative)) {
         throw 'Duplicate file in recovery operations.'
     }
+    $seen[$relative] = $true
     $action = [string]$op.action
     if ($action -cnotin @('install','replace_after_backup')) {
         throw 'Recovery only understands installed or backup-first replacement operations.'
@@ -206,10 +207,10 @@ foreach ($op in $rows) {
         relative_path = $relative
         original_existed = $wasPresent
         recorded_action = $action
-        current_state = if ($null -eq $current) { 'missing' }
+        current_state = $(if ($null -eq $current) { 'missing' }
           elseif (Signature-Matches $current $afterHash $afterSize) { 'installed_signature' }
           elseif ($wasPresent -and (Signature-Matches $current $beforeHash $beforeSize)) { 'original_signature' }
-          else { 'unknown_changed_signature' }
+          else { 'unknown_changed_signature' })
         backup_state = $backupState
         proposed_recovery = $decision
         reason = $reason
@@ -221,7 +222,7 @@ $plan = [pscustomobject][ordered]@{
     session_id = [string]$manifest.session_id
     recorded_session_status = [string]$manifest.status
     patchset = [string]$manifest.patchset
-    status = if ($conflictCount -gt 0) { 'manual_conflict_review_required' } else { 'review_only_no_conflicts' }
+    status = $(if ($conflictCount -gt 0) { 'manual_conflict_review_required' } else { 'review_only_no_conflicts' })
     conflict_count = $conflictCount
     operations = @($results.ToArray())
     warning = 'READ ONLY: no files were created, changed, restored or removed. A future restoration engine must recheck every file and obtain consent.'
