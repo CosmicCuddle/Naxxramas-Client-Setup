@@ -12,7 +12,8 @@ param(
  [Parameter(Mandatory=$true)][string]$ManifestPath,
  [ValidateSet('Plan','Copy','Rollback')][string]$Action='Plan',
  [switch]$ConfirmDisposableFixture,
- [ValidateRange(0,20)][int]$SimulateFailureAfter=0
+ [ValidateRange(0,20)][int]$SimulateFailureAfter=0,
+ [ValidateRange(0,20)][int]$SimulateRollbackInterruptionAfter=0
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -89,6 +90,42 @@ function CheckMarker([string]$root,[string]$name,[string]$value){
  Require (Test-Path -LiteralPath $p -PathType Leaf) 'Synthetic test-only marker is missing.'
  Require ([string](Get-Content -LiteralPath $p -Raw).Trim() -ceq $value) 'Fixture marker content is incorrect. Real clients are forbidden.'
 }
+function VerifyDestinationEntries([string]$root,[object[]]$manifestFiles){
+ # Fixed shape only. Empty unknown directories must block, not merely files.
+ $rootNames=@('.naxx-copy-test-destination','.naxx-fixture-copy-journal.json')
+ $dataNames=@()
+ $localeNames=@()
+ foreach($f in $manifestFiles){
+  $parts=([string]$f.relative_path).Split('/')
+  if($parts.Count -eq 1){$rootNames+=$parts[0]}
+  elseif($parts.Count -eq 2){
+   if($rootNames -cnotcontains 'Data'){$rootNames+='Data'}
+   $dataNames+=$parts[1]
+  }elseif($parts.Count -eq 3){
+   if($rootNames -cnotcontains 'Data'){$rootNames+='Data'}
+   if($dataNames -cnotcontains 'enUS'){$dataNames+='enUS'}
+   $localeNames+=$parts[2]
+  }
+ }
+ foreach($scope in @(
+  @{Path=$root;Names=$rootNames},
+  @{Path=(Join-Path $root 'Data');Names=$dataNames},
+  @{Path=(Join-Path $root 'Data/enUS');Names=$localeNames}
+ )){
+  if(-not (Test-Path -LiteralPath $scope.Path)){continue}
+  NoLinkAncestors $scope.Path
+  Require (Test-Path -LiteralPath $scope.Path -PathType Container) 'Expected fixture folder was replaced.'
+  foreach($item in @(Get-ChildItem -LiteralPath $scope.Path -Force)){
+   NoLinkAncestors $item.FullName
+   Require ($scope.Names -ccontains $item.Name) 'Unexpected destination file or empty folder. Manual review required.'
+   if($item.PSIsContainer){
+    Require ($item.Name -ceq 'Data' -or $item.Name -ceq 'enUS') 'Unexpected fixture subfolder.'
+   }else{
+    Require (-not ($item.Name -ceq 'Data' -or $item.Name -ceq 'enUS')) 'Fixture directory became a file.'
+   }
+  }
+ }
+}
 function WriteJournal([string]$path,[object]$record){
  $json=$record|ConvertTo-Json -Depth 10
  $utf8=[Text.UTF8Encoding]::new($false)
@@ -117,13 +154,14 @@ try{
  $rows=@($data.files)
  $journalPath=Join-Path $dest $stateFile
  if($Action -eq 'Rollback'){
+  Require ($SimulateFailureAfter -eq 0) 'Copy failure injection is not valid during rollback.'
   Require ([bool]$ConfirmDisposableFixture) 'Rollback requires -ConfirmDisposableFixture.'
   Require (Test-Path -LiteralPath $journalPath -PathType Leaf) 'No fixture copy journal exists.'
   NoLinkAncestors $journalPath
   $journal=Get-Content -LiteralPath $journalPath -Raw|ConvertFrom-Json
   Require ($journal.schema_version -eq 1 -and $journal.kind -ceq 'naxx_fixture_copy_journal' -and
    $journal.destination -ceq $dest -and $journal.source -ceq $src -and
-   (@('applying','copied') -ccontains [string]$journal.status)) 'Fixture journal is invalid; refusing rollback.'
+   (@('applying','copied','rolling_back') -ccontains [string]$journal.status)) 'Fixture journal is invalid; refusing rollback.'
   Require (@($journal.files).Count -eq $rows.Count) 'Fixture journal does not match manifest.'
   foreach($j in @($journal.files)){
    $rel=SafeRelative ([string]$j.relative_path)
@@ -133,20 +171,41 @@ try{
     [long]$j.byte_size -eq [long]$match[0].byte_size) 'Journal and manifest disagree.'
    $target=Join-Path $dest $rel
    if(Test-Path -LiteralPath $target -PathType Leaf){ProbeFile $target $j}
-   else{Require ($journal.status -ceq 'applying') 'Completed fixture journal has a missing file.'}
+   else{Require ($journal.status -cne 'copied') 'Completed fixture journal has a missing file.'}
   }
-  # Any additional user-created entries means manual review; never remove them.
-  $expectedPaths=@($destMarker,$stateFile)+@($rows|ForEach-Object {[string]$_.relative_path})
-  $owned=@{}
-  foreach($p in $expectedPaths){$owned[$p.Replace('/',[IO.Path]::DirectorySeparatorChar)]=1}
-  foreach($f in @(Get-ChildItem -LiteralPath $dest -Recurse -File -Force)){
-   $rel=$f.FullName.Substring($dest.Length).TrimStart([char[]]@('\','/'))
-   Require ($owned.ContainsKey($rel)) 'Destination contains unexpected files. Rollback blocked to protect them.'
+  # Never trust file-only recursion: an unknown EMPTY directory also blocks.
+  VerifyDestinationEntries $dest $rows
+  # If a previous journal atomic replacement was interrupted, do not guess.
+  foreach($leftover in @($journalPath+'.rollback-writing',$journalPath+'.rollback-previous')){
+   Require (-not (Test-Path -LiteralPath $leftover)) 'Rollback journal replacement residue requires manual review.'
   }
+  if($journal.status -cne 'rolling_back'){
+   # Transition to a durable, resumable state BEFORE the first deletion.
+   $journal.status='rolling_back'
+   $writing=$journalPath+'.rollback-writing'
+   $previous=$journalPath+'.rollback-previous'
+   WriteJournal $writing $journal
+   [IO.File]::Replace($writing,$journalPath,$previous)
+   [IO.File]::Delete($previous)
+  }
+  [int]$removed=0
   foreach($j in @($journal.files)){
    $target=Join-Path $dest (SafeRelative ([string]$j.relative_path))
-   if(Test-Path -LiteralPath $target -PathType Leaf){[IO.File]::Delete($target)}
+   VerifyDestinationEntries $dest $rows
+   NoLinkAncestors $target
+   if(Test-Path -LiteralPath $target -PathType Leaf){
+    # Recheck immediately before deletion; never delete altered fixture files.
+    ProbeFile $target $j
+    [IO.File]::Delete($target)
+    $removed++
+    if($SimulateRollbackInterruptionAfter -gt 0 -and $removed -eq $SimulateRollbackInterruptionAfter){
+     throw 'SIMULATED FIXTURE ROLLBACK INTERRUPTION; rolling_back journal retained.'
+    }
+   }else{
+    Require (-not (Test-Path -LiteralPath $target)) 'A fixture file path changed into an unexpected object.'
+   }
   }
+  VerifyDestinationEntries $dest $rows
   foreach($sub in @('Data/enUS','Data')){
    $dir=Join-Path $dest ($sub.Replace('/',[IO.Path]::DirectorySeparatorChar))
    if(Test-Path -LiteralPath $dir -PathType Container){
@@ -157,6 +216,7 @@ try{
   Write-Host 'SYNTHETIC FIXTURE ROLLBACK VERIFIED. ORIGINAL SOURCE UNCHANGED.'
   exit 0
  }
+ Require ($SimulateRollbackInterruptionAfter -eq 0) 'Rollback interruption injection is valid only during rollback.'
  Require (-not (Test-Path -LiteralPath $journalPath)) 'Existing fixture journal must be reviewed or rolled back first.'
  $destEntries=@(Get-ChildItem -LiteralPath $dest -Force)
  Require ($destEntries.Count -eq 1 -and $destEntries[0].Name -ceq $destMarker) 'Destination must contain only its marker. No overwrites allowed.'
