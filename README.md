@@ -61,6 +61,10 @@ This script **does not install, download, copy, repair, replace or remove any ga
 
 The [Recovery Preview](docs/RECOVERY-PREVIEW.md) can inspect **synthetic development session records** and compare saved hashes, original backups and current files to show where a future rollback would encounter conflicts. The script is `tools/Review-Naxxramas-Recovery.ps1`. Windows PowerShell fixture tests passed on 10 October 2026. **It does not restore, delete, replace or change files, and no production installer creates session records yet.**
 
+## Synthetic signed journal checks (developer-only)
+
+The [signed journal v2 fixture](docs/JOURNAL-V2-FIXTURE.md) demonstrates **read-only** HMAC/event-chain checks on randomly generated synthetic records in Windows PowerShell. It does not create trusted installation records or verify ownership of any real client. No DPAPI-protected key, durable replay-proof anchor, write-capable installer or rollback engine exists. This developer tool is separate from the existing recovery preview and **must not be used to justify file changes**.
+
 ## Updating core and optional patches
 
 When patch-V, patch-Z, Patch-J or Patch-U changes, **do not rename a patch or overwrite its old version record**. Download a fresh repository copy and drag the folder containing `Wow.exe` onto `tools/Prepare-Patch-Update.bat`. This generates `tools/patch-update-proposal.json` (hashes, sizes and proposed next version only; no game binaries, personal paths or automatic uploads). Send the proposal for review, test the patched client, and then commit the new reference plus an immutable history entry. See [Patch Updates](docs/PATCH-UPDATES.md). The application updater/rollback system is **not implemented yet**.
@@ -76,7 +80,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** review a versioned and authenticated journal format in [Journal Authority](docs/JOURNAL-AUTHORITY.md), verify authoritative Windows volume identity, and settle [Journal Durability](docs/JOURNAL-DURABILITY.md) before any separately reviewed fixture-only write experiment. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** design a protected latest-session trust anchor and local installation identity, and resolve the remaining [Journal Authority](docs/JOURNAL-AUTHORITY.md) and [Journal Durability](docs/JOURNAL-DURABILITY.md) safety gates. The signed v2 prototype is fixture-only and **not a production authority**; no file-writing installer or rollback is available. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 

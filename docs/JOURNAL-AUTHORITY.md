@@ -79,11 +79,13 @@ The future engine must do **all** of the following, freshly and under its own co
 
 ## Open design decisions
 
-- Canonical encoding and schema version for the authenticated envelope.
+- Review a production encoding and schema. The [synthetic v2 fixture](JOURNAL-V2-FIXTURE.md) chooses a fixed ASCII event layout with exact-byte HMAC; that choice is **not approved** for a production trust boundary.
 - Whether a per-installation HMAC key protected by DPAPI is sufficient for the intended threat model, and how portable *manual* backup recovery works.
 - Windows file/directory identity for renamed/moved clients.
 - Crash-durable ordering of journal, checkpoint and protected anchor across filesystems.
 - Whether the release should be code-signed and how users verify installer provenance.
 - Private backup retention and key lifecycle after uninstall.
 
-**Next implementation step:** create **synthetic, read-only** tests for malformed or replayed signed-envelope examples *after* agreeing a versioned format. Do not create a write-capable rollback engine just from this proposal.
+**Prototype checkpoint (10 October 2026):** a [synthetic v2 signed journal format](JOURNAL-V2-FIXTURE.md) and a **read-only** inspector have now been implemented and tested on Windows PowerShell 5.1. Tests use randomly generated disposable keys and anchors; no production keys, DPAPI, protected installation identity, automatic recovery or write operations exist. A stored signed journal and its **matching** anchor may still be replayed together, because the fixture has no independently protected latest-state authority.
+
+**Next implementation step:** refine secure key/anchor management, strict input limits and Windows installation/volume identity; define a crash-tolerant state protocol and test it without a real WoW client. Do not build a write-capable rollback engine from the fixture format alone.
