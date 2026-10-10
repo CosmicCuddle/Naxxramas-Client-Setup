@@ -51,13 +51,14 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Emit `no_change`, `install`, `replace_after_backup`, `blocked`, `not_selected` and `leave_existing` actions.
 - [x] Use an exact four-patch policy allowlist with no file copying.
 - [ ] Resolve asset provenance and approved distribution sources before any future copying.
-- [x] Estimate staging/backup space, check local free disk and reject overlapping roots and reparse points (pending Windows validation).
+- [x] Estimate staging/backup space, check local free disk and reject overlapping roots and reparse points; Windows fixture tests passed.
 - [x] Provide text and JSON previews without uploading MPQ bytes or personal file paths.
 - [x] Add synthetic cases for current/missing/older/unknown patches, source mismatch, J/U selection, realmlist, collisions and no-write behaviour.
 - [x] Add missing/nested-path and conditional junction rejection fixture assertions.
 - [x] Confirm Windows CI and exercise a malformed policy in synthetic fixtures, including a valid build-12340 metadata success case.
 - [x] Add deterministic low-space and failed-space-query regression tests, using **fixture-only script copies** without introducing a production override; both fail closed in the real preview logic.
 - [x] Verify Windows PowerShell 5.1 CI succeeds for these planner changes (PR #5).
+- [x] Add optional `-BackupRoot` capacity preview, path isolation and distinct/shared drive budget reporting with deterministic low/unknown backup drive tests (PR #6; Windows fixtures passed).
 - [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
@@ -71,6 +72,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Verify read-only recovery preview fixture tests on GitHub Windows PowerShell 5.1 CI (10 October 2026; PR #4).
 - [x] Prevent recovery suggestions from uncommitted/unverified journals and reject duplicate backup references; verify Windows CI (PR #5).
 - [x] Draft [journal durability and ownership design](JOURNAL-DURABILITY.md) with crash-point tests, permission boundaries and unresolved authentication issues.
+- [x] Draft [journal authority proposal](JOURNAL-AUTHORITY.md): versioned trust levels, DPAPI-protected per-installation key proposal, signed event chain and replay caveats. **Design only**, no keys or signed journals implemented.
 - [ ] Build a transaction engine for allowlisted configuration/approved assets only after design and sources are approved.
 - [ ] Require explicit confirmation and client-closed checks before writing.
 - [ ] Stage files, verify SHA-256 and size, then commit by safe replacement.
@@ -135,6 +137,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 | Realm policy | [../config/realm.json](../config/realm.json) | Independent realm address |
 | Transaction recovery | [RECOVERY-PREVIEW.md](RECOVERY-PREVIEW.md) | Tested read-only session rollback decisions |
 | Journal durability | [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) | Design-only crash safety and ownership gates |
+| Journal authority | [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) | Design-only signed ownership and replay-defense proposal |
 
 ## Decision and progress log
 
@@ -150,4 +153,6 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - Recorded the write-capable design separately in [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md), without introducing any installation code.
 - PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) merged a validated read-only recovery inspector, synthetic safety tests and [recovery guide](RECOVERY-PREVIEW.md). Both new recovery and existing preflight workflows passed on Windows.
 - PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5): low/unknown-space regression tests, blocked incomplete recovery journals, duplicate backup rejection and [journal durability proposal](JOURNAL-DURABILITY.md). Windows preflight, planner and recovery workflows all passed.
-- **Next task:** finalise trusted journal ownership/authentication, backup-volume capacity accounting, atomic replacement and crash-recovery protocol before any separately approved fixture-only writing prototype. **Do not modify a real client.**
+- PR [#6](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/6) extends the read-only planner with optional validated `-BackupRoot`, two-drive budget checks, simulated independent volume failures and path collision tests. Windows planner and existing preflight suites passed. **Drive-root identification is not authoritative physical volume identity.**
+- Added [Journal Authority](JOURNAL-AUTHORITY.md) specifying proposed tamper-evident ownership and failure cases, without implementing keys or automatic recovery.
+- **Next task:** review/choose the authenticated journal schema, true Windows volume identification and durable checkpoint protocol. Then add read-only synthetic trust tests before considering *separately approved* fixture-only write experiments. Do not modify any real client.
