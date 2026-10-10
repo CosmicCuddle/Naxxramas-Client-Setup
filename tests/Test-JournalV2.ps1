@@ -93,6 +93,8 @@ try {
         return $v
     }
     $valid = Store-Valid
+    $fixtureEnvelopeRaw = [IO.File]::ReadAllText($envelopeFile)
+    Write-Host ("FIXTURE FORMAT DIAGNOSTIC: " + $fixtureEnvelopeRaw.Substring(0,[Math]::Min(40,$fixtureEnvelopeRaw.Length)))
     $before = Snap $fixture
     $raw = & $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -Json | Out-String
     $result = $raw | ConvertFrom-Json
