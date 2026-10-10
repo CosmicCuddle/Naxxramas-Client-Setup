@@ -33,6 +33,8 @@
 
 - **Milestone 24 passing Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936 (tested implementation commit `39cc99e20f7444b09eec3cc6d1d168cdb856dfd2`)
 
+**Milestone 25 (Windows CI pending):** Added developer-only `Inspect-Fixture-Transaction-Status.ps1` to summarise strictly marked tiny synthetic journals, transaction residues, and an optionally specified stage, without modifying files or exposing user paths. It delegates verification to existing M20/M22 read-only inspectors. Do not interpret a consistent result as permission to erase files or deploy the game.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -133,6 +135,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M22 — complete (CI 38062420201)** | Synthetic stage owner marker, nonrecursive guarded cleanup, and developer-only read-only single-stage inspection with unknown-folder/tamper tests. No automated orphan removal. |
 | **M23 — complete (CI 38063285602)** | Controlled low-space, interrupted stage-write and staged-file mutation fault switches, with prepromotion source/stage verification; tiny synthetic fixtures only, not real concurrent writes. |
 | **M24 — complete (CI 38064037936)** | Deterministic interrupted stage-owner and destination-journal writes, promotion-time dummy collision, conservative retention of uncertain state; synthetic-only fixture tests. |
+| **M25 — Windows CI pending** | Read-only synthetic transaction status overview, safe journal and stage classifications, privacy-safe console output, no modifications or automated recovery. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -155,6 +158,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M22:** `tools/Inspect-Fixture-Stage.ps1`: developer-only, read-only review of a single explicit disposable stage folder. M15 writes stage-owner metadata and keeps suspicious stages, not recursive cleanup.
 - **M23:** M15 dummy-only copy adds `-SimulateAvailableDiskBytes`, `-SimulateDiskWriteFailureAfterStagedFiles`, and `-SimulateStagedFileMutationBeforePromotion`. All are explicitly confirmed Copy-only test switches; staged mutation never changes a real source.
 - **M24:** M15 synthetic copy adds `-SimulateInterruptedStageOwnerWrite`, `-SimulateInterruptedJournalWrite`, and `-SimulateDestinationCollisionBeforePromotion`. Added fixtures check partial journal retention, invalid stage marker rejection, non-overwriting collision. No real-client copy.
+- **M25:** `tools/Inspect-Fixture-Transaction-Status.ps1`: developer-only summary from M15/M20/M22 disposable fixtures, with explicit optional stage selection. Never scans siblings, saves a report, or performs cleanup.
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -173,7 +177,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M24 full Windows regression suite and preview packaging **passed** ([run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936)). No owner test is needed. Next developer work: read-only transaction-health/status inspection that explains partial journals, stage-owner markers and journal sidecar residues without reading player accounts; then design deliberately confirmed, non-destructive recovery actions. Improve real external process/path-change fixture tests, but never imply that deterministic injection proves race freedom. Keep draft PR, disabled full-client downloader, exact synthetic markers and strict 1 MiB cap.
+**Current next task:** M25 read-only synthetic transaction status inspection implemented (Windows CI pending). Run all M25 fixture classification/privacy tests, prior rollback/security fixtures and Windows preview packaging. If successful, record passing run in milestone docs, handover and draft PR. Next develop a strictly read-only/manual recovery decision plan and stronger tests for actual concurrent changes to tiny disposable files. Preserve draft PR, exact markers, 1 MiB ceiling, fixed dummy paths, blocked full client source, no proprietary assets, and explicit owner release approval.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -194,7 +198,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 24 has passed Windows validation. You do not need to run anything, repeat the client hash scan, or change your WoW folder. Next we'll make the synthetic recovery state easier to inspect before designing any manual repair functions.”
+**Owner-facing next instruction:** “Milestone 25 uses only synthetic test folders and has no new player-facing task. No local client scan or backup changes are needed. Once Windows CI passes we'll continue designing explicit, non-destructive recovery choices for interrupted transactions.”
 
 ---
 

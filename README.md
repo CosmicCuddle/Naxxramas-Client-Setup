@@ -156,6 +156,10 @@ The M15 dummy-only copy prototype can now simulate **zero available space**, **s
 
 The developer-only copy fixture now simulates a **partly written stage marker**, a **truncated copy journal** and a **new file appearing at the destination immediately before promotion**. Uncertain journals/stages are retained for manual review and existing files are never intentionally overwritten. These are deterministic tiny-file tests, not proof of a production filesystem transaction. See [Milestone 24](docs/INSTALLER-MILESTONE-24.md).
 
+## Milestone 25 — Read-only synthetic recovery status
+
+`tools/Inspect-Fixture-Transaction-Status.ps1` gives developers a simple, **read-only** status of one deliberately marked dummy transaction: empty destination, verified partial/completed journal, unsafe journal residues and optionally one explicitly nominated stage folder. It does not search the player's PC, install, repair, delete, copy files or create a report. A consistent state still requires manual review; it does not authorise cleanup. [M25 technical guide](docs/INSTALLER-MILESTONE-25.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
