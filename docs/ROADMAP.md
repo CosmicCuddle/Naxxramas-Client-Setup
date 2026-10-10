@@ -72,7 +72,9 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Verify read-only recovery preview fixture tests on GitHub Windows PowerShell 5.1 CI (10 October 2026; PR #4).
 - [x] Prevent recovery suggestions from uncommitted/unverified journals and reject duplicate backup references; verify Windows CI (PR #5).
 - [x] Draft [journal durability and ownership design](JOURNAL-DURABILITY.md) with crash-point tests, permission boundaries and unresolved authentication issues.
-- [x] Draft [journal authority proposal](JOURNAL-AUTHORITY.md): versioned trust levels, DPAPI-protected per-installation key proposal, signed event chain and replay caveats. **Design only**, no keys or signed journals implemented.
+- [x] Draft [journal authority proposal](JOURNAL-AUTHORITY.md): versioned trust levels, DPAPI-protected per-installation key proposal, signed event chain and replay caveats. **Production design only**; DPAPI key protection remains unimplemented.
+- [x] Implement **synthetic-only** signed journal v2 envelope/anchor inspection with HMAC, predecessor link validation, allowlist checks and Windows fixtures; [format and limits](JOURNAL-V2-FIXTURE.md). No production trust authority or file writes (PR #7).
+- [ ] Resolve replay resistance of a journal and its corresponding signed anchor, secure DPAPI key lifecycle and installation identity for a *production* journal.
 - [ ] Build a transaction engine for allowlisted configuration/approved assets only after design and sources are approved.
 - [ ] Require explicit confirmation and client-closed checks before writing.
 - [ ] Stage files, verify SHA-256 and size, then commit by safe replacement.
@@ -138,6 +140,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 | Transaction recovery | [RECOVERY-PREVIEW.md](RECOVERY-PREVIEW.md) | Tested read-only session rollback decisions |
 | Journal durability | [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) | Design-only crash safety and ownership gates |
 | Journal authority | [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) | Design-only signed ownership and replay-defense proposal |
+| Synthetic signed journal v2 | [JOURNAL-V2-FIXTURE.md](JOURNAL-V2-FIXTURE.md) | Tested fixture format, limitations and Windows check command |
 
 ## Decision and progress log
 
@@ -155,4 +158,5 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5): low/unknown-space regression tests, blocked incomplete recovery journals, duplicate backup rejection and [journal durability proposal](JOURNAL-DURABILITY.md). Windows preflight, planner and recovery workflows all passed.
 - PR [#6](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/6) extends the read-only planner with optional validated `-BackupRoot`, two-drive budget checks, simulated independent volume failures and path collision tests. Windows planner and existing preflight suites passed. **Drive-root identification is not authoritative physical volume identity.**
 - Added [Journal Authority](JOURNAL-AUTHORITY.md) specifying proposed tamper-evident ownership and failure cases, without implementing keys or automatic recovery.
-- **Next task:** review/choose the authenticated journal schema, true Windows volume identification and durable checkpoint protocol. Then add read-only synthetic trust tests before considering *separately approved* fixture-only write experiments. Do not modify any real client.
+- PR [#7](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/7) adds synthetic signed journal v2 event-chain and anchor checks, a Windows fixture test suite, and [format documentation](JOURNAL-V2-FIXTURE.md). **Only trust properties of the disposable fixture are tested.**
+- **Next task:** define a separately protected, monotonic latest-session anchor and a verified local installation identity; then test coordinated-replay and crash-boundary cases read-only. Actual writes, backup transactions and real game clients remain off-limits.
