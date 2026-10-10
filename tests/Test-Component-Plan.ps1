@@ -15,7 +15,7 @@ try{
  $stub=Join-Path $base 'repo'
  Copy-Item -LiteralPath $planner -Destination (Join-Path $stub 'tools/Plan-Reference-Components.ps1')
  foreach($cfg in @('client-patches.json','addon-suite.json','realm.json')){
-  Copy-Item -LiteralPath (Join-Path (Join-Path $repo 'config') $cfg) -Destination (Join-Path $stub 'config' $cfg)
+  Copy-Item -LiteralPath (Join-Path (Join-Path $repo 'config') $cfg) -Destination (Join-Path (Join-Path $stub 'config') $cfg)
  }
  $policy=Get-Content -LiteralPath (Join-Path $repo 'config/client-patches.json') -Raw|ConvertFrom-Json
  $reportFile=Join-Path $base 'reports/reference.json'
