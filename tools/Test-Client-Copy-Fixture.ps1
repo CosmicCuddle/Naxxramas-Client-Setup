@@ -173,12 +173,13 @@ try{
    if(Test-Path -LiteralPath $target -PathType Leaf){ProbeFile $target $j}
    else{Require ($journal.status -cne 'copied') 'Completed fixture journal has a missing file.'}
   }
-  # Never trust file-only recursion: an unknown EMPTY directory also blocks.
-  VerifyDestinationEntries $dest $rows
-  # If a previous journal atomic replacement was interrupted, do not guess.
+  # A previous interrupted journal transition needs explicit manual review.
+  # Check this before the general unknown-destination entry scan.
   foreach($leftover in @($journalPath+'.rollback-writing',$journalPath+'.rollback-previous')){
    Require (-not (Test-Path -LiteralPath $leftover)) 'Rollback journal replacement residue requires manual review.'
   }
+  # Never trust file-only recursion: an unknown EMPTY directory also blocks.
+  VerifyDestinationEntries $dest $rows
   if($journal.status -cne 'rolling_back'){
    # Transition to a durable, resumable state BEFORE the first deletion.
    $journal.status='rolling_back'
