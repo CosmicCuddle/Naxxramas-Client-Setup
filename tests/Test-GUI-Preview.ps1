@@ -37,6 +37,9 @@ foreach($needle in @(
  '$result.AccessibleName=',
  'New-NaxxPreviewRequest',
  'New-NaxxSourceDownloadRequest',
+ 'New-NaxxFreshPreviewRequest',
+ 'FRESH CLIENT SELECTOR SAFETY TEST PASSED',
+ 'Fresh client - planning only',
  'Get-NaxxBrowseInitialFolder (Normalize-NaxxInputPath $box.Text)',
  'EMPTY FOLDER BROWSE TEST PASSED',
  'DIRECT CTRL+V PATH TEST PASSED',
@@ -107,6 +110,15 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  [IO.File]::WriteAllText($script,$fakeScript)
  # A synthetic download stub is only used to validate the GUI argument builder.
  [IO.File]::WriteAllText((Join-Path $repoFixture 'tools/Get-Patch-Sources.ps1'),'param()')
+ [IO.File]::WriteAllText((Join-Path $repoFixture 'tools/Plan-Fresh-Client.ps1'),'param()')
+ $freshRequest=New-NaxxFreshPreviewRequest -DestinationPath $patches -TbcLogin $true -VanillaLoading $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
+ if($freshRequest.Mode -ne 'FreshPlan' -or $freshRequest.Parameters.Action -ne 'Plan' -or
+    $freshRequest.Parameters.ContainsKey('Apply') -or
+    $freshRequest.Parameters.ContainsKey('ConfirmDownload') -or
+    $freshRequest.Parameters.ContainsKey('ClientPath') -or
+    -not $freshRequest.Parameters.TbcLogin){
+  throw 'Fresh preview requested unsafe operations.'
+ }
  $req=New-NaxxPreviewRequest -Mode Plan -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -VanillaLoading $true -Addons @('DungeonJournal','DungeonJournal','MultiBot') -RepositoryPath $repoFixture
  if($req.Parameters.Action -ne 'Plan' -or $req.Parameters.ContainsKey('Apply') -or
     $req.Parameters.ContainsKey('ConfirmDisposableFixture') -or
@@ -134,7 +146,7 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  } finally { Remove-Job -Job $job -Force -ErrorAction SilentlyContinue }
  $command=Join-Path $repo 'tools/Naxxramas-Preview.ps1'
  $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $command -SmokeTest 2>&1 | Out-String)
- if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED') -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('DIRECT CTRL+V PATH TEST PASSED')) {
+ if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED') -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('DIRECT CTRL+V PATH TEST PASSED') -or -not $display.Contains('FRESH CLIENT SELECTOR SAFETY TEST PASSED')) {
   throw ("Window construction smoke test failed: "+$display)
  }
  # Verify the fixed default image is loaded from a copy of the repository,
@@ -162,7 +174,7 @@ Write-Output "READ-ONLY PLAN COMPLETE"
   $newArtHash=(Get-FileHash -LiteralPath $fixedPath -Algorithm SHA256).Hash.ToLowerInvariant()
   if($previousArtHash -and $previousArtHash -eq $newArtHash){throw 'Replaced artwork was identical.'}
   $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $packagedGui -SmokeTest 2>&1 | Out-String)
-  if($LASTEXITCODE -ne 0 -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('DIRECT CTRL+V PATH TEST PASSED') -or -not $display.Contains("DEFAULT ARTWORK SHA256: $newArtHash") -or
+  if($LASTEXITCODE -ne 0 -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('DIRECT CTRL+V PATH TEST PASSED') -or -not $display.Contains('FRESH CLIENT SELECTOR SAFETY TEST PASSED') -or -not $display.Contains("DEFAULT ARTWORK SHA256: $newArtHash") -or
      -not $display.Contains('CLASSIC LAUNCHER LAYOUT TEST PASSED')){
    throw ("Fixed default artwork smoke test failed: "+$display)
   }

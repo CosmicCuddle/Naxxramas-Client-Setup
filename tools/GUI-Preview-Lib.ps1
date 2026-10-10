@@ -101,3 +101,42 @@ function New-NaxxSourceDownloadRequest {
  if($VanillaLoading){$parameters.VanillaLoading=$true}
  return [pscustomobject]@{ScriptPath=$engine;Parameters=$parameters;Mode='Download'}
 }
+
+
+# Fresh-client read-only planning. This never downloads or installs the base game.
+# It does not reuse the existing-client request because there is no Wow.exe yet.
+function New-NaxxFreshPreviewRequest {
+ [CmdletBinding()]
+ param(
+  [Parameter(Mandatory=$true)][string]$DestinationPath,
+  [bool]$VanillaLogin=$false,
+  [bool]$TbcLogin=$false,
+  [bool]$VanillaLoading=$false,
+  [string[]]$Addons=@(),
+  [string]$RepositoryPath=(Split-Path -Parent $PSScriptRoot)
+ )
+ if($VanillaLogin -and $TbcLogin){throw 'Choose only one login screen: Vanilla J or TBC C.'}
+ if([string]::IsNullOrWhiteSpace($DestinationPath)){
+  throw 'Create and select a new empty folder for the future WoW client.'
+ }
+ if(-not (Test-Path -LiteralPath $DestinationPath -PathType Container)){
+  throw 'The fresh client destination must be an existing empty folder.'
+ }
+ $dest=(Resolve-Path -LiteralPath $DestinationPath).ProviderPath
+ $engine=Join-Path (Join-Path $RepositoryPath 'tools') 'Plan-Fresh-Client.ps1'
+ if(-not (Test-Path -LiteralPath $engine -PathType Leaf)){
+  throw 'Plan-Fresh-Client.ps1 is missing. Download a complete updated launcher.'
+ }
+ $allowed=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
+ $chosen=New-Object 'System.Collections.Generic.List[string]'
+ foreach($name in @($Addons)){
+  if($allowed -cnotcontains $name){throw "Unrecognised addon: $name"}
+  if(-not $chosen.Contains($name)){$chosen.Add($name)}
+ }
+ $args=@{Action='Plan';DestinationPath=$dest}
+ if($VanillaLogin){$args.VanillaLogin=$true}
+ if($TbcLogin){$args.TbcLogin=$true}
+ if($VanillaLoading){$args.VanillaLoading=$true}
+ if($chosen.Count -gt 0){$args.Addons=@($chosen.ToArray())}
+ return [pscustomobject]@{ScriptPath=$engine;Parameters=$args;Mode='FreshPlan'}
+}

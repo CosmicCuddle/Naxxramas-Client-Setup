@@ -6,7 +6,11 @@ Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a s
 
 ## Purpose
 
-The goal is to make joining the Naxxramas server straightforward for players who already have a legitimate, compatible **World of Warcraft 3.3.5a (build 12340)** installation.
+**Fresh-client setup is now a separate planned workflow.** The GUI provides **Existing client** and **Fresh client - planning only** choices. Fresh mode lets the user select an empty destination, preview all planned components, and see why complete-client downloading is blocked pending verified redistribution authorisation. Existing-client patch downloads remain available; no real-client installation is enabled.
+
+[Milestone 11: fresh-client planning and source requirements](docs/INSTALLER-MILESTONE-11.md). The full-game source is **not configured**, and the repo does not contain a copy of WoW.
+
+The finished launcher is intended for **two player journeys**: setting up a complete authorised World of Warcraft 3.3.5a (build 12340) client from scratch, or preparing an existing compatible client. Both will add the Naxxramas patches, addons and realmlist. **At present only the existing-client preparation tools and a read-only fresh-client plan exist**; downloading the base game is blocked until a legitimate redistributable source is validated.
 
 Planned features:
 

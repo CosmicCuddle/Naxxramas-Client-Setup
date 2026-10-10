@@ -27,6 +27,9 @@ jobs:
       - name: Offline verified patch downloader fixture tests
         shell: powershell
         run: .\tests\Test-Patch-Downloads.ps1
+      - name: Fresh client read-only planning and source-lock fixture tests
+        shell: powershell
+        run: .\tests\Test-Fresh-Client-Plan.ps1
       - name: Headless Windows GUI preview safety tests
         shell: powershell
         run: .\tests\Test-GUI-Preview.ps1
@@ -42,13 +45,16 @@ jobs:
             'tools/GUI-Preview-Lib.ps1'
             'tools/Setup-Prototype.ps1'
             'tools/Get-Patch-Sources.ps1'
+            'tools/Plan-Fresh-Client.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
+            'config/base-client-source.json'
             'config/addon-suite.json'
             'config/realm.json'
             'docs/INSTALLER-MILESTONE-8.md'
             'docs/INSTALLER-MILESTONE-10.md'
+            'docs/INSTALLER-MILESTONE-11.md'
             'assets/README.md'
           )
           foreach ($relative in $files) {
@@ -72,7 +78,7 @@ jobs:
           NAXXRAMAS CLIENT LAUNCHER - DEVELOPMENT PREVIEW
           ------------------------------------------------
           Open tools\Launch-Naxxramas-Preview.bat on Windows.
-          This preview can read and check your existing client but CANNOT install it.
+          This preview checks existing clients and plans fresh installations, but CANNOT install a full game client.
           No WoW client or proprietary MPQ archives are included.
           Optional default artwork (if present) is shipped from assets\default.
           Ensure artwork rights are reviewed before distributing to others.

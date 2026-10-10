@@ -157,7 +157,7 @@ $result.Location=New-Object Drawing.Point(12,38)
 $result.Size=New-Object Drawing.Size(445,95)
 $result.Anchor='Top,Bottom,Left,Right'
 $result.AccessibleName='Read-only installation preview output'
-$result.Text="Welcome to Naxxramas Client Setup.`r`nCore patches V and Z are required.`r`nChoose your client folder and click PREVIEW."
+$result.Text="Welcome to Naxxramas Client Setup.`r`nChoose Existing or Fresh client planning.`r`nFull-client downloads are not yet available."
 $news.Controls.Add($result)
 $news.Add_SizeChanged({
  $result.Width=[math]::Max(300,$news.ClientSize.Width-24)
@@ -252,10 +252,21 @@ function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
  }.GetNewClosure())
  return $box
 }
-$client=Picker 'Existing WoW 3.3.5a client' 6 $false 0
-$patch=Picker 'Local patch source (optional)' 70 $false 2
-$zip=Picker 'N-Addon Collection v2.0.0 ZIP (optional)' 134 $true 4
-[void](Label $options 'LOGIN SCREEN (CHOOSE ONE)' 2 199 350 25 $heading $gold)
+[void](Label $options 'SETUP MODE' 2 3 350 19 $small $muted)
+$setupMode=New-Object Windows.Forms.ComboBox
+$setupMode.Location=New-Object Drawing.Point(2,24)
+$setupMode.Size=New-Object Drawing.Size(350,26)
+$setupMode.Anchor='Top,Left,Right'
+$setupMode.DropDownStyle='DropDownList'
+$setupMode.BackColor=$well;$setupMode.ForeColor=$cream
+$setupMode.Font=$f
+[void]$setupMode.Items.Add('Existing client - check and prepare')
+[void]$setupMode.Items.Add('Fresh client - planning only')
+$options.Controls.Add($setupMode)
+$client=Picker 'Existing WoW 3.3.5a client' 62 $false 0
+$patch=Picker 'Local patch source (optional)' 126 $false 2
+$zip=Picker 'N-Addon Collection v2.0.0 ZIP (optional)' 190 $true 4
+[void](Label $options 'LOGIN SCREEN (CHOOSE ONE)' 2 255 350 25 $heading $gold)
 function Check([string]$name,[int]$x,[int]$y,[int]$tab){
  $cb=New-Object Windows.Forms.CheckBox
  $cb.Text=$name;$cb.Location=New-Object Drawing.Point($x,$y)
@@ -263,13 +274,13 @@ function Check([string]$name,[int]$x,[int]$y,[int]$tab){
  $cb.ForeColor=$cream;$cb.TabIndex=$tab
  $options.Controls.Add($cb);return $cb
 }
-$login=Check 'Vanilla login (J)' 3 225 6
-$tbc=Check 'TBC login (C)' 191 225 7
+$login=Check 'Vanilla login (J)' 3 281 6
+$tbc=Check 'TBC login (C)' 191 281 7
 $login.Add_CheckedChanged({if($login.Checked){$tbc.Checked=$false}}.GetNewClosure())
 $tbc.Add_CheckedChanged({if($tbc.Checked){$login.Checked=$false}}.GetNewClosure())
-$loading=Check 'Vanilla loading (U)' 3 254 8
-[void](Label $options 'N-ADDON COLLECTION' 2 288 350 25 $heading $gold)
-$core=Label $options 'NCore - select a suite ZIP to enable' 3 316 355 24 $small $gold
+$loading=Check 'Vanilla loading (U)' 3 310 8
+[void](Label $options 'N-ADDON COLLECTION' 2 344 350 25 $heading $gold)
+$core=Label $options 'NCore - select a suite ZIP to enable' 3 372 355 24 $small $gold
 $definitions=@(
  @{Id='IndividualProgressionAddon';Title='Individual Progression'},
  @{Id='DungeonJournal';Title='Dungeon Journal'},
@@ -279,7 +290,7 @@ $definitions=@(
 $addonChecks=@{}
 for($i=0;$i -lt $definitions.Count;$i++){
  $d=$definitions[$i]
- $cb=Check $d.Title 3 (343+$i*29) (9+$i)
+ $cb=Check $d.Title 3 (399+$i*29) (9+$i)
  $cb.Enabled=$false
  $addonChecks[$d.Id]=$cb
 }
@@ -322,6 +333,25 @@ $tip.SetToolTip($preview,'Alt+P or Enter: read-only verification.')
 $tip.SetToolTip($inspect,'Alt+I: read-only recovery-state inspection.')
 $tip.SetToolTip($cancel,'Cancel an active preview or download. A cancelled download may leave a temporary partial file in the separate source folder.')
 $tip.SetToolTip($download,'Download and SHA-256 verify selected missing official MPQs into a separate source folder; never into your WoW client.')
+$existingCaption=@($options.Controls | Where-Object {$_ -is [Windows.Forms.Label] -and $_.Text -eq 'Existing WoW 3.3.5a client'})[0]
+# Initialize before ComboBox raises SelectedIndexChanged on first load.
+$script:activeJob=$null
+$setupMode.Add_SelectedIndexChanged({
+ $fresh=($setupMode.SelectedIndex -eq 1)
+ $existingCaption.Text=if($fresh){'New EMPTY client destination'}else{'Existing WoW 3.3.5a client'}
+ if($fresh){
+  $result.Text='Fresh-client setup is a read-only plan until an authorised complete-client source is configured. Choose an empty folder and click PREVIEW.'
+  $status.Text='FULL CLIENT SOURCE REQUIRED';$status.ForeColor=$gold
+ }else{
+  $result.Text='Select an existing WoW client and click PREVIEW. Get patches downloads into a separate folder.'
+  $status.Text='READ-ONLY PREVIEW';$status.ForeColor=$green
+ }
+ if($null -eq $script:activeJob){
+  $download.Enabled=(-not $fresh)
+  $inspect.Enabled=(-not $fresh)
+ }
+}.GetNewClosure())
+$setupMode.SelectedIndex=0
 $script:activeJob=$null;$script:currentMode=''
 $timer=New-Object Windows.Forms.Timer
 $timer.Interval=350
@@ -334,20 +364,25 @@ $timer.Add_Tick({
  if([string]::IsNullOrWhiteSpace($message)){$message='No verification results returned.'}
  $result.Text=$message
  $ok=($job.State -eq 'Completed') -and
-  (($script:currentMode -eq 'Plan' -and $message.Contains('READ-ONLY PLAN COMPLETE')) -or
+  (($script:currentMode -eq 'FreshPlan' -and $message.Contains('FRESH CLIENT PLAN COMPLETE')) -or
+   ($script:currentMode -eq 'Plan' -and $message.Contains('READ-ONLY PLAN COMPLETE')) -or
    ($script:currentMode -eq 'Inspect' -and $message.Contains('READ-ONLY INSPECTION COMPLETE')) -or
    ($script:currentMode -eq 'Download' -and $message.Contains('PATCH DOWNLOAD COMPLETE')))
- if($ok){$status.Text='PREVIEW COMPLETE';$status.ForeColor=$green}
+ if($ok -and $script:currentMode -eq 'FreshPlan'){$status.Text='FULL CLIENT SOURCE REQUIRED';$status.ForeColor=$gold}
+ elseif($ok){$status.Text='PREVIEW COMPLETE';$status.ForeColor=$green}
  else{$status.Text='REVIEW ERRORS';$status.ForeColor=$red}
  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
- $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
+ $preview.Enabled=$true;$inspect.Enabled=($setupMode.SelectedIndex -eq 0);$download.Enabled=($setupMode.SelectedIndex -eq 0);$cancel.Enabled=$false
 })
 function Launch([string]$action){
  if($null -ne $script:activeJob){return}
  try{
   $selected=@()
   foreach($d in $definitions){if($addonChecks[$d.Id].Checked){$selected+=([string]$d.Id)}}
-  if($action -eq 'Download'){
+  if($setupMode.SelectedIndex -eq 1){
+   if($action -ne 'Plan'){throw 'Full client downloading and installation are not available yet.'}
+   $request=New-NaxxFreshPreviewRequest -DestinationPath $client.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked -Addons $selected
+  }elseif($action -eq 'Download'){
    $request=New-NaxxSourceDownloadRequest -ClientPath $client.Text -PatchSourcePath $patch.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked
    $question='Download missing selected patches directly from the pinned Naxxramas GitHub Releases?' + [Environment]::NewLine + [Environment]::NewLine +
     'Files will be saved ONLY to:' + [Environment]::NewLine + [string]$request.Parameters.PatchSourcePath + [Environment]::NewLine + [Environment]::NewLine +
@@ -358,10 +393,10 @@ function Launch([string]$action){
    $request=New-NaxxPreviewRequest -Mode $action -ClientPath $client.Text -PatchSourcePath $patch.Text -AddonSuiteArchivePath $zip.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked -Addons $selected
   }
   $preview.Enabled=$false;$inspect.Enabled=$false;$download.Enabled=$false;$cancel.Enabled=$true
-  $status.Text=if($action -eq 'Download'){'GETTING PATCHES'}else{'CHECKING FILES'}
+  $status.Text=if($request.Mode -eq 'FreshPlan'){'CHECKING EMPTY DESTINATION'}elseif($action -eq 'Download'){'GETTING PATCHES'}else{'CHECKING FILES'}
   $status.ForeColor=$gold
-  $result.Text=if($action -eq 'Download'){'Downloading selected patch files into the separate source folder...'}else{'Reading local files. Checking large patches may take a little while...'}
-  $script:currentMode=$action
+  $result.Text=if($request.Mode -eq 'FreshPlan'){'Planning a fresh client. No downloads or file changes will occur.'}elseif($action -eq 'Download'){'Downloading selected patch files into the separate source folder...'}else{'Reading local files. Checking large patches may take a little while...'}
+  $script:currentMode=$request.Mode
   $script:activeJob=Start-Job -ScriptBlock {
    param([string]$entry,[hashtable]$options)
    & $entry @options 2>&1|Out-String
@@ -370,7 +405,7 @@ function Launch([string]$action){
  }catch{
   $status.Text='PREVIEW NOT READY';$status.ForeColor=$red
   $result.Text='Could not start preview: '+$_.Exception.Message
-  $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
+  $preview.Enabled=$true;$inspect.Enabled=($setupMode.SelectedIndex -eq 0);$download.Enabled=($setupMode.SelectedIndex -eq 0);$cancel.Enabled=$false
  }
 }
 $preview.Add_Click({Launch 'Plan'})
@@ -385,7 +420,7 @@ $cancel.Add_Click({
  $timer.Stop();$job=$script:activeJob;$script:activeJob=$null
  Stop-Job -Job $job -ErrorAction SilentlyContinue
  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
- $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
+ $preview.Enabled=$true;$inspect.Enabled=($setupMode.SelectedIndex -eq 0);$download.Enabled=($setupMode.SelectedIndex -eq 0);$cancel.Enabled=$false
  $status.Text='CANCELLED';$status.ForeColor=$muted
  $result.Text='Operation cancelled. The WoW client was not changed. Incomplete source downloads may leave a .partial file outside the game.'
 })
@@ -407,7 +442,8 @@ try{
    $form.ClientSize=$size
    $grid.PerformLayout();$main.PerformLayout()
    $right.PerformLayout();$footer.PerformLayout();$left.PerformLayout()
-   if($null -eq $tbc -or ($login.Checked -and $tbc.Checked) -or
+   if($null -eq $setupMode -or $setupMode.Items.Count -ne 2 -or
+      $null -eq $tbc -or ($login.Checked -and $tbc.Checked) -or
       $null -eq $art -or $null -eq $result -or $null -eq $options -or
       $null -eq $artImage -or $artLayout.RowCount -ne 1 -or
       $artLayout.ClientSize.Width -le 0 -or
@@ -440,6 +476,15 @@ try{
   if(@($options.Controls | Where-Object {$_.Text -eq 'Paste'}).Count -ne 0){
    throw 'An unwanted Paste button remains.'
   }
+  $setupMode.SelectedIndex=1
+  if($download.Enabled -or $inspect.Enabled -or -not $existingCaption.Text.Contains('EMPTY')){
+   throw 'Fresh-client mode did not disable unavailable downloads or inspections.'
+  }
+  $setupMode.SelectedIndex=0
+  if(-not $download.Enabled -or -not $inspect.Enabled){
+   throw 'Existing-client mode did not restore actions.'
+  }
+  Write-Host 'FRESH CLIENT SELECTOR SAFETY TEST PASSED'
   Write-Host 'DIRECT CTRL+V PATH TEST PASSED'
   Write-Host 'EMPTY FOLDER BROWSE TEST PASSED'
   # Ensure the image placeholder and image control behave consistently.
