@@ -24,6 +24,8 @@ try{
  [IO.File]::WriteAllText((Join-Path $client 'Wow.exe'),'DUMMY ONLY WOW.EXE')
  [IO.File]::WriteAllText((Join-Path $client 'Data/common.MPQ'),'DUMMY COMMON')
  [IO.File]::WriteAllText((Join-Path $client 'Data/enUS/locale-enUS.MPQ'),'DUMMY LOCALE')
+ [IO.File]::WriteAllText((Join-Path $client 'Data/enUS/base-enUS.MPQ'),'DUMMY BASE LOCALE')
+ [IO.File]::WriteAllText((Join-Path $client 'Data/enUS/backup-enUS.MPQ'),'DUMMY BACKUP LOCALE')
  $policy=Get-Content -LiteralPath (Join-Path $repo 'config/client-patches.json') -Raw|ConvertFrom-Json
  foreach($p in @($policy.patches)){
   if([string]$p.path -in @('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-U.mpq')){
@@ -54,6 +56,15 @@ try{
  if($good.Code -ne 0 -or -not $good.Text.Contains('REPORT STRUCTURE: CONSISTENT') -or
     -not $good.Text.Contains('V/Z REPORTED HASHES AGAINST POLICY: MATCH') -or
     -not $good.Text.Contains('INSTALL/DOWNLOAD: BLOCKED')){throw ('Correct full scan rejected: '+$good.Text)}
+ $rpt=Get-Content -LiteralPath $full -Raw|ConvertFrom-Json
+ foreach($name in @('Data/enUS/base-enUS.MPQ','Data/enUS/backup-enUS.MPQ')){
+  $found=@($rpt.files|Where-Object {$_.relative_path -ceq $name})
+  if($found.Count -ne 1 -or $found[0].component -cne 'base_archive_candidate' -or
+    $found[0].integrity -cne 'not_pinned'){
+   throw ('Locale MPQ not accepted by M16 reviewer: '+$name)
+  }
+ }
+
  $quick=Join-Path $base 'reports/quick.json'
  Scan $quick @('-Quick')
  $q=Review $quick

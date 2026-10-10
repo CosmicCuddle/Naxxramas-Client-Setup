@@ -20,6 +20,8 @@ try{
  [IO.File]::WriteAllText((Join-Path $game 'Launcher.exe'),'dummy launcher')
  [IO.File]::WriteAllText((Join-Path $game 'Data/common.MPQ'),'dummy base MPQ')
  [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/locale-enUS.MPQ'),'dummy locale archive')
+ [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/base-enUS.MPQ'),'dummy base locale resource')
+ [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/BACKUP-enUS.mpq'),'dummy locale backup')
  [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/realmlist.wtf'),'PRIVATE_REALM_VALUE')
  [IO.File]::WriteAllText((Join-Path $game 'Data/PRIVATE_NAME.mpq'),'DO_NOT_SHOW_FILENAME')
  $private=Join-Path $game 'WTF/Account/SECRET_PERSON/sensitive.txt'
@@ -69,6 +71,48 @@ try{
     @($report.files|Where-Object {$_.relative_path -ceq 'Data/enUS/locale-enUS.MPQ'}).Count -ne 1){
   throw 'Case-insensitive game archives were not enumerated.'
  }
+ foreach($n in @('Data/enUS/base-enUS.MPQ','Data/enUS/BACKUP-enUS.mpq')){
+  $found=@($report.files|Where-Object {$_.relative_path -ceq $n})
+  if($found.Count -ne 1 -or $found[0].component -cne 'base_archive_candidate' -or
+    $found[0].integrity -cne 'not_pinned' -or [string]$found[0].sha256 -cnotmatch '^[0-9a-f]{64}
+ $text=Get-Content -LiteralPath $output -Raw
+ foreach($forbidden in @('SECRET_PERSON','VERY_PRIVATE_ACCOUNT_DATA','PRIVATE_NAME','DO_NOT_SHOW_FILENAME','PRIVATE_REALM_VALUE','PersonalAddon','SECRET_ADDON_INFO','PRIVATE_SCREENSHOT',$game)){
+  if($text.Contains($forbidden)){throw 'Private data leaked into manifest: '+$forbidden}
+ }
+ $quickFile=Join-Path $base 'reports/files-quick.json'
+ $quickRun=Run $quickFile @('-Quick')
+ if($quickRun.Code -ne 0){throw ('Quick inventory failed: '+$quickRun.Text)}
+ $quick=Get-Content -LiteralPath $quickFile -Raw|ConvertFrom-Json
+ if($quick.hash_mode -cne 'sizes_only_unverified' -or
+    @($quick.files|Where-Object {$null -ne $_.sha256}).Count -ne 0 -or
+    @($quick.pinned_patches|Where-Object {$_.required -and $_.status -cne 'not_checked_quick_mode'}).Count -ne 0){
+  throw 'Quick mode was incorrectly treated as hash verified.'
+ }
+ $duplicate=Run $output @()
+ if($duplicate.Code -eq 0 -or -not $duplicate.Text.Contains('already exists')){throw 'Existing report was overwritten.'}
+ $unsafe=Run (Join-Path $game 'client-report.json') @()
+ if($unsafe.Code -eq 0 -or -not $unsafe.Text.Contains('inside the WoW client')){
+  throw 'Report inside game was not rejected.'
+ }
+ [IO.File]::WriteAllText((Join-Path $game 'Data/patch-Z.mpq'),'tampered')
+ $tamperFile=Join-Path $base 'reports/files-tampered.json'
+ $tamperRun=Run $tamperFile @()
+ if($tamperRun.Code -ne 0){throw ('Tamper test scanner failed: '+$tamperRun.Text)}
+ $tamper=Get-Content -LiteralPath $tamperFile -Raw|ConvertFrom-Json
+ $z=@($tamper.pinned_patches|Where-Object {$_.relative_path -ceq 'Data/patch-Z.mpq'})[0]
+ if($z.status -cne 'pinned_mismatch'){throw 'Corrupted mandatory patch was incorrectly verified.'}
+ if((Get-FileHash -LiteralPath $private -Algorithm SHA256).Hash -ne $before){throw 'Client personal data was modified.'}
+ if(Test-Path -LiteralPath (Join-Path $game 'client-report.json')){throw 'A report was written into game.'}
+ Write-Host 'ALL WHITELISTED GAME FILE INVENTORY TESTS PASSED'
+}finally{
+ if(Test-Path -LiteralPath $base){Remove-Item -LiteralPath $base -Recurse -Force}
+}
+exit 0
+){
+   throw ('New locale candidate not correctly classified: '+$n)
+  }
+ }
+
  $text=Get-Content -LiteralPath $output -Raw
  foreach($forbidden in @('SECRET_PERSON','VERY_PRIVATE_ACCOUNT_DATA','PRIVATE_NAME','DO_NOT_SHOW_FILENAME','PRIVATE_REALM_VALUE','PersonalAddon','SECRET_ADDON_INFO','PRIVATE_SCREENSHOT',$game)){
   if($text.Contains($forbidden)){throw 'Private data leaked into manifest: '+$forbidden}
