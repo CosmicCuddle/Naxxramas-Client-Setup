@@ -2,7 +2,7 @@
 
 Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a server**.
 
-> **Project status: read-only preflight prototype.** There is no finished installer or downloadable game client in this repository yet.
+> **Project status: read-only client checks and installer-plan preview prototype.** There is no finished installer or downloadable game client in this repository yet. The new planner's Windows test results still need verification.
 
 ## Purpose
 
@@ -51,6 +51,12 @@ Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas
 
 See [Installer Development — Milestone 1](docs/INSTALLER-MILESTONE-1.md) for the exact steps, caveats, and the next implementation phase.
 
+## Read-only installer plan (Milestone 2)
+
+The new **[installer-plan preview](docs/INSTALLER-PLAN.md)** describes what an eventual setup *might* need to do. Drag a WoW folder onto `tools/Plan-Naxxramas-Install.bat` to preview the existing client without changing any files. A separate local patch source and optional J/U selections are supported through `tools/Plan-Naxxramas-Install.ps1`. The preview can classify current, missing, known older or unrecognised patches, check the realmlist, and show backups and blockers.
+
+This script **does not install, download, copy, repair, replace or remove any game files**. A Windows PowerShell fixture test workflow has been added, but passing execution has not yet been independently verified in this development session. Do not treat a preview as an installation approval or distribution permission.
+
 ## Updating core and optional patches
 
 When patch-V, patch-Z, Patch-J or Patch-U changes, **do not rename a patch or overwrite its old version record**. Download a fresh repository copy and drag the folder containing `Wow.exe` onto `tools/Prepare-Patch-Update.bat`. This generates `tools/patch-update-proposal.json` (hashes, sizes and proposed next version only; no game binaries, personal paths or automatic uploads). Send the proposal for review, test the patched client, and then commit the new reference plus an immutable history entry. See [Patch Updates](docs/PATCH-UPDATES.md). The application updater/rollback system is **not implemented yet**.
@@ -66,7 +72,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** a *read-only installer planner* that previews required patch, optional patch and realmlist changes without modifying the WoW client. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** validate and harden the new read-only installer planner with Windows PowerShell fixture tests, then work through the remaining safety checks. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 
