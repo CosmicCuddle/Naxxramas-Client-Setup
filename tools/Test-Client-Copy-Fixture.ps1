@@ -133,6 +133,83 @@ function WriteJournal([string]$path,[object]$record){
  $stream=[IO.File]::Open($path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
  try{$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
 }
+
+function CleanupOwnedStage([string]$stage,[object[]]$rows,[string]$source,[string]$dest){
+ # No recursive removal: refuse anything unknown, linked or modified.
+ NoLinkAncestors $stage
+ Require ([IO.Path]::GetFileName($stage) -cmatch '^\.naxx-test-copy-stage-[0-9a-f]{32}$') 'Stage name is not synthetic.'
+ Require ([string][IO.Directory]::GetParent($stage).FullName -ieq
+  [string][IO.Directory]::GetParent($dest).FullName) 'Stage is not beside fixture destination.'
+ $marker=Join-Path $stage '.naxx-fixture-stage-owner.json'
+ NoLinkAncestors $marker
+ Require (Test-Path -LiteralPath $marker -PathType Leaf) 'Stage ownership marker is absent.'
+ Require ([long](Get-Item -LiteralPath $marker).Length -le 65536) 'Stage owner marker too large.'
+ $owner=Get-Content -LiteralPath $marker -Raw|ConvertFrom-Json
+ Require ($owner.schema_version -eq 1 -and
+  $owner.kind -ceq 'naxx_synthetic_stage_marker' -and $owner.synthetic_fixture -eq $true -and
+  $owner.source -ceq $source -and $owner.destination -ceq $dest -and
+  $owner.stage -ceq $stage -and @($owner.files).Count -eq $rows.Count) 'Stage owner marker does not match session.'
+ foreach($record in $rows){
+  $match=@($owner.files|Where-Object {$_.relative_path -ceq $record.relative_path})
+  Require ($match.Count -eq 1 -and $match[0].sha256 -ceq $record.sha256 -and
+   [long]$match[0].byte_size -eq [long]$record.byte_size) 'Stage metadata does not match manifest.'
+ }
+ # Include the owner file in the allowed root structure, never arbitrary data.
+ $rootNames=@('.naxx-fixture-stage-owner.json')
+ $dataNames=@()
+ $localeNames=@()
+ foreach($r in $rows){
+  $p=([string]$r.relative_path).Split('/')
+  if($p.Count -eq 1){$rootNames+=$p[0]}
+  elseif($p.Count -eq 2){
+   if($rootNames -cnotcontains 'Data'){$rootNames+='Data'}
+   $dataNames+=$p[1]
+  }else{
+   if($rootNames -cnotcontains 'Data'){$rootNames+='Data'}
+   if($dataNames -cnotcontains 'enUS'){$dataNames+='enUS'}
+   $localeNames+=$p[2]
+  }
+ }
+ foreach($scope in @(
+  @{path=$stage;names=$rootNames},
+  @{path=(Join-Path $stage 'Data');names=$dataNames},
+  @{path=(Join-Path $stage 'Data/enUS');names=$localeNames}
+ )){
+  if(-not (Test-Path -LiteralPath $scope.path)){continue}
+  NoLinkAncestors $scope.path
+  Require (Test-Path -LiteralPath $scope.path -PathType Container) 'Stage directory is not a folder.'
+  foreach($item in @(Get-ChildItem -LiteralPath $scope.path -Force)){
+   NoLinkAncestors $item.FullName
+   Require ($scope.names -ccontains $item.Name) 'Unknown stage file or empty folder; stage retained.'
+   if($item.PSIsContainer){
+    Require ($item.Name -ceq 'Data' -or $item.Name -ceq 'enUS') 'Unknown stage folder; stage retained.'
+   }elseif($item.Name -ceq 'Data' -or $item.Name -ceq 'enUS'){
+    throw 'Expected stage folder is now a file.'
+   }
+  }
+ }
+ # Precheck ALL existing files before changing any, so modified dummy data is preserved.
+ foreach($record in $rows){
+  $p=Join-Path $stage (SafeRelative ([string]$record.relative_path))
+  if(Test-Path -LiteralPath $p -PathType Leaf){ProbeFile $p $record}
+  else{Require (-not (Test-Path -LiteralPath $p)) 'Stage expected path is not a file.'}
+ }
+ foreach($record in $rows){
+  $p=Join-Path $stage (SafeRelative ([string]$record.relative_path))
+  if(Test-Path -LiteralPath $p -PathType Leaf){ProbeFile $p $record;[IO.File]::Delete($p)}
+ }
+ foreach($sub in @('Data/enUS','Data')){
+  $dir=Join-Path $stage ($sub.Replace('/',[IO.Path]::DirectorySeparatorChar))
+  if(Test-Path -LiteralPath $dir -PathType Container){
+   Require (@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0) 'Stage directory changed during cleanup.'
+   [IO.Directory]::Delete($dir)
+  }
+ }
+ NoLinkAncestors $marker
+ [IO.File]::Delete($marker)
+ Require (@(Get-ChildItem -LiteralPath $stage -Force).Count -eq 0) 'Stage root changed during cleanup.'
+ [IO.Directory]::Delete($stage)
+}
 try{
  $src=FullFolder $SourcePath
  $dest=FullFolder $DestinationPath
@@ -242,6 +319,20 @@ try{
  $drive=[IO.DriveInfo]::new([IO.Path]::GetPathRoot($dest))
  Require ($drive.AvailableFreeSpace -gt ($bytesNeeded*2+1048576)) 'Insufficient disk space for stage and copy.'
  [IO.Directory]::CreateDirectory($stage)|Out-Null
+ $stageOwner=[ordered]@{
+  schema_version=1
+  kind='naxx_synthetic_stage_marker'
+  synthetic_fixture=$true
+  source=$src
+  destination=$dest
+  stage=$stage
+  files=@($rows|ForEach-Object {
+   [ordered]@{relative_path=$_.relative_path;sha256=$_.sha256;byte_size=$_.byte_size}
+  })
+ }
+ # Durable identity marker created before any staged file. If power fails before
+ # this write, the unmarked directory remains untrusted and is never auto-cleaned.
+ WriteJournal (Join-Path $stage '.naxx-fixture-stage-owner.json') $stageOwner
  $promoted=New-Object 'System.Collections.Generic.List[string]'
  try{
   foreach($record in $rows){
@@ -309,7 +400,10 @@ try{
   foreach($residue in @($journalPath+'.writing',$journalPath+'.previous')){if(Test-Path -LiteralPath $residue){[IO.File]::Delete($residue)}}
   throw ('Copy failed: '+$failure+'. '+$(if($incomplete){'Manual intervention required; journal retained.'}else{'Verified partial copy rolled back.'}))
  }finally{
-  if(Test-Path -LiteralPath $stage){Remove-Item -LiteralPath $stage -Recurse -Force}
+  if(Test-Path -LiteralPath $stage){
+   try{CleanupOwnedStage $stage $rows $src $dest}
+   catch{Write-Warning 'Synthetic staging was not safely removable; retained for manual read-only inspection.'}
+  }
  }
  exit 0
 }catch{
