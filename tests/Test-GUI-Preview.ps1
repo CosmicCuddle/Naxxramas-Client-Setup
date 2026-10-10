@@ -37,7 +37,7 @@ foreach($needle in @(
  '$result.AccessibleName=',
  'New-NaxxPreviewRequest',
  'New-NaxxSourceDownloadRequest',
- 'Get-NaxxBrowseInitialFolder $box.Text',
+ 'Get-NaxxBrowseInitialFolder (Normalize-NaxxInputPath $box.Text)',
  'EMPTY FOLDER BROWSE TEST PASSED',
  'PASTE PATH REGRESSION TEST PASSED',
  '$paste.Add_Click',
