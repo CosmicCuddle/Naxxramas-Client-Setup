@@ -136,6 +136,10 @@ Now that the MPQ filename count is reconciled, the next work is checking **non-M
 
 The owner's M18 read-only audit found six candidate root files and all four directory checks present. Seven other candidates were not present; this is **not** a failure. The scanner and JSON reviewer now explicitly recognise **`ijl15.dll`** and **`dbghelp.dll`** as unpinned root binary candidates. If the development client has not changed, a future report should contain **27 allowlisted files**; that is a prediction rather than a fresh verified scan. No installer/client writes or full-client downloads are enabled. See [Milestone 19](docs/INSTALLER-MILESTONE-19.md).
 
+## Milestone 20 — Read-only synthetic interrupted-copy recovery audit
+
+A new developer-only `tools/Inspect-Fixture-Recovery.ps1` inspects the status of an intentionally **disposable, marker-locked** M15 copy fixture after a simulated interruption. It checks expected files, hashes, journal ownership and unexpected destination entries, and returns **READY_FOR_MANUAL_ROLLBACK** or **BLOCKED**. It does not perform rollback, cleanup, writes, real WoW installation or download, and does not scan player folders. See [Milestone 20](docs/INSTALLER-MILESTONE-20.md). No action is needed from the client owner.
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.

@@ -13,6 +13,8 @@
 
 **M19 implementation verified:** [Windows CI run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) passed at checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`. The M14/M16 root allowlists now recognise `ijl15.dll`/`dbghelp.dll` as **unpinned candidates**; M18 screenshot observations are recorded in M19. The workflow also parses all PowerShell tests before executing them.
 
+**M20 in development (Windows CI pending):** A separate read-only inspector checks the safety of explicitly marked tiny synthetic copy fixtures after interrupted M15 operations. It verifies journal identity, manifest file hashes, partial/complete states and unknown contents. It never removes anything or accesses a real WoW installation. Next work is durable recovery and safe stage cleanup in synthetic tests.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -108,6 +110,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 | **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
 | **M19 — complete (CI 38059211057)** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
+| **M20 — pending CI** | Developer-only read-only recovery readiness audit for disposable partial/completed copy fixtures; detects changed/unknown contents and validates M15 journal vs manifest without modifying anything. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -124,7 +127,8 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files.
 - **M17:** `tools/Inspect-Unclassified-MPQs.ps1` + `.bat`: reports only the unknown Data/enUS MPQ names and byte sizes locally after explicit drag/drop. No report or network; never modify clients.
 - **M18:** `tools/Inspect-Client-Support-Files.ps1` + `.bat`: checks a narrow list of root file presence/size and well-known directory existence, console-only. No file content reads, recursion, writes, network or reports.
-- **M19:** no additional player tool; extends M14 root allowlist and M16 JSON validator for exactly ijl15.dll/dbghelp.dll. Existing Windows dummy fixture tests expanded, no new permissions. 
+- **M19:** no additional player tool; extends M14 root allowlist and M16 JSON validator for exactly ijl15.dll/dbghelp.dll. Existing Windows dummy fixture tests expanded, no new permissions.
+- **M20:** `tools/Inspect-Fixture-Recovery.ps1`: developer-only, read-only audit for M15 synthetic fixture journal+manifest after interruption. READY is a recovery *inspection*, not rollback or game repair. No real-client paths or writes. 
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -143,7 +147,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** The owner has completed M18's read-only support audit. M19 incorporated the two additional observed DLL names into the fixed allowlist and JSON reviewer (Windows CI [38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) passed), without changing any files on the game client. The owner need not perform another 17+ GB scan now. Next engineering priorities: independently authorised/verified base-game source plus better synthetic interruption, disk-space, rollback and concurrency tests. Keep the draft PR, existing M15 fixture-only write locks, patchset versioning and disabled fresh-client source.
+**Current next task:** The M18 owner audit and M19 observed-DLL coverage are complete. M20 adds a read-only synthetic-only journal/manifest recovery readiness check (Windows CI pending). No owner action, game archive download or full-file rehash is required. After verification, develop interruption-safe manual rollback and staging cleanup with *strictly disposable* fixture files and new tests for concurrent modifications/disk exhaustion. Preserve M15 1 MiB test caps, exact markers, existing source restrictions, draft PR, disabled fresh-client source and independent ownership/authenticity gates.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -164,7 +168,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Your M18 audit is recorded and M19 Windows CI passed. Do not repair or remove any of the seven absent support candidates based on this audit. No further owner test is required at present; keep your original client backed up. The next work is synthetic-only crash/rollback/disconnection and disk-space protections, without enabling real-client installation. A new private full-hash report is optional if you want to confirm the predicted 27 entries.”
+**Owner-facing next instruction:** “No action is needed from you for Milestone 20. The new developer-only recovery check uses fake files and never touches the WoW installation. Keep your known-working client backed up. We will continue improving rollback and stage-cleanup safeguards before any optional local testing.”
 
 ---
 
