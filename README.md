@@ -27,6 +27,14 @@ This repository is **not** a full World of Warcraft client download. Do not uplo
 
 Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The `.gitignore` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
 
+## Verified reference client (your working V/Z copy)
+
+Your currently working WoW 3.3.5a client **already contains required V and Z**. The optional login/loading patches J, C and U and the optional N-Addon Collection are **not installed** in that reference copy, which is entirely expected. They will remain separate choices in the finished launcher.
+
+The new `tools/Inspect-Reference-Client.bat` reads the existing client, checks `Wow.exe` build 12340 and the pinned V/Z hashes, and creates a **sanitised JSON report** in the launcher `tools` folder. It records **presence only** for optional patches and NCore/addons. It never opens or exports `WTF`, SavedVariables, Cache, screenshots, account names, realmlist content or absolute client paths. It never modifies game files.
+
+**Before using it, make a separate backup of your known-working game client.** Drag the folder containing `Wow.exe` onto `Inspect-Reference-Client.bat`, then review the `client-reference-*.json` report. See [Milestone 12](docs/INSTALLER-MILESTONE-12.md). Never upload the complete game client or private settings to this repository.
+
 ## First step: inspect the existing client safely
 
 The included inventory tool lists filenames and approximate sizes only. It does **not** read the contents of account settings, saved variables, passwords, or realm configuration.

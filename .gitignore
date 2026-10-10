@@ -39,3 +39,6 @@ patch-update-proposal.json
 
 # Personal-use locally supplied launcher artwork is never published.
 /assets/local/
+
+# Sanitised local client reference reports, never committed automatically.
+/tools/client-reference-*.json

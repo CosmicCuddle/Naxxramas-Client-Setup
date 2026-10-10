@@ -15,6 +15,9 @@ jobs:
       - name: Preflight and patch version smoke tests
         shell: powershell
         run: .\tests\Test-Preflight.ps1
+      - name: Reference client sanitised inspection fixture tests
+        shell: powershell
+        run: .\tests\Test-Reference-Client.ps1
       - name: Installer alpha fixture tests (dummy files only)
         shell: powershell
         run: .\tests\Test-Installer-Prototype.ps1
@@ -46,6 +49,8 @@ jobs:
             'tools/Setup-Prototype.ps1'
             'tools/Get-Patch-Sources.ps1'
             'tools/Plan-Fresh-Client.ps1'
+            'tools/Inspect-Reference-Client.ps1'
+            'tools/Inspect-Reference-Client.bat'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
@@ -55,6 +60,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-8.md'
             'docs/INSTALLER-MILESTONE-10.md'
             'docs/INSTALLER-MILESTONE-11.md'
+            'docs/INSTALLER-MILESTONE-12.md'
             'assets/README.md'
           )
           foreach ($relative in $files) {
