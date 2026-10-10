@@ -94,7 +94,7 @@ try{
  [IO.File]::WriteAllText($sidecar,'DUMMY INTERRUPTED STATE')
  $sidecarBlocked=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
  if($sidecarBlocked.code -eq 0 -or -not $sidecarBlocked.text.Contains('replacement residue')){
-  throw 'Rollback accepted an unreviewed journal replacement sidecar.'
+  throw ('Rollback sidecar handling mismatch (exit '+$sidecarBlocked.code+'): '+$sidecarBlocked.text)
  }
  [IO.File]::Delete($sidecar)
  $halted=Call $dst 'Rollback' @('-ConfirmDisposableFixture','-SimulateRollbackInterruptionAfter','2')
