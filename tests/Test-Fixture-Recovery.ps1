@@ -76,9 +76,10 @@ try{
  ExpectBlocked 'unknown empty directory'
  [IO.Directory]::Delete((Join-Path $dest 'Data/owner-notes'))
  # Unexpected journal paths or hashes are always refused.
+ $originalDigest=[string]$rows[0].sha256
  $j.files[0].sha256=('b'*64);SaveJson $j $journal
  ExpectBlocked 'forged journal'
- $j.files[0].sha256=$rows[0].sha256;SaveJson $j $journal
+ $j.files[0].sha256=$originalDigest;SaveJson $j $journal
  ExpectReady 'VERIFIED DESTINATION FILES: 2'
  [IO.File]::Delete($journal)
  ExpectBlocked 'missing journal'
