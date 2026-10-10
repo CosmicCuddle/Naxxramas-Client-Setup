@@ -164,6 +164,10 @@ The developer-only copy fixture now simulates a **partly written stage marker**,
 
 `tools/Plan-Fixture-Recovery.ps1` reads the safe labels from the M25 synthetic transaction status inspector and provides **human review guidance** for empty destinations, interrupted copies, completed copies, interrupted rollbacks, uncertain journals and an explicitly selected stage. **No automatic actions are ever permitted.** It does not access real WoW clients or account data, nor delete, copy, install or repair anything. See [Milestone 26](docs/INSTALLER-MILESTONE-26.md).
 
+## Milestone 27 — External-process synthetic mutation tests
+
+A separate Windows process now runs the M15 **disposable fixture-only** copy while the independent test harness changes dummy source, stage or destination bytes at a controlled journal barrier. Source/stage mismatches and new destination files must prevent promotion while preserving externally modified content. This is a real second-process test at a controlled checkpoint, **not** a proof of race-free installation. See [Milestone 27](docs/INSTALLER-MILESTONE-27.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
