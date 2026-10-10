@@ -17,7 +17,9 @@
 
 - **Milestone 20 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793 (tested implementation checkpoint `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53`)
 
-**Milestone 21 — Windows CI pending:** M15's strictly synthetic copy-fixture rollback now records a resumable `rolling_back` journal state, checks unknown files/empty folders and stale journal sidecars, and supports an injected interruption with later explicit confirmation. M20's read-only auditor recognises this state. No real-client copying enabled.
+**Milestone 21 — verified (Windows [run 38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117) passed):** M15's strictly synthetic copy-fixture rollback now records a resumable `rolling_back` journal state, checks unknown files/empty folders and stale journal sidecars, and supports an injected interruption with later explicit confirmation. M20's read-only auditor recognises this state. No real-client copying enabled.
+
+- **Milestone 21 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117 (tested implementation commit `e5e4c7a14fb1120eed78f06fb99f6c8bea313843`)
 
 ## 1. Project and critical GitHub links
 
@@ -115,7 +117,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
 | **M19 — complete (CI 38059211057)** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
 | **M20 — complete (CI 38060443793)** | Developer-only read-only recovery readiness audit for disposable partial/completed copy fixtures; detects changed/unknown contents and validates M15 journal vs manifest without modifying anything. |
-| **M21 — pending CI** | Durable `rolling_back` journal state, simulated interrupted rollback, explicit resume, unexpected empty-folder and journal-sidecar blockers, plus M20 read-only-state coverage. Synthetic-only; no game writes. |
+| **M21 — complete (CI 38061485117)** | Durable `rolling_back` journal state, simulated interrupted rollback, explicit resume, unexpected empty-folder and journal-sidecar blockers, plus M20 read-only-state coverage. Synthetic-only; no game writes. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -149,11 +151,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M20 read-only recovery readiness audit for disposable M15 copy fixtures. Synthetic partial/completed journal, file integrity and unexpected-entry tests; full Windows CI and preview package **passed** at commit `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53` in [run 38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793). Before M20, M19 passed [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057). Before that, M18 passed Windows CI run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
+**Last verified implementation step:** M21 introduced durable `rolling_back` state for interrupted rollback of disposable M15 fixtures, SHA-256 rechecks, unknown empty-folder and journal sidecar refusal, and explicit confirmed continuation. All Windows fixtures/GUI/preview ZIP tests **passed** at `e5e4c7a14fb1120eed78f06fb99f6c8bea313843` in [run 38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117). **Previous verified step:** M20 read-only recovery readiness audit for disposable M15 copy fixtures. Synthetic partial/completed journal, file integrity and unexpected-entry tests; full Windows CI and preview package **passed** at commit `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53` in [run 38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793). Before M20, M19 passed [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057). Before that, M18 passed Windows CI run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M21 implements resumable `rolling_back` journal and synthetic interruption/restart tests (Windows CI pending). No owner action is needed. Next, inspect orphan staging folders read-only and design synthetic-only manual cleanup, disk-exhaustion and concurrent-change tests. Never loosen the M15 1 MiB cap, exact markers or root constraints; fresh-client sources remain disabled, and the draft PR must not be merged without owner approval.
+**Current next task:** M21 resumable synthetic rollback completed and Windows CI [38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117) passed. No owner action is needed. Next, inspect orphan staging folders read-only and design synthetic-only manual cleanup, disk-exhaustion and concurrent-change tests. Never loosen the M15 1 MiB cap, exact markers or root constraints; fresh-client sources remain disabled, and the draft PR must not be merged without owner approval.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -174,7 +176,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 21 uses synthetic files only; your WoW client remains untouched. No local testing or 17+ GB rescan is needed. We'll validate interrupted rollback and then tackle leftover staging folders and disk-space safeguards.”
+**Owner-facing next instruction:** “Milestone 21 Windows tests passed. No local actions or 17+ GB rescan are needed, and the WoW installation remains untouched. Next we'll handle orphan staging and disk-space/concurrent-change safety in dummy-only tests.”
 
 ---
 

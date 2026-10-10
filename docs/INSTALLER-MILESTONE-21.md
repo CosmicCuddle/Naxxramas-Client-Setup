@@ -1,6 +1,6 @@
 # Milestone 21 — Resumable rollback of disposable copy fixtures
 
-**Status: Windows CI pending.** This only operates on the tiny, explicitly marked **synthetic M15 test fixtures**, never real WoW installations.
+**Status: Windows CI passed** ([run 38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117), tested commit `e5e4c7a14fb1120eed78f06fb99f6c8bea313843`). This only operates on the tiny, explicitly marked **synthetic M15 test fixtures**, never real WoW installations.
 
 ## What was changed
 
@@ -36,7 +36,7 @@ M20's **read-only** `Inspect-Fixture-Recovery.ps1` recognises `rolling_back` and
 
 Expanded `tests/Test-Client-Copy-Fixture.ps1` exercises unknown empty directory rejection, leftover journal sidecars, interruption after two deletions, persisted `rolling_back`, refusal to delete a modified remaining file, repair of that synthetic fixture, then successful confirmed resume. Existing copy-failure tests continue to run. Expanded M20 recovery tests accept partial `rolling_back` journals without considering copied-but-incomplete journals safe.
 
-**CI result:** not yet recorded. Do not mark complete until the latest Windows workflow succeeds.
+**CI result:** [run 38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117) completed successfully. Synthetic rollback interruption/resume, unknown-folder/sidecar refusal, M20 recovery-state tests, earlier fixture safety tests, GUI smoke tests and preview ZIP packaging all passed. No real client was used.
 
 ## Next milestone
 
