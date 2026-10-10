@@ -45,7 +45,9 @@
 
 - **Milestone 27 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841 (tested implementation commit `9872b1cec15d4e0d6b176ccf93d205fb47049d01`)
 
-**M28 (Windows CI pending):** M15 dummy-only copy now captures Windows native volume/file-index identity for synthetic source, destination and stage folders using read-only handles. It rejects a same-named folder replacement at each pre-promotion checkpoint and avoids cleanup of replaced roots. New separate-process dummy tests swap all three directory types while a copy is paused after its journal is written. No real WoW client access or production write functionality was enabled.
+**M28 verified (Windows [run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075) passed):** M15 dummy-only copy now captures Windows native volume/file-index identity for synthetic source, destination and stage folders using read-only handles. It rejects a same-named folder replacement at each pre-promotion checkpoint and avoids cleanup of replaced roots. New separate-process dummy tests swap all three directory types while a copy is paused after its journal is written. No real WoW client access or production write functionality was enabled.
+
+- **Milestone 28 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075 (implementation checkpoint `01a46d529f2e8dfc1c0fceb575bbf37ee6bd5a0b`)
 
 ## 1. Project and critical GitHub links
 
@@ -150,7 +152,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M25 — complete (CI 38064980775)** | Read-only synthetic transaction status overview, safe journal and stage classifications, privacy-safe console output, no modifications or automated recovery. |
 | **M26 — complete (CI 38066008592)** | Read-only fixture recovery decision planner, fixed review labels for interrupted copy/rollback, uncertain journal/stage and completed copy, no commands or automatic file changes. |
 | **M27 — complete (CI 38067600841)** | Separate-process mutation of disposable source, stage and destination after an applying journal is written; test-only pause, non-overwrite and guarded preservation checks. |
-| **M28 — Windows CI pending** | Native read-only Windows directory-object identity snapshots before synthetic Copy promotion and cleanup; separate-process source/destination/stage directory swaps with preserved uncertain data. |
+| **M28 — complete (CI 38069581075)** | Native read-only Windows directory-object identity snapshots before synthetic Copy promotion and cleanup; separate-process source/destination/stage directory swaps with preserved uncertain data. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -191,11 +193,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M27 isolated external-process mutations during a bounded journal-to-promotion pause of confirmed M15 *disposable synthetic fixtures*. A child Windows PowerShell process copies dummy files while the independent test harness modifies source bytes, changes staged bytes or creates an unowned destination file after journal commit. Expected checks block all three and preserve externally changed data. Existing rollback/recovery/patch/addon suites, WinForms GUI smoke tests and preview ZIP passed at checkpoint `9872b1cec15d4e0d6b176ccf93d205fb47049d01` in [run 38067600841](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067600841). This is NOT proof of race-free production file copying. M26 previously passed [run 38066298922](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38066298922).
+**Last verified implementation step:** M28 added read-only Windows native directory identity snapshots for strictly marker-locked M15 synthetic Copy source, destination and stage. Before promotion, the copier refuses changed directory identities; on failure it avoids cleanup against replaced roots. Windows external-process tests renamed/replaced each of the three test directories using a different ordinary folder and verified preservation of journal/data. New and all prior fixture/recovery/patch/addon/GUI tests plus preview ZIP packaging **passed** at implementation commit `01a46d529f2e8dfc1c0fceb575bbf37ee6bd5a0b` in [run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075). Identity snapshots do **not** eliminate every postcheck race or authorise real-client installation. Previous M27 passed [run 38067925768](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38067925768).
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M28 synthetic Windows directory-identity checks and externally swapped folder tests are committed (Windows CI pending). Confirm the new source/destination/stage replacement tests pass and rerun M15–M27 rollback/recovery/GUI/ZIP suites. Fix any regressions before marking complete. Next address symlink/junction replacement and narrowed handle/operation gaps, without claiming full TOCTOU protection or allowing production full-client installs. Preserve 1 MiB fixture cap, exact markers, fixed eight paths, backup-first approach, private-data exclusions and Draft PR #1.
+**Current next task:** M28 directory-object identity checks and complete Windows CI **passed** ([run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075)). No owner PC work. Next M29: isolated synthetic Windows junction/symlink swap tests, investigate retaining directory handles during sensitive operations, and harden rollback/journal updates against postcheck path changes; do not claim directory identity snapshots guarantee atomic moves or deletions. Keep exact synthetic markers, eight dummy paths, 1 MiB ceiling, disabled full-client source, privacy protections, draft PR and explicit owner permission before merge.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -216,7 +218,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “No action is needed on your PC for Milestone 28. It tests only disposable fake client directories in GitHub's Windows runner. We will validate whether a same-named folder swap is rejected and then keep strengthening path-handle safety.”
+**Owner-facing next instruction:** “Milestone 28 Windows tests passed. A replaced, same-named synthetic directory was detected before copying and the original or unexpected data was preserved. No client action or hash scan is required; next development focuses on junction swaps and stronger filesystem handle protection.”
 
 ---
 

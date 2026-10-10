@@ -1,6 +1,6 @@
 # Milestone 28 — Native directory-identity checks for disposable fixtures
 
-**Status:** Windows CI pending. This is a proof-of-concept in the M15 **tiny synthetic-only** Copy prototype. It is **not** an authorised production WoW installer or a fully race-free filesystem implementation.
+**Status:** Windows CI passed ([run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075); tested implementation commit `01a46d529f2e8dfc1c0fceb575bbf37ee6bd5a0b`). This is a proof-of-concept in the M15 **tiny synthetic-only** Copy prototype. It is **not** an authorised production WoW installer or a fully race-free filesystem implementation.
 
 ## Purpose
 
@@ -41,4 +41,4 @@ The tests use five dummy files under the existing eight-name allowlist. Each is 
 
 M29: dedicated test-only linked-directory/junction swaps and safer path-handle/transaction design, with explicit manual recovery and stronger protection around rollback and journal sidecars. Continue dummy-only Windows tests and don't present checkpoint verification as race freedom.
 
-**Windows CI result:** pending.
+**Windows CI passed:** [run 38069581075](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38069581075). The three independently triggered source/destination/stage directory swaps were detected, and the original files and unexpected replacement data were preserved. Earlier copy/rollback, external file-mutation, read-only recovery, patch/addon and GUI smoke tests, plus preview ZIP packaging, all passed. This remains checkpoint-only fixture validation, not a production race-free installer.
