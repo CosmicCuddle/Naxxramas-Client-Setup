@@ -117,7 +117,7 @@ Current implemented slice:
 
 Next checks before leaving Milestone 2:
 1. Confirm Windows workflow results, fix any PowerShell parser or runtime issues and re-run.
-2. Add explicit symlink/junction, nonexistent path, malformed manifest and low-space safety regression tests.
+2. Review the newly added missing/nested-path and conditional junction tests on Windows; add malformed-policy and low-space regression cases.
 3. Review JSON plan fields for any information leakage, and confirm the no-write guarantee on disposable fixtures.
 4. Complete owner-friendly documentation and record final validated status here and in ROADMAP.
 5. **Only after those steps**, design the separately reviewed backup-first transaction engine; do not begin by writing to the working client.
@@ -141,6 +141,6 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - Noted that the README contains a five-step outline but that a dedicated `docs/PROJECT-HANDOVER.md` and `docs/ROADMAP.md` were absent at the start of the continuation.
 - Added these continuity documents to preserve the full constraints and nominate the read-only planner as next feature.
 - Implemented `tools/Plan-Naxxramas-Install.ps1` and `.bat`: read-only checks and a proposed action for each of the four patches and realmlist.
-- Added generated-file fixture tests, a Windows workflow and `docs/INSTALLER-PLAN.md`. No proprietary game files are present.
+- Added generated-file fixture tests (including missing/nested paths, a conditional junction check, and preserving realmlist comments), a Windows workflow and `docs/INSTALLER-PLAN.md`. No proprietary game files are present.
 - Local authoring environment has no Windows PowerShell runtime; test execution **not verified**. Connector did not report a passing workflow result.
 - **Next engineering action:** inspect Windows CI logs, repair any failures, extend safety cases, then sign off the read-only milestone. Backup-first writes remain unimplemented.
