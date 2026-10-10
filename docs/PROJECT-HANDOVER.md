@@ -61,7 +61,10 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
 | `docs/TRANSACTION-DESIGN.md` | Proposed backup, journal, write-gate, rollback and recovery safety contract; no implementation | N/A |
 | `docs/JOURNAL-DURABILITY.md` | Design-only crash boundaries, journal authority and interruption safety checklist | N/A |
-| `docs/JOURNAL-AUTHORITY.md` | Proposed signed session ownership, DPAPI/HMAC design and replay caveats; **not implemented** | N/A |
+| `docs/JOURNAL-AUTHORITY.md` | Proposed *production* signed session ownership, DPAPI/HMAC design and replay caveats; **not implemented** | N/A |
+| `tools/Inspect-Naxxramas-JournalV2.ps1` | Read-only HMAC/event-chain inspector for **synthetic signed fixtures only**; no trusted Windows key/anchor | No |
+| `tests/Test-JournalV2.ps1` and `.github/workflows/journal-v2-fixtures.yml` | Synthetic Windows signature, event ordering, stale anchor, forbidden path and no-write tests | No |
+| `docs/JOURNAL-V2-FIXTURE.md` | V2 fixture event schema, usage and replay/authentication limitations | N/A |
 | `docs/RECOVERY-PREVIEW.md` | How the read-only recovery inspector classifies safe suggestions and conflicts | N/A |
 | `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
 | `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 fixture workflow; passed on 10 October 2026 | N/A |
@@ -94,7 +97,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 - In-game precedence when J and U are both installed.
 - Internals, dependencies, origin and redistribution rights of V/Z patches.
 - Redistribution rights for J/U or any addon package.
-- Any safe automatic installation, repair, update, rollback or uninstall. The new recovery inspection tool is **read-only** and does not restore files.
+- Any safe automatic installation, repair, update, rollback or uninstall. Both the recovery inspector and synthetic signed journal validator are **read-only** and cannot authorise restoration.
 
 Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 match or a staged plan as a completed end-to-end functional test.
 
@@ -155,5 +158,6 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5) added low/unknown-disk-space failure tests to disposable planner copies, no public bypass option, and recovery guards against incomplete checkpoints/sessions and shared original backups. **All three Windows PowerShell suites passed** on its test commit.
 - [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) now records proposed write ordering and crash boundaries, plus outstanding filesystem durability and trusted-journal ownership decisions; **it is not implemented**.
 - PR [#6](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/6) adds optional `-BackupRoot` to the **read-only** planner. Existing separate folder required; client/source/backup nesting and volume-root selections rejected. Same-drive budgets aggregate, while simulated different-drive free space is checked independently. Windows planner and preflight fixture suites passed. No client or backup file was written.
-- Wrote [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) proposing per-installation DPAPI-protected HMAC keys and signed sequence anchors. **No signed journal, key creation, installer or rollback engine exists.**
-- **Next engineering action:** establish authentic volume identifiers, a reviewed signed schema, backup-space enforcement in future writer and crash-safe journal/anchor ordering; test trust failures read-only. No actual client writes or patch redistribution.
+- Wrote [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) proposing per-installation DPAPI-protected HMAC keys and signed sequence anchors. **No production signed journal, protected key creation, installer or rollback engine exists.**
+- PR [#7](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/7) adds a strictly read-only **synthetic signed v2 journal inspector** and fixture-only tests; no game files, rollback authority or persistent keys. Windows PowerShell tests cover tampered/reordered events, wrong key, broken links, stale anchor against a newer chain, unknown paths and valid fixture checks. A journal and matching signed anchor copied/replayed together **are not detected** without an external latest-state trust anchor.
+- **Next engineering action:** design and validate protected latest-state anchors, key portability/DPAPI lifecycle, durable journal checkpoints and authoritative Windows volume/installation identity. No actual client writes or patch redistribution.
