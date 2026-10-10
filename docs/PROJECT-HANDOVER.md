@@ -45,6 +45,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | --- | --- | --- |
 | `tools/Inspect-Client.bat` / `.ps1` | Generate a names/sizes-only inventory | No |
 | `tools/Check-Naxxramas-Client.bat` and `tools/Test-Naxxramas-Client.ps1` | Check client structure, executable version metadata, V/Z hashes, optional J/U, addons and realmlist | No |
+| `tools/Plan-Naxxramas-Install.bat` / `.ps1` | Preview possible V/Z, J/U and realmlist actions, blockers and backup needs (Milestone 2; Windows tests pending) | No |
 | `tools/Get-Core-Patch-Hashes.bat` / `.ps1` | Display V/Z SHA-256 and sizes | No |
 | `tools/Prepare-Patch-Update.bat` / `.ps1` | Propose new patch metadata in `tools/patch-update-proposal.json` | No (writes a local *report* in repository tools folder) |
 | `config/client-patches.json` | Current V/Z and J/U policy, hashes, sizes, overlap warning | N/A |
@@ -55,6 +56,9 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/INSTALLER-MILESTONE-1.md` | Existing preflight instructions and design | N/A |
 | `docs/PATCH-UPDATES.md` | Instructions for future versioned patch changes | N/A |
 | `docs/REALMLIST.md` | Manual realmlist backup/configuration guide | N/A |
+| `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
+| `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
+| `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 test workflow (result not confirmed here) | N/A |
 | `docs/ROADMAP.md` | Detailed milestones, gates and progress log | N/A |
 | `docs/PROJECT-HANDOVER.md` | This running engineering handover | N/A |
 
@@ -79,7 +83,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 - The preflight and proposal tools exist as source code in GitHub.
 
 **Not established**
-- Automated test coverage, end-to-end execution on clean fixtures or a production installer.
+- Production-game end-to-end testing and a write-capable installer. A synthetic fixture test suite and Windows workflow have been committed, but their successful execution remains to be confirmed.
 - Full client runtime compatibility, working real-world Naxxramas login, or external reachability of the realm address.
 - In-game precedence when J and U are both installed.
 - Internals, dependencies, origin and redistribution rights of V/Z patches.
@@ -103,14 +107,20 @@ Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 ma
 
 ## 6. Immediate next task
 
-**Milestone 2: build the read-only installer planner**, not the write-capable installer.
+**Milestone 2: validate and harden the read-only installer planner**, not the write-capable installer.
 
-Suggested first implementation slice:
-1. Define an operation-plan format in `docs/` (format version, required inputs, selected options, source checks, destinations, file action, blockers and warnings).
-2. Create `tools/Plan-Naxxramas-Install.ps1` plus a drag-and-drop `.bat` launcher, with **zero writes to the game folder**. It should consume the same pinned patch/realm configuration as the current preflight, not duplicate hashes in code.
-3. Begin with four patches and the realmlist. V/Z must remain required, J/U independent. Identify already-matching / missing / mismatching destination files without performing replacements.
-4. Build disposable fixture tests for source/destination collisions, unknown hashes, unsafe paths, missing patches and realmlist changes.
-5. After it passes review, update README, ROADMAP and this file. Then consider the backup-first transaction engine as a separate milestone.
+Current implemented slice:
+1. `tools/Plan-Naxxramas-Install.ps1` emits a console plan or optional JSON using the existing patch and realm manifests, with no writes. Windows drag-and-drop launcher added.
+2. V/Z are mandatory, J/U independent, and unselected existing optional files are preserved. Current, missing, known-older and unknown versions are classified; unrecognised selected patches are blocked.
+3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked.
+4. `tests/Test-InstallerPlan.ps1` uses generated tiny fake files to cover the main cases, and a Windows PowerShell GitHub Actions workflow was added. **Passing execution has not yet been confirmed.**
+
+Next checks before leaving Milestone 2:
+1. Confirm Windows workflow results, fix any PowerShell parser or runtime issues and re-run.
+2. Add explicit symlink/junction, nonexistent path, malformed manifest and low-space safety regression tests.
+3. Review JSON plan fields for any information leakage, and confirm the no-write guarantee on disposable fixtures.
+4. Complete owner-friendly documentation and record final validated status here and in ROADMAP.
+5. **Only after those steps**, design the separately reviewed backup-first transaction engine; do not begin by writing to the working client.
 
 Do **not** treat this task as permission to copy or distribute MPQ files. It is a design/validation step.
 
@@ -130,4 +140,7 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - Inspected current README, patch manifest, patch version history, realm config, first milestone docs, inventory review, patch update rules and preflight code.
 - Noted that the README contains a five-step outline but that a dedicated `docs/PROJECT-HANDOVER.md` and `docs/ROADMAP.md` were absent at the start of the continuation.
 - Added these continuity documents to preserve the full constraints and nominate the read-only planner as next feature.
-- **Next engineering action:** Milestone 2 read-only planner + tests, then update docs in the same commit.
+- Implemented `tools/Plan-Naxxramas-Install.ps1` and `.bat`: read-only checks and a proposed action for each of the four patches and realmlist.
+- Added generated-file fixture tests, a Windows workflow and `docs/INSTALLER-PLAN.md`. No proprietary game files are present.
+- Local authoring environment has no Windows PowerShell runtime; test execution **not verified**. Connector did not report a passing workflow result.
+- **Next engineering action:** inspect Windows CI logs, repair any failures, extend safety cases, then sign off the read-only milestone. Backup-first writes remain unimplemented.
