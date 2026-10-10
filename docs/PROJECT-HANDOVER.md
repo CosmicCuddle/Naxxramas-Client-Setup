@@ -2,7 +2,7 @@
 
 **Purpose:** Permanent continuation reference for future chats, maintainers, and development sessions. **Read this document first** when starting again after context loss. Update the *Current checkpoint*, *Completed work*, *Open decisions* and *Next steps* whenever a milestone or recovery fix is completed. Keep it in the repository, not only in a conversation.
 
-**Status as of 10 October 2026:** **Milestone 15 is complete and passed Windows CI.** A strictly synthetic fixture-only copy/verify/rollback experiment is implemented. No full-game download, public client or production installation is enabled.
+**Status as of 10 October 2026:** Milestone 15 **passed Windows CI**. **Milestone 16** adds a read-only review of the private M14 JSON inventory; its Windows CI status is pending. No full-game download, public client or production installation is enabled.
 
 ## 1. Project and critical GitHub links
 
@@ -74,6 +74,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | M13 | Read-only plan for V/Z, J/C/U, NCore, optional addons and realmlist based only on a sanitised JSON; corrections for existing U and addons |
 | **M14 — complete** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, dummy-file Windows tests. **CI 38053138014 passed**. |
 | **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
+| **M16 — pending CI** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -86,7 +87,8 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - `tools/Plan-Reference-Components.ps1` + `.bat`: reads reference JSON and emits safe component choices, no game writes.
 - `tools/Plan-Fresh-Client.ps1`: validates an empty destination and describes a blocked source; never installs anything.
 - **M14:** `tools/Inventory-Game-Files.ps1` + `.bat`: enumerates only whitelisted root game binaries and Data/enUS MPQs, hashes locally, produces a private report **outside WoW**; no game writes, no complete-client claim.
-- **M15:** `tools/Test-Client-Copy-Fixture.ps1`: tiny synthetic-only local copy/verify/rollback experiment; never expose to real WoW paths or player launcher. Requires exact marker files, synthetic-only manifest, empty destination and explicit confirmation. 
+- **M15:** `tools/Test-Client-Copy-Fixture.ps1`: tiny synthetic-only local copy/verify/rollback experiment; never expose to real WoW paths or player launcher. Requires exact marker files, synthetic-only manifest, empty destination and explicit confirmation.
+- **M16:** `tools/Review-Game-File-Report.ps1` + `.bat`: reads a previously saved, sanitised inventory JSON and pinned policy only; refuses inconsistent/private paths, reports Quick as unverified and never touches game files. 
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -101,13 +103,13 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** Milestone 15, synthetic fixture-only copy, hash verification and rollback, implementation commit `8350949c`, fully successful Windows CI run `38054045414`.
+**Last verified implementation step:** Milestone 15, synthetic fixture-only copy, hash verification and rollback, implementation commit `8350949c`, fully successful Windows CI run `38054045414`. M16 report review is newly added and requires an actual Windows CI result before marking complete.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** Ask the owner to scan a **separate backed-up development copy** with Milestone 14's `Inventory-Game-Files.bat`, producing a private `game-files-*.json`. Review its file coverage before designing large-file copy verification and full client identity checks. Milestone 15's synthetic copy tool does **not** accept the owner's real-client inventory; do not lift its fixture-only locks.
+**Current next task:** The owner scans a **separate backed-up development copy** with M14's `Inventory-Game-Files.bat`, producing a private `game-files-*.json`. Drag the JSON onto M16's `Review-Game-File-Report.bat`, then privately review file coverage and unknown MPQ counts. M15's synthetic copy tool does **not** accept real-client inventories. Keep its locks; await M16 Windows CI before calling it validated.
 
-**After M14 (next milestone):
+**Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
 2. Owner runs new game file inventory against the development copy. Its local JSON must be reviewed before sharing and never committed; the files aren't copied.
 3. Compare inventoried base candidates against known patchset V/Z/U; explicitly mark missing/unknown components. **Do not infer complete client validity from 21 MPQs or a partial allowlist.**
@@ -126,7 +128,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Back up your working client, create a separate development copy, then drag its containing folder onto `tools/Inventory-Game-Files.bat`. The SHA-256 scan of the 17+ GiB client may take several minutes. Review the local `game-files-*.json` file before sending it privately here.”
+**Owner-facing next instruction:** “Back up your working client, make a separate development copy, then drag that folder onto `tools/Inventory-Game-Files.bat`. Drag the resulting private `game-files-*.json` onto `tools/Review-Game-File-Report.bat`. Review both outputs before sending the JSON privately in chat; never commit it to GitHub.”
 
 ---
 

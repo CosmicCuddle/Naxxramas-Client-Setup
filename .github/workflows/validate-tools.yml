@@ -24,6 +24,9 @@ jobs:
       - name: Whitelisted game file inventory fixture tests
         shell: powershell
         run: .\tests\Test-Game-File-Inventory.ps1
+      - name: Private game-file report review fixture tests
+        shell: powershell
+        run: .\tests\Test-Game-File-Report-Review.ps1
       - name: Disposable client copy, verified rollback, and marker security tests
         shell: powershell
         run: .\tests\Test-Client-Copy-Fixture.ps1
@@ -64,6 +67,8 @@ jobs:
             'tools/Plan-Reference-Components.bat'
             'tools/Inventory-Game-Files.ps1'
             'tools/Inventory-Game-Files.bat'
+            'tools/Review-Game-File-Report.ps1'
+            'tools/Review-Game-File-Report.bat'
             'tools/Test-Client-Copy-Fixture.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
@@ -78,6 +83,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-13.md'
             'docs/INSTALLER-MILESTONE-14.md'
             'docs/INSTALLER-MILESTONE-15.md'
+            'docs/INSTALLER-MILESTONE-16.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )

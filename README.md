@@ -116,6 +116,10 @@ The launcher displays a single owner-managed image: `assets/default/launcher-art
 
 A Windows CI job produces a **downloadable preview ZIP artifact** once its tests pass. The ZIP includes scripts and configuration but does not contain a WoW client, MPQs, Blizzard logos or other proprietary artwork; it cannot install files. See [Milestone 8](docs/INSTALLER-MILESTONE-8.md).
 
+## Milestone 16 — Private game-file report review
+
+After running the Milestone 14 file inventory on a **backed-up development client**, drag the resulting private **game-files-*.json** onto **tools/Review-Game-File-Report.bat**. This checks the report against its pinned V/Z/J/C/U patch policy and detects inconsistent or private file entries **without reading WoW game files**. It does not verify every base-game file or enable installation. See [Milestone 16](docs/INSTALLER-MILESTONE-16.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
