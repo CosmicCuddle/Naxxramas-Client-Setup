@@ -34,3 +34,8 @@ Existing M15 dummy-only copy/rollback CI also tests the guarded stage cleanup in
 ## Verified Windows result
 
 [Run 38062420201](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38062420201) passed the new stage inspector tests, guarded synthetic copy/rollback tests, previous safety suites, GUI smoke tests and preview ZIP packaging. It does **not** validate real WoW file copying or authorise stage cleanup outside disposable fixtures.
+
+
+## Milestone 23 compatibility
+
+The M23 dummy-only copy prototype now tests insufficient free-space and stage-write faults without consuming real disk space. It verifies source/staged file integrity before promotion. If an owned stage changes unexpectedly, M22 guarded cleanup preserves it, and `Inspect-Fixture-Stage.ps1` refuses that stage. This does not permit automatic orphan deletion or production-client copying. See [Milestone 23](INSTALLER-MILESTONE-23.md).
