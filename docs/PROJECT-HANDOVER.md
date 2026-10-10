@@ -57,8 +57,9 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/PATCH-UPDATES.md` | Instructions for future versioned patch changes | N/A |
 | `docs/REALMLIST.md` | Manual realmlist backup/configuration guide | N/A |
 | `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
+| `docs/TRANSACTION-DESIGN.md` | Proposed backup, journal, write-gate, rollback and recovery safety contract; no implementation | N/A |
 | `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
-| `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 test workflow (result not confirmed here) | N/A |
+| `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 fixture workflow; passed on 10 October 2026 | N/A |
 | `docs/ROADMAP.md` | Detailed milestones, gates and progress log | N/A |
 | `docs/PROJECT-HANDOVER.md` | This running engineering handover | N/A |
 
@@ -83,7 +84,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 - The preflight and proposal tools exist as source code in GitHub.
 
 **Not established**
-- Production-game end-to-end testing and a write-capable installer. A synthetic fixture test suite and Windows workflow have been committed, but their successful execution remains to be confirmed.
+- Production-game end-to-end testing and a write-capable installer. Synthetic Windows fixture suites passed on 10 October 2026, but these do **not** validate real client gameplay or any installer writes.
 - Full client runtime compatibility, working real-world Naxxramas login, or external reachability of the realm address.
 - In-game precedence when J and U are both installed.
 - Internals, dependencies, origin and redistribution rights of V/Z patches.
@@ -113,14 +114,14 @@ Current implemented slice:
 1. `tools/Plan-Naxxramas-Install.ps1` emits a console plan or optional JSON using the existing patch and realm manifests, with no writes. Windows drag-and-drop launcher added.
 2. V/Z are mandatory, J/U independent, and unselected existing optional files are preserved. Current, missing, known-older and unknown versions are classified; unrecognised selected patches are blocked.
 3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked.
-4. `tests/Test-InstallerPlan.ps1` uses generated tiny fake files to cover the main cases, and a Windows PowerShell GitHub Actions workflow was added. **Passing execution has not yet been confirmed.**
+4. `tests/Test-InstallerPlan.ps1` covers required/optional patches, realm safety, invalid source/path/policy, junctions and a test-only generated versioned executable. Its Windows PowerShell CI run **passed** on 10 October 2026. It checks before/after file fingerprints to catch unexpected writes.
 
 Next checks before leaving Milestone 2:
-1. Confirm Windows workflow results, fix any PowerShell parser or runtime issues and re-run.
-2. Review the newly added missing/nested-path and conditional junction tests on Windows; add malformed-policy and low-space regression cases.
-3. Review JSON plan fields for any information leakage, and confirm the no-write guarantee on disposable fixtures.
-4. Complete owner-friendly documentation and record final validated status here and in ROADMAP.
-5. **Only after those steps**, design the separately reviewed backup-first transaction engine; do not begin by writing to the working client.
+1. **Completed:** Windows workflows passed; corrected the legacy preflight suite's stale subprocess exit code. Preserve those passing baseline tests.
+2. **Completed:** missing/nested-path, junction and malformed-policy fixture checks passed on Windows. **Still needed:** deterministic low-disk regression and additional fail-closed testing.
+3. **Completed for fixture scope:** JSON does not include absolute fixture paths; source and destination snapshots remain unchanged across tested previews. Continue reviewing data privacy for any new planner fields.
+4. **Completed:** updated the owner-facing milestone documentation and verified Windows results in this handover and ROADMAP. Document any further checks with the same precision.
+5. Read [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md) for the **design-only** transaction proposal. Build a separate read-only session/journal recovery evaluator before developing code capable of writing game files.
 
 Do **not** treat this task as permission to copy or distribute MPQ files. It is a design/validation step.
 
@@ -142,5 +143,7 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - Added these continuity documents to preserve the full constraints and nominate the read-only planner as next feature.
 - Implemented `tools/Plan-Naxxramas-Install.ps1` and `.bat`: read-only checks and a proposed action for each of the four patches and realmlist.
 - Added generated-file fixture tests (including missing/nested paths, a conditional junction check, and preserving realmlist comments), a Windows workflow and `docs/INSTALLER-PLAN.md`. No proprietary game files are present.
-- Local authoring environment has no Windows PowerShell runtime; test execution **not verified**. Connector did not report a passing workflow result.
-- **Next engineering action:** inspect Windows CI logs, repair any failures, extend safety cases, then sign off the read-only milestone. Backup-first writes remain unimplemented.
+- Both Windows PowerShell 5.1 workflows passed on 10 October 2026 after opening PRs to trigger full checks. The original preflight workflow initially failed due to a stale child-process `LASTEXITCODE`; that harness bug was corrected and reverified.
+- Expanded tests merged in PR #2 and non-blocking valid-build fixture merged in PR #3. The read-only success path and core negative tests are now covered; real game runtime and installation remain untested.
+- Created [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md) with a transaction state machine, backup ownership rules, conflict-safe rollback and crash-recovery gates.
+- **Next engineering action:** finish low-space/fail-closed tests, then implement and test a **read-only journal-state recovery planner** against synthetic session data. Do not touch genuine client files.
