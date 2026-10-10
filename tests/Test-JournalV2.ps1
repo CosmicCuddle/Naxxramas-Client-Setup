@@ -221,6 +221,14 @@ try {
     Assert ($unwitnessed.witness_status -eq 'not_supplied') 'Unwitnessed inspection explicitly reports absent external state'
     Witness-Failure 'Independent newer witness rejects coordinated replay of signed journal AND anchor'
 
+    # Known limitation: if the entire fixture state is rolled back,
+    # including the independently keyed witness, it is internally valid.
+    # A production engine needs protected external monotonic state.
+    $olderAnchor = Make-Anchor 1 $v.FirstHash
+    Store-Witness $olderAnchor
+    $allOld = Inspect-WithWitness
+    Assert ($allOld.witness_status -eq 'matches_independent_fixture') 'Full coordinated replay including the witness is NOT prevented by caller-controlled fixture files'
+
     $v = Store-Valid
     Store-Witness (Make-Anchor 1 $v.FirstHash)
     Witness-Failure 'Older but valid witness is rejected when journal is newer'
