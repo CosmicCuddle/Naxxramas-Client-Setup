@@ -15,6 +15,8 @@ try{
  $stub=Join-Path $base 'repo'
  $script=Join-Path $stub 'tools/Test-Client-Copy-Fixture.ps1'
  Copy-Item -LiteralPath $engine -Destination $script
+ $stageAuditor=Join-Path $stub 'tools/Inspect-Fixture-Stage.ps1'
+ Copy-Item -LiteralPath (Join-Path $repo 'tools/Inspect-Fixture-Stage.ps1') -Destination $stageAuditor
  $src=Join-Path $base 'src'
  $dst=Join-Path $base 'dest'
  $sourceMarker=Join-Path $src '.naxx-copy-test-source'
@@ -128,6 +130,51 @@ try{
   throw ('Simulated failure did not clean up partial copy: '+$partial.text)
  }
  if(@(Get-ChildItem -LiteralPath $dst -Recurse -File -Force).Count -ne 1){throw 'Simulated failure left altered destination.'}
+ # M23: deterministic simulated disk gates and staged-file mutation (dummy fixtures only).
+ $badPlan=Call $dst 'Plan' @('-SimulateAvailableDiskBytes','0')
+ if($badPlan.code -eq 0 -or -not $badPlan.text.Contains('Fault switches are allowed only')){
+  throw ('Fault-injection switch was accepted for planning: '+$badPlan.text)
+ }
+ $noFaultConfirm=Call $dst 'Copy' @('-SimulateAvailableDiskBytes','0')
+ if($noFaultConfirm.code -eq 0 -or -not $noFaultConfirm.text.Contains('ConfirmDisposableFixture')){
+  throw ('Fault injection bypassed the explicit Copy confirmation: '+$noFaultConfirm.text)
+ }
+ $lowDisk=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateAvailableDiskBytes','0')
+ if($lowDisk.code -eq 0 -or -not $lowDisk.text.Contains('Insufficient disk space')){
+  throw ('Deterministic zero-space injection did not fail closed: '+$lowDisk.text)
+ }
+ if(@(Get-ChildItem -LiteralPath $dst -Force).Count -ne 1){throw 'Low-space simulation wrote to destination.'}
+ $stageFault=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateDiskWriteFailureAfterStagedFiles','2')
+ if($stageFault.code -eq 0 -or
+   -not $stageFault.text.Contains('SIMULATED SYNTHETIC DISK WRITE FAILURE') -or
+   -not $stageFault.text.Contains('Verified partial copy rolled back.')){
+  throw ('Staging write fault failed safely: '+$stageFault.text)
+ }
+ $stagedLeft=@(Get-ChildItem -LiteralPath $base -Directory -Force |
+  Where-Object {$_.Name -match '^\.naxx-test-copy-stage-[0-9a-f]{32}$'})
+ if($stagedLeft.Count -ne 0 -or @(Get-ChildItem -LiteralPath $dst -Force).Count -ne 1){
+  throw 'Safe staging failure unexpectedly left normal staged/destination files.'
+ }
+ $corrupt=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateStagedFileMutationBeforePromotion')
+ if($corrupt.code -eq 0 -or -not $corrupt.text.Contains('Fixture file size differs')){
+  throw ('Staged data mutation reached promotion: '+$corrupt.text)
+ }
+ $suspect=@(Get-ChildItem -LiteralPath $base -Directory -Force |
+  Where-Object {$_.Name -match '^\.naxx-test-copy-stage-[0-9a-f]{32}$'})
+ if($suspect.Count -ne 1){throw 'Tampered staged file was not preserved for review.'}
+ if(@(Get-ChildItem -LiteralPath $dst -Force).Count -ne 1 -or
+  (Test-Path -LiteralPath $journal)){throw 'Staged-file mutation changed the destination or wrote a journal.'}
+ $audit=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $stageAuditor -SourcePath $src -DestinationPath $dst -ManifestPath $manifestFile -StagePath $suspect[0].FullName 2>&1 | Out-String)
+ if($LASTEXITCODE -eq 0 -or -not $audit.Contains('SYNTHETIC STAGE AUDIT: BLOCKED')){
+  throw ('M22 inspector failed to recognise tampered M23 stage: '+$audit)
+ }
+ if(-not (Test-Path -LiteralPath (Join-Path $suspect[0].FullName 'Wow.exe'))){
+  throw 'Tampered staged file was deleted rather than preserved.'
+ }
+ $outOfRange=Call $dst 'Copy' @('-ConfirmDisposableFixture','-SimulateDiskWriteFailureAfterStagedFiles','8')
+ if($outOfRange.code -eq 0 -or -not $outOfRange.text.Contains('outside synthetic manifest')){
+  throw 'Fault count beyond the synthetic manifest was not refused.'
+ }
  $populated=Join-Path $base 'dest-populated'
  [IO.File]::WriteAllText((Join-Path $populated '.naxx-copy-test-destination'),'NAXX_SYNTHETIC_COPY_DESTINATION_V1')
  [IO.File]::WriteAllText((Join-Path $populated 'personal-file.txt'),'SAVE THIS FILE')
