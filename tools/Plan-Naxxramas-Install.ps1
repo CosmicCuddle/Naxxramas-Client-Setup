@@ -8,6 +8,7 @@ The result describes possible future operations, NOT an approved install transac
 param(
     [Parameter(Mandatory=$true)][string]$ClientPath,
     [string]$PatchSourcePath,
+    [string]$BackupRoot,
     [switch]$VanillaLogin,
     [switch]$VanillaLoading,
     [string]$RealmHost,
@@ -37,7 +38,13 @@ function Require-Root([string]$Path) {
     Assert-NoLinks $Path
     $full = (Resolve-Path -LiteralPath $Path).ProviderPath
     Assert-NoLinks $full
-    return [IO.Path]::GetFullPath($full)
+    $canonical = [IO.Path]::GetFullPath($full)
+    if ($canonical.TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar).Equals(
+        ([IO.Path]::GetPathRoot($canonical)).TrimEnd([IO.Path]::DirectorySeparatorChar,[IO.Path]::AltDirectorySeparatorChar),
+        [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'A volume root cannot be selected as a client, source or backup directory.'
+    }
+    return $canonical
 }
 function Normalise-Directory([string]$Path) {
     $full = [IO.Path]::GetFullPath($Path)
@@ -83,6 +90,11 @@ function Get-AvailableSpaceBytes([string]$Directory) {
     if (-not $drive.IsReady) { throw 'Destination drive is not ready.' }
     return [int64]$drive.AvailableFreeSpace
 }
+function Get-StorageKey([string]$Directory) {
+    # A drive-root comparison is only a conservative preview approximation.
+    # Future write-capable code must determine true volume identity and recheck.
+    return ([IO.Path]::GetPathRoot($Directory)).ToUpperInvariant()
+}
 function Hash-Bytes([byte[]]$Bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() }
@@ -116,6 +128,17 @@ if ($PatchSourcePath) {
     $sourceRoot = Require-Root $PatchSourcePath
     if ((Is-SameOrChild $sourceRoot $dest) -or (Is-SameOrChild $dest $sourceRoot)) {
         throw 'Patch source and client destination must be separate, non-nested folders.'
+    }
+}
+$backupRoot = $null
+if ($BackupRoot) {
+    $backupRoot = Require-Root $BackupRoot
+    if ((Is-SameOrChild $backupRoot $dest) -or (Is-SameOrChild $dest $backupRoot)) {
+        throw 'Backup and client destination must be separate, non-nested folders.'
+    }
+    if ($sourceRoot -and ((Is-SameOrChild $backupRoot $sourceRoot) -or
+        (Is-SameOrChild $sourceRoot $backupRoot))) {
+        throw 'Backup and patch source must be separate, non-nested folders.'
     }
 }
 $blockers = New-Object 'System.Collections.Generic.List[string]'
@@ -286,25 +309,59 @@ $items.Add([pscustomobject][ordered]@{
     reason = $realmReason
 })
 
-# Estimate room for staging, backups and a contingency; never perform a write.
-[int64]$needed = 0
+# Conservative READ-ONLY budget. Future writes must independently verify true
+# volume identity, both capacities, real staging layout and free-space changes.
+[int64]$newBytes = 0
+[int64]$originalBytes = 0
 foreach ($entry in $items) {
-    if ($entry.action -eq 'install' -or $entry.action -eq 'replace_after_backup') {
-        $needed += 2 * [int64]$entry.expected_size_bytes
-        if ($entry.backup_required) { $needed += [int64]$entry.existing_size_bytes }
+    if ($entry.action -in @('install','replace_after_backup')) {
+        $newBytes += [int64]$entry.expected_size_bytes
+        if ($entry.backup_required) { $originalBytes += [int64]$entry.existing_size_bytes }
     }
 }
-if ($needed -gt 0) {
-    $needed += 67108864 # 64 MiB contingency; estimate, not a guarantee
+[int64]$clientNeeded = 0
+[int64]$backupNeeded = 0
+if ($newBytes -gt 0) {
+    $clientNeeded = (2 * $newBytes) + 67108864 # staging plus same-volume temp + 64 MiB
+    if ($backupRoot) {
+        $backupNeeded = $originalBytes + 67108864 # immutable backups and journal reserve
+    } else {
+        # Legacy single-volume estimate, not an approved future backup location.
+        $clientNeeded += $originalBytes
+        $warnings.Add('Select a separate backup directory before any future write-capable installation.')
+    }
+}
+$spaceMode = 'backup_not_selected'
+if ($backupRoot) {
+    $spaceMode = if ((Get-StorageKey $backupRoot) -eq (Get-StorageKey $dest)) {
+        'shared_volume'
+    } else { 'separate_volumes' }
+    $warnings.Add('Volume identity uses drive roots in this preview only; revalidate actual volumes before future writes.')
+}
+[int64]$needed = $clientNeeded + $backupNeeded
+[int64]$clientCheckBytes = if ($spaceMode -eq 'shared_volume') { $needed } else { $clientNeeded }
+if ($clientNeeded -gt 0) {
     try {
         $availableBytes = Get-AvailableSpaceBytes $dest
         if ($availableBytes -lt 0) {
             $blockers.Add('Available destination space was invalid; preview must be blocked.')
-        } elseif ($availableBytes -lt $needed) {
+        } elseif ($availableBytes -lt $clientCheckBytes) {
             $blockers.Add('Insufficient destination free space for estimated staging and backups.')
         }
     } catch {
         $blockers.Add('Could not verify free space on the destination drive.')
+    }
+}
+if ($backupRoot -and $spaceMode -eq 'separate_volumes' -and $backupNeeded -gt 0) {
+    try {
+        $backupAvailableBytes = Get-AvailableSpaceBytes $backupRoot
+        if ($backupAvailableBytes -lt 0) {
+            $blockers.Add('Available backup space was invalid; preview must be blocked.')
+        } elseif ($backupAvailableBytes -lt $backupNeeded) {
+            $blockers.Add('Insufficient backup drive space for estimated originals and journal.')
+        }
+    } catch {
+        $blockers.Add('Could not verify free space on the backup drive.')
     }
 }
 $warnings.Add('This is only a read-only preview. It does not authorise copying or distributing MPQ files.')
@@ -323,6 +380,14 @@ $plan = [pscustomobject][ordered]@{
     }
     realm_host = $realmTargetHost
     estimated_space_bytes = $needed
+    space_budget = [pscustomobject][ordered]@{
+        mode = $spaceMode
+        backup_location_selected = [bool]$backupRoot
+        client_volume_required_bytes = $clientNeeded
+        backup_volume_required_bytes = $backupNeeded
+        combined_volume_required_bytes = $(if ($spaceMode -eq 'shared_volume') { $needed } else { $null })
+        approximation_only = $true
+    }
     status = $(if ($blockers.Count -eq 0) { 'review_only_no_blockers' } else { 'blocked' })
     blockers = @($blockers.ToArray())
     warnings = @($warnings.ToArray())
@@ -338,6 +403,7 @@ if ($Json) {
         Write-Host ("{0,-22} {1} ({2})" -f $entry.action.ToUpperInvariant(),$entry.path,$entry.destination_state)
     }
     Write-Host ("Estimated staging and backup space: {0:N0} bytes" -f $needed)
+    Write-Host "Storage mode: $($plan.space_budget.mode); client budget: $clientNeeded bytes; backup budget: $backupNeeded bytes"
     foreach ($message in $warnings) { Write-Warning $message }
     foreach ($message in $blockers) { Write-Host "BLOCKED: $message" -ForegroundColor Red }
     Write-Host "Preview status: $($plan.status)"
