@@ -26,6 +26,7 @@ try {
   [pscustomobject]@{name='patch-V.mpq';path='Data/patch-V.mpq';data='new V';required=$true},
   [pscustomobject]@{name='patch-Z.mpq';path='Data/patch-Z.mpq';data='new Z';required=$true},
   [pscustomobject]@{name='Patch-J.mpq';path='Data/Patch-J.mpq';data='new J';required=$false},
+   [pscustomobject]@{name='Patch-C.mpq';path='Data/Patch-C.mpq';data='new C';required=$false},
   [pscustomobject]@{name='Patch-U.mpq';path='Data/Patch-U.mpq';data='new U';required=$false}
  )
  $patches=@()
@@ -182,7 +183,7 @@ try {
  if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {throw 'Recovery modified untouched realmlist.'}
  $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-VanillaLogin','-VanillaLoading')
  if ($r.exit -ne 0 -or -not $r.text.Contains('TEST INSTALL COMPLETE')) {throw ("Install failed: "+$r.text)}
- foreach($entry in $patches) {
+ foreach($entry in @($patches | Where-Object {$_.path -cne 'Data/Patch-C.mpq'})) {
   $p=Join-Path $game $entry.path
   if (-not (Test-Path -LiteralPath $p) -or (Get-FileHash -LiteralPath $p).Hash.ToLowerInvariant() -ne $entry.sha256) {throw "Missing or incorrect: $($entry.path)"}
  }
@@ -205,6 +206,34 @@ try {
   if (Test-Path -LiteralPath (Join-Path (Join-Path $game 'Data') $name)) {throw "New file $name not removed."}
  }
  if ([IO.File]::ReadAllText($realmFile) -cne 'set realmlist old.example') {throw 'Original realmlist was not restored.'}
+ # Exclusivity and already-installed conflicts, all on tiny disposable fixtures.
+ $r=Run @('-VanillaLogin','-TbcLogin')
+ if($r.exit -eq 0 -or -not $r.text.Contains('Choose only one login screen')) {throw 'Selected J and C together were accepted.'}
+ [IO.File]::WriteAllText((Join-Path $game 'Data/Patch-J.mpq'),'pre-existing J')
+ $r=Run @('-TbcLogin')
+ if($r.exit -eq 0 -or -not $r.text.Contains('while Vanilla Patch J exists')) {throw 'TBC option accepted existing J.'}
+ Remove-Item -LiteralPath (Join-Path $game 'Data/Patch-J.mpq') -Force
+ [IO.File]::WriteAllText((Join-Path $game 'Data/Patch-C.mpq'),'pre-existing C')
+ $r=Run @('-VanillaLogin')
+ if($r.exit -eq 0 -or -not $r.text.Contains('while TBC Patch C exists')) {throw 'Vanilla option accepted existing C.'}
+ [IO.File]::WriteAllText((Join-Path $game 'Data/Patch-J.mpq'),'pre-existing J')
+ $r=Run @()
+ if($r.exit -eq 0 -or -not $r.text.Contains('Conflicting login patches J and C are both installed')) {throw 'Existing J and C together were accepted.'}
+ Remove-Item -LiteralPath (Join-Path $game 'Data/Patch-J.mpq') -Force
+ Remove-Item -LiteralPath (Join-Path $game 'Data/Patch-C.mpq') -Force
+ $r=Run @('-TbcLogin','-VanillaLoading')
+ if($r.exit -ne 0 -or -not $r.text.Contains('PLAN: 5 file change(s)')) {throw ("TBC plus U plan failed: "+$r.text)}
+ $r=Run @('-Action','Install','-Apply','-ConfirmDisposableFixture','-TbcLogin','-VanillaLoading')
+ if($r.exit -ne 0 -or -not $r.text.Contains('TEST INSTALL COMPLETE')) {throw ("TBC plus U install failed: "+$r.text)}
+ foreach($name in @('Patch-C.mpq','Patch-U.mpq')){
+  if(-not (Test-Path -LiteralPath (Join-Path (Join-Path $game 'Data') $name))) {throw "TBC fixture is missing $name"}
+ }
+ if(Test-Path -LiteralPath (Join-Path $game 'Data/Patch-J.mpq')) {throw 'TBC install also wrote J.'}
+ $r=Run @('-Action','Rollback','-Apply','-ConfirmDisposableFixture')
+ if($r.exit -ne 0 -or -not $r.text.Contains('ROLLBACK COMPLETE')) {throw ("TBC fixture rollback failed: "+$r.text)}
+ foreach($name in @('Patch-C.mpq','Patch-U.mpq')){
+  if(Test-Path -LiteralPath (Join-Path (Join-Path $game 'Data') $name)) {throw "TBC rollback left $name"}
+ }
  # The N Addon Suite is always selected with NCore, and only explicitly selected optional modules.
  $r=Run @('-Addons','DungeonJournal')
  if ($r.exit -eq 0 -or -not $r.text.Contains('require -AddonSuitePath')) {

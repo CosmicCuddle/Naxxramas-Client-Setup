@@ -12,10 +12,12 @@ function New-NaxxPreviewRequest {
   [string]$PatchSourcePath,
   [string]$AddonSuiteArchivePath,
   [bool]$VanillaLogin=$false,
+  [bool]$TbcLogin=$false,
   [bool]$VanillaLoading=$false,
   [string[]]$Addons=@(),
   [string]$RepositoryPath=(Split-Path -Parent $PSScriptRoot)
  )
+ if ($Mode -eq 'Plan' -and $VanillaLogin -and $TbcLogin) { throw 'Choose only one login screen (J or C).' }
  $client=$ClientPath.Trim()
  if (-not $client -or -not (Test-Path -LiteralPath $client -PathType Container)) {
   throw 'Choose an existing WoW client folder.'
@@ -48,6 +50,7 @@ function New-NaxxPreviewRequest {
    $arguments.AddonSuiteArchivePath=(Resolve-Path -LiteralPath $AddonSuiteArchivePath).ProviderPath
   }
   if ($VanillaLogin) { $arguments.VanillaLogin=$true }
+  if ($TbcLogin) { $arguments.TbcLogin=$true }
   if ($VanillaLoading) { $arguments.VanillaLoading=$true }
   $allowed=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
   $chosen=New-Object 'System.Collections.Generic.List[string]'

@@ -12,7 +12,7 @@ Planned features:
 
 - Guided connection setup, including a server-specific realmlist configuration.
 - Installation and updating of **redistributable** Naxxramas-specific files.
-- Validation of mandatory `patch-V.mpq` and `patch-Z.mpq`; optional Vanilla visual patches `Patch-J.mpq` and `Patch-U.mpq`.
+- Validation of mandatory `patch-V.mpq` and `patch-Z.mpq`; optional Vanilla/TBC visual patches `Patch-J.mpq`, `Patch-C.mpq` and `Patch-U.mpq`.
 - Optional installation of supported Naxxramas addons.
 - Version checks, backups, and a clear way to undo installer changes.
 - Simple instructions, including support for less technical players.
@@ -41,7 +41,7 @@ The owner-provided [realmlist configuration](config/realm.json) defaults to `set
 
 ## Core and optional client patches
 
-The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for a complete Naxxramas client installation. Neither may be skipped or disabled. `Data/Patch-J.mpq` is the optional login-screen patch (also including some loading-screen assets); `Data/Patch-U.mpq` is the optional loading-screen patch. Their two overlapping loading-screen paths require in-game compatibility testing when both options are selected.
+The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for a complete Naxxramas client installation. Neither may be skipped or disabled. `Data/Patch-J.mpq` provides the optional Vanilla login screen, `Data/Patch-C.mpq` provides the optional Burning Crusade Dark Portal login screen, and `Data/Patch-U.mpq` adds Vanilla loading screens. **Never combine J and C**: they replace the same login-screen system. U can accompany either J or C. J/U have overlapping loading textures whose combined priority requires in-game testing. A pre-existing conflicting login MPQ blocks a new selection; the test installer never silently deletes it.
 
 The [patch policy manifest](config/client-patches.json) records those installer requirements. **It does not provide or license the MPQ files.** No installer has been implemented yet.
 
@@ -65,7 +65,7 @@ The [Milestone 6 recovery inspection](docs/INSTALLER-MILESTONE-6.md) adds read-o
 
 ## Windows graphical preview (development only)
 
-A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla visuals and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface does **not** offer Install, Apply, Rollback, downloading or any operation that modifies a WoW client.
+A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla or TBC login visuals, Vanilla loading screens, and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface does **not** offer Install, Apply, Rollback, downloading or any operation that modifies a WoW client.
 
 See [Milestone 7: Windows GUI preview](docs/INSTALLER-MILESTONE-7.md). This is a **development preview**, not a finished player installer. It uses Windows PowerShell 5.1 and WinForms; Windows CI validates window construction at narrow and wide sizes without showing it. The preview now supports Tab navigation, Alt+P / Alt+I shortcuts, Escape to close and cancelling a running check.
 
@@ -79,13 +79,13 @@ A Windows CI job produces a **downloadable preview ZIP artifact** once its tests
 
 ## Read-only preflight tools
 
-Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are now recorded as `patchset-0001` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/U patches separately from selected installation options.
+Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
 
 See [Installer Development — Milestone 1](docs/INSTALLER-MILESTONE-1.md) for the exact steps, caveats, and the next implementation phase.
 
 ## Updating core and optional patches
 
-When patch-V, patch-Z, Patch-J or Patch-U changes, **do not rename a patch or overwrite its old version record**. Download a fresh repository copy and drag the folder containing `Wow.exe` onto `tools/Prepare-Patch-Update.bat`. This generates `tools/patch-update-proposal.json` (hashes, sizes and proposed next version only; no game binaries, personal paths or automatic uploads). Send the proposal for review, test the patched client, and then commit the new reference plus an immutable history entry. See [Patch Updates](docs/PATCH-UPDATES.md). The application updater/rollback system is **not implemented yet**.
+When patch-V, patch-Z, Patch-J, Patch-C or Patch-U changes, **do not rename a patch or overwrite its old version record**. Download a fresh repository copy and drag the folder containing `Wow.exe` onto `tools/Prepare-Patch-Update.bat`. This generates `tools/patch-update-proposal.json` (hashes, sizes and proposed next version only; no game binaries, personal paths or automatic uploads). Send the proposal for review, test the patched client, and then commit the new reference plus an immutable history entry. See [Patch Updates](docs/PATCH-UPDATES.md). The application updater/rollback system is **not implemented yet**.
 
 ## Current client review
 

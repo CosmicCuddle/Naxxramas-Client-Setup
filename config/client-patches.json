@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "design_only_not_an_installer_or_distribution_approval",
-  "note": "V/Z hashes and byte sizes pinned from the owner-supplied 2026-10-09 screenshot of the read-only tool. J/U hashes previously derived from owner-provided files. These checksums identify the expected bytes, not file provenance, redistribution rights, or runtime compatibility. No binaries or public download URLs are included.",
+  "note": "Reference SHA-256 and sizes for mandatory V/Z and optional J/U come from previous owner verification. Patch C SHA-256 and size come from GitHub optional-v1.0 release asset metadata. These checksums identify expected bytes; they do not grant distribution rights or prove runtime compatibility. No patch binaries are bundled or downloaded.",
   "target_client": {
     "game": "World of Warcraft",
     "version": "3.3.5a",
@@ -45,6 +45,18 @@
       "inspection": "archive_listfile_verified_2026-10-09"
     },
     {
+      "path": "Data/Patch-C.mpq",
+      "role": "burning_crusade_login_screen",
+      "detail": "Burning Crusade Dark Portal and Hellfire-themed login visuals and replacement music. Do not combine with Patch-J.mpq.",
+      "required": false,
+      "allow_disable": true,
+      "sha256": "16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8",
+      "public_distribution_approved": false,
+      "size_bytes": 26753640,
+      "hash_reference": "optional-v1.0_GitHub_release_asset",
+      "inspection": "github_release_asset_sha256_and_size"
+    },
+    {
       "path": "Data/Patch-U.mpq",
       "role": "vanilla_loading_screens",
       "detail": "Four BLPs: Eastern Kingdoms and Kalimdor, plus widescreen variants. Two BLP paths overlap with Patch-J.mpq and have different contents.",
@@ -66,9 +78,17 @@
       "Interface/GLUES/LoadingScreens/LoadScreenEasternKingdom.blp",
       "Interface/GLUES/LoadingScreens/LoadScreenKalimdor.blp"
     ],
-    "in_game_joint_option_test_required": true
+    "in_game_joint_option_test_required": true,
+    "mutually_exclusive_optional_patches": [
+      [
+        "Data/Patch-J.mpq",
+        "Data/Patch-C.mpq"
+      ]
+    ],
+    "reject_existing_conflicting_login_patch": true,
+    "tbc_release": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/optional-v1.0"
   },
-  "patch_set_revision": 1,
-  "patch_set_version": "patchset-0001",
-  "patch_set_updated": "2026-10-09"
+  "patch_set_revision": 2,
+  "patch_set_version": "patchset-0002",
+  "patch_set_updated": "2026-10-10"
 }

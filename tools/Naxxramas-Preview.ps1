@@ -213,7 +213,7 @@ function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
 $client=Picker 'Existing WoW 3.3.5a client' 6 $false 0
 $patch=Picker 'Local patch source (optional)' 70 $false 2
 $zip=Picker 'N-Addon Collection v2.0.0 ZIP (optional)' 134 $true 4
-[void](Label $options 'VANILLA VISUALS' 2 199 350 25 $heading $gold)
+[void](Label $options 'LOGIN SCREEN (CHOOSE ONE)' 2 199 350 25 $heading $gold)
 function Check([string]$name,[int]$x,[int]$y,[int]$tab){
  $cb=New-Object Windows.Forms.CheckBox
  $cb.Text=$name;$cb.Location=New-Object Drawing.Point($x,$y)
@@ -221,10 +221,13 @@ function Check([string]$name,[int]$x,[int]$y,[int]$tab){
  $cb.ForeColor=$cream;$cb.TabIndex=$tab
  $options.Controls.Add($cb);return $cb
 }
-$login=Check 'Login screen (J)' 3 225 6
-$loading=Check 'Loading screens (U)' 191 225 7
-[void](Label $options 'N-ADDON COLLECTION' 2 259 350 25 $heading $gold)
-$core=Label $options 'NCore - select a suite ZIP to enable' 3 287 355 24 $small $gold
+$login=Check 'Vanilla login (J)' 3 225 6
+$tbc=Check 'TBC login (C)' 191 225 7
+$login.Add_CheckedChanged({if($login.Checked){$tbc.Checked=$false}}.GetNewClosure())
+$tbc.Add_CheckedChanged({if($tbc.Checked){$login.Checked=$false}}.GetNewClosure())
+$loading=Check 'Vanilla loading (U)' 3 254 8
+[void](Label $options 'N-ADDON COLLECTION' 2 288 350 25 $heading $gold)
+$core=Label $options 'NCore - select a suite ZIP to enable' 3 316 355 24 $small $gold
 $definitions=@(
  @{Id='IndividualProgressionAddon';Title='Individual Progression'},
  @{Id='DungeonJournal';Title='Dungeon Journal'},
@@ -234,7 +237,7 @@ $definitions=@(
 $addonChecks=@{}
 for($i=0;$i -lt $definitions.Count;$i++){
  $d=$definitions[$i]
- $cb=Check $d.Title 3 (314+$i*29) (8+$i)
+ $cb=Check $d.Title 3 (343+$i*29) (9+$i)
  $cb.Enabled=$false
  $addonChecks[$d.Id]=$cb
 }
@@ -298,7 +301,7 @@ function Launch([string]$action){
  try{
   $selected=@()
   foreach($d in $definitions){if($addonChecks[$d.Id].Checked){$selected+=([string]$d.Id)}}
-  $request=New-NaxxPreviewRequest -Mode $action -ClientPath $client.Text -PatchSourcePath $patch.Text -AddonSuiteArchivePath $zip.Text -VanillaLogin $login.Checked -VanillaLoading $loading.Checked -Addons $selected
+  $request=New-NaxxPreviewRequest -Mode $action -ClientPath $client.Text -PatchSourcePath $patch.Text -AddonSuiteArchivePath $zip.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked -Addons $selected
   $preview.Enabled=$false;$inspect.Enabled=$false;$cancel.Enabled=$true
   $status.Text='CHECKING FILES';$status.ForeColor=$gold
   $result.Text='Reading local files. Checking large patches may take a little while...'
@@ -347,7 +350,8 @@ try{
    $form.ClientSize=$size
    $grid.PerformLayout();$main.PerformLayout()
    $right.PerformLayout();$footer.PerformLayout();$left.PerformLayout()
-   if($null -eq $art -or $null -eq $result -or $null -eq $options -or
+   if($null -eq $tbc -or ($login.Checked -and $tbc.Checked) -or
+      $null -eq $art -or $null -eq $result -or $null -eq $options -or
       $null -eq $artImage -or $artLayout.RowCount -ne 1 -or
       $artLayout.ClientSize.Width -le 0 -or
       $mode.Text -ne 'READ-ONLY' -or

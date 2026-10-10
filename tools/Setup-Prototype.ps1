@@ -14,6 +14,7 @@ param(
  [ValidateSet('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')]
  [string[]]$Addons=@(),
  [switch]$VanillaLogin,
+ [switch]$TbcLogin,
  [switch]$VanillaLoading,
  [switch]$Apply,
  [switch]$ConfirmDisposableFixture,
@@ -36,7 +37,7 @@ function IsInside([string]$p,[string]$parent) {
     $p.StartsWith(($parent+[IO.Path]::DirectorySeparatorChar),[StringComparison]::OrdinalIgnoreCase)
 }
 function Rel([string]$p) {
- $allowed=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+ $allowed=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-C.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
  if (-not ($allowed -ccontains $p)) {
   Require ($p -cmatch '^Interface/AddOns/(NCore|IndividualProgressionAddon|DungeonJournal|MultiBot|NaxxLootLottery)/[^/]+') "Unsafe path: $p"
   foreach($part in ($p -split '/')) {
@@ -201,11 +202,18 @@ function PatchSource([string]$p) {
  return $null
 }
 function ProposedChanges {
+ Require (-not ($VanillaLogin -and $TbcLogin)) 'Choose only one login screen: Vanilla Patch J or Burning Crusade Patch C.'
+ # The installer never silently deletes an unrelated existing MPQ.
+ $jPresent=Test-Path -LiteralPath (Destination 'Data/Patch-J.mpq') -PathType Leaf
+ $cPresent=Test-Path -LiteralPath (Destination 'Data/Patch-C.mpq') -PathType Leaf
+ Require (-not ($jPresent -and $cPresent)) 'Conflicting login patches J and C are both installed. Back up and resolve them manually.'
+ Require (-not ($TbcLogin -and $jPresent)) 'Cannot select TBC Patch C while Vanilla Patch J exists. Back up and remove J manually before continuing.'
+ Require (-not ($VanillaLogin -and $cPresent)) 'Cannot select Vanilla Patch J while TBC Patch C exists. Back up and remove C manually before continuing.'
  $changes=New-Object 'System.Collections.Generic.List[object]'
  foreach ($p in @($policy.patches)) {
   $path=[string]$p.path
   $null=Rel $path
-  $needed=[bool]$p.required -or ($path -ceq 'Data/Patch-J.mpq' -and $VanillaLogin) -or ($path -ceq 'Data/Patch-U.mpq' -and $VanillaLoading)
+  $needed=[bool]$p.required -or ($path -ceq 'Data/Patch-J.mpq' -and $VanillaLogin) -or ($path -ceq 'Data/Patch-C.mpq' -and $TbcLogin) -or ($path -ceq 'Data/Patch-U.mpq' -and $VanillaLoading)
   if (-not $needed) { continue }
   $hash=[string]$p.sha256
   $size=[long]$p.size_bytes
@@ -379,7 +387,7 @@ try {
  Require ($policy.schema_version -eq 1 -and [bool]$policy.patch_set_version) 'Unknown patchset manifest.'
  Require ($realm.schema_version -eq 1 -and $realm.relative_path -ceq 'Data/enUS/realmlist.wtf') 'Wrong realm configuration target.'
  Require ($realm.host -match '^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$' -and $realm.line -ceq ('set realmlist '+$realm.host)) 'Unsafe realm configuration.'
- Require (@($policy.patches).Count -eq 4) 'Unexpected patch manifest count.'
+ Require (@($policy.patches).Count -eq 5) 'Unexpected patch manifest count.'
  $needed=@($policy.patches | Where-Object { $_.required })
  Require ($needed.Count -eq 2 -and @($needed | Where-Object { $_.path -ceq 'Data/patch-V.mpq' }).Count -eq 1 -and
   @($needed | Where-Object { $_.path -ceq 'Data/patch-Z.mpq' }).Count -eq 1) 'Both mandatory core patches must be present in manifest.'

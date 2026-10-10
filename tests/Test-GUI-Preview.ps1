@@ -35,7 +35,10 @@ foreach($needle in @(
  '$cancel.Add_Click',
  'CLASSIC LAUNCHER LAYOUT TEST PASSED',
  '$result.AccessibleName=',
- 'New-NaxxPreviewRequest'
+ 'New-NaxxPreviewRequest',
+ 'TBC login (C)',
+ '$tbc.Add_CheckedChanged',
+ '-TbcLogin $tbc.Checked'
 )){
  if(-not $guiBlob.Contains($needle)){throw ("Missing classic launcher feature: "+$needle)}
 }
@@ -79,6 +82,7 @@ param(
  [string]$AddonSuiteArchivePath,
  [string[]]$Addons=@(),
  [switch]$VanillaLogin,
+ [switch]$TbcLogin,
  [switch]$VanillaLoading
 )
 Write-Output "ACTION=$Action"
@@ -151,7 +155,12 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  if((Get-FileHash -LiteralPath $packagedGui -Algorithm SHA256).Hash -ne $sameCode){
   throw 'Artwork replacement unexpectedly changed the application code.'
  }
-  $inspect=New-NaxxPreviewRequest -Mode Inspect -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
+  $tbcReq=New-NaxxPreviewRequest -Mode Plan -ClientPath $game -PatchSourcePath $patches -TbcLogin $true -VanillaLoading $true -RepositoryPath $repoFixture
+ if(-not $tbcReq.Parameters.TbcLogin -or $tbcReq.Parameters.ContainsKey('VanillaLogin')) {throw 'TBC login was not sent safely to backend.'}
+ $blocked=$false
+ try{$null=New-NaxxPreviewRequest -Mode Plan -ClientPath $game -TbcLogin $true -VanillaLogin $true -RepositoryPath $repoFixture}catch{$blocked=$true}
+ if(-not $blocked){throw 'GUI helper accepted both J and C.'}
+ $inspect=New-NaxxPreviewRequest -Mode Inspect -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
  if(@($inspect.Parameters.Keys).Count -ne 2 -or $inspect.Parameters.Action -ne 'Inspect'){
   throw 'Inspect mode should receive only Action and ClientPath.'
  }

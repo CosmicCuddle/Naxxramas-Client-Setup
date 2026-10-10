@@ -10,6 +10,7 @@ param(
   [Parameter(Mandatory=$true)][string]$ClientPath,
   [string]$PatchSourcePath,
   [switch]$VanillaLogin,
+  [switch]$TbcLogin,
   [switch]$VanillaLoading,
   [string]$AddonSuitePath,
   [ValidateSet('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')]
@@ -131,9 +132,25 @@ try {
     }
   }
 
+  if ($VanillaLogin -and $TbcLogin) {
+    $issues.Add('Choose only one login screen: Vanilla Patch J or Burning Crusade Patch C.')
+  }
+  $existingJ = Find-Patch $root 'Data/Patch-J.mpq'
+  $existingC = Find-Patch $root 'Data/Patch-C.mpq'
+  if ($existingJ -and $existingC) {
+    $issues.Add('Conflicting login patches J and C are both installed. Back up and resolve manually.')
+  }
+  if ($TbcLogin -and $existingJ) {
+    $issues.Add('Cannot select TBC Patch C while Vanilla Patch J exists. Back up and remove J manually.')
+  }
+  if ($VanillaLogin -and $existingC) {
+    $issues.Add('Cannot select Vanilla Patch J while TBC Patch C exists. Back up and remove C manually.')
+  }
+
   foreach ($patch in @($policy.patches)) {
     $required = [bool]$patch.required
     $chosen = $required -or ($patch.path -eq 'Data/Patch-J.mpq' -and [bool]$VanillaLogin) -or
+      ($patch.path -eq 'Data/Patch-C.mpq' -and [bool]$TbcLogin) -or
       ($patch.path -eq 'Data/Patch-U.mpq' -and [bool]$VanillaLoading)
     $installed = Find-Patch $root $patch.path
     if (-not $chosen) {
