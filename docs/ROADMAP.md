@@ -37,7 +37,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Record the owner-provided realmlist address separately in `config/realm.json` and supply a manual `realmlist.wtf` template.
 - [x] Write standalone project roadmap and handover notes for chat continuity.
 - [x] Add synthetic PowerShell fixture tests and a Windows CI workflow for the new planner.
-- [ ] Confirm Windows execution succeeds; legacy read-only scripts still need regression tests.
+- [x] Confirm planner and legacy preflight fixture suites pass on GitHub Windows PowerShell 5.1 CI (10 October 2026; PRs #2 and #3).
 
 ## Milestone 2 — Installer planning, still READ ONLY
 
@@ -55,16 +55,18 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Provide text and JSON previews without uploading MPQ bytes or personal file paths.
 - [x] Add synthetic cases for current/missing/older/unknown patches, source mismatch, J/U selection, realmlist, collisions and no-write behaviour.
 - [x] Add missing/nested-path and conditional junction rejection fixture assertions.
-- [ ] Confirm CI execution and add low-disk and malformed-policy regression cases.
+- [x] Confirm Windows CI and exercise a malformed policy in synthetic fixtures, including a valid build-12340 metadata success case.
+- [ ] Add a deterministic low-free-space regression case and further fail-closed safety assertions.
 - [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
 
 ## Milestone 3 — Backup-first local transaction
 
-**Blocked until the read-only planner is tested and sources are confirmed appropriate for local use.**
+**Write-capable development remains blocked by provenance/approval decisions and remaining failure-path coverage.** A [backup/transaction design](TRANSACTION-DESIGN.md) has been drafted; no game-file writing engine exists.
 
-- [ ] Build a transaction engine for allowlisted configuration/approved assets only.
+- [x] Draft the [backup-first transaction and rollback design](TRANSACTION-DESIGN.md), including journal states and recovery tests.
+- [ ] Build a transaction engine for allowlisted configuration/approved assets only after design and sources are approved.
 - [ ] Require explicit confirmation and client-closed checks before writing.
 - [ ] Stage files, verify SHA-256 and size, then commit by safe replacement.
 - [ ] Store exact pre-change files in a per-install backup folder outside the client.
@@ -136,5 +138,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - Confirmed an actual write-capable installer, updater, rollback and uninstall are **not yet present**.
 - Created a dedicated roadmap and handover as living project records.
 - Added the read-only planner, Windows launcher, synthetic test suite, CI workflow and [preview documentation](INSTALLER-PLAN.md).
-- Windows tests have been authored but **not yet confirmed passing** in the current environment.
-- **Next task:** confirm Windows CI, correct any failures, add remaining free-space/policy failure tests and meet the preview exit gate before any write-capable installer.
+- On 10 October 2026, GitHub's Windows PowerShell 5.1 workflows for read-only planner fixtures **passed**, including the synthetic supported-build no-blockers scenario. The legacy preflight suite also **passed** after fixing an inherited exit-code issue.
+- PR [#2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2) merged expanded safety fixtures and corrected legacy test exit-code handling. PR [#3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3) merged a generated versioned executable fixture to test the non-blocking preview.
+- Recorded the write-capable design separately in [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md), without introducing any installation code.
+- **Next task:** finish remaining low-space and fail-closed planner tests, then design a *read-only* journal-state recovery evaluator. Do not alter a real game client.
