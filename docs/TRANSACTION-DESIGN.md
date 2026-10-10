@@ -176,4 +176,4 @@ Automated **disposable fixture** tests required:
 
 **Completed first slice:** [Recovery Preview](RECOVERY-PREVIEW.md) now reads synthetic session records and inspects current/backup file hashes without changing them. The Windows PowerShell CI fixture suite passed on 10 October 2026.
 
-**Next:** design authenticated ownership and a crash-durable journal update mechanism; complete remaining low-space/failure-path testing. Do not code a real-client write-capable engine. Any subsequent write experiments must use disposable fixtures and a separate review gate.
+**Next:** review [Journal Durability](JOURNAL-DURABILITY.md) for the proposed write/checkpoint ordering, ambiguous power-loss states and local session ownership questions. Complete remaining free-space and fail-closed regression coverage. **Do not** code a real-client write-capable engine. Any subsequent write experiments must use disposable fixtures and a separate review gate.
