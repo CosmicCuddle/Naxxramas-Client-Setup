@@ -96,10 +96,15 @@ try {
         if ($Login) { $parameters.VanillaLogin = $true }
         if ($Loading) { $parameters.VanillaLoading = $true }
         $before = Snapshot $client
+        $sourceBefore = Snapshot $source
         $json = & $planner @parameters | Out-String
         $after = Snapshot $client
+        $sourceAfter = Snapshot $source
         Check ($before -ceq $after) 'Preview does not modify any fixture client file'
-        return ($json | ConvertFrom-Json)
+        Check ($sourceBefore -ceq $sourceAfter) 'Preview does not modify any fixture source file'
+        $parsed = $json | ConvertFrom-Json
+        Check (-not $json.Contains($work)) 'Plan JSON excludes absolute test paths'
+        return $parsed
     }
 
     $plan = Plan
@@ -108,6 +113,10 @@ try {
     Check ((Item $plan 'Data/Patch-J.mpq').action -eq 'not_selected') 'Unselected J remains optional'
     Check ((Item $plan 'Data/Patch-U.mpq').action -eq 'not_selected') 'Unselected U remains optional'
     Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'no_change') 'Matching realmlist preserved'
+    Check ($plan.status -eq 'blocked') 'Unknown executable version is reported as blocking'
+    Check (@($plan.blockers | Where-Object { $_ -like '*12340*' }).Count -eq 1) 'Unsupported executable metadata is not silently accepted'
+    Check ($plan.patch_set_version -eq 'patchset-0001') 'Plan records the pinned patchset'
+    Check (@($plan.files).Count -eq 5) 'Plan includes only four patches and the realmlist'
 
     Remove-Item -LiteralPath (Join-Path $client 'Data/patch-Z.mpq')
     $plan = Plan
@@ -189,6 +198,39 @@ try {
     Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'leave_existing') 'Additional realmlist content is preserved'
     Save $realmFile 'set realmlist naxx.example.test'
 
+    $changedPlan = (& $planner -ClientPath $client -RealmHost 'alternate.example.test' -Json |
+        Out-String) | ConvertFrom-Json
+    Check ($changedPlan.realm_host -eq 'alternate.example.test') 'Realm host override is reflected in the preview'
+    Check ((Item $changedPlan 'Data/enUS/realmlist.wtf').action -eq 'replace_after_backup') 'Realm override requires backup'
+
+    $invalidHostThrown = $false
+    try {
+        $null = & $planner -ClientPath $client -RealmHost 'https://bad.example.test:8085' -Json 2>&1 | Out-String
+    } catch { $invalidHostThrown = $true }
+    Check $invalidHostThrown 'URL and port are rejected as realm host'
+
+    $bigRealmlist = ('x' * 4097)
+    Save $realmFile $bigRealmlist
+    $plan = Plan
+    Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'blocked') 'Oversized realmlist is blocked'
+    Save $realmFile 'set realmlist naxx.example.test'
+
+    $invalidManifest = Join-Path $config 'client-patches.json'
+    $originalManifest = [IO.File]::ReadAllBytes($invalidManifest)
+    try {
+        $invalidPolicy = Get-Content -LiteralPath $invalidManifest -Raw | ConvertFrom-Json
+        $invalidPolicy.patches[2].required = $true
+        $invalidPolicy | ConvertTo-Json -Depth 9 |
+            Set-Content -LiteralPath $invalidManifest -Encoding UTF8
+        $invalidManifestThrown = $false
+        try {
+            $null = & $planner -ClientPath $client -Json 2>&1 | Out-String
+        } catch { $invalidManifestThrown = $true }
+        Check $invalidManifestThrown 'Invalid manifest cannot make optional J mandatory'
+    } finally {
+        [IO.File]::WriteAllBytes($invalidManifest,$originalManifest)
+    }
+
     # A junction is created only within this disposable fixture, and may be
     # unavailable without elevated privileges on some local Windows machines.
     $junction = Join-Path $work 'junction-client'
@@ -211,7 +253,22 @@ try {
     Write-Host 'All synthetic read-only planner assertions passed.' -ForegroundColor Green
 }
 finally {
-    if (Test-Path -LiteralPath $work) {
+    # Never recursively traverse a test junction. Remove the link itself first.
+    $testJunction = Join-Path $work 'junction-client'
+    $cleanJunction = $true
+    if (Test-Path -LiteralPath $testJunction) {
+        try {
+            $link = Get-Item -LiteralPath $testJunction -Force
+            if (($link.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0) {
+                throw 'Expected junction is not a reparse point; refusing unsafe cleanup.'
+            }
+            [IO.Directory]::Delete($testJunction,$false)
+        } catch {
+            $cleanJunction = $false
+            Write-Warning 'Could not safely remove temporary test junction; leaving the fixture for manual inspection.'
+        }
+    }
+    if ($cleanJunction -and (Test-Path -LiteralPath $work)) {
         Remove-Item -LiteralPath $work -Recurse -Force
     }
 }
