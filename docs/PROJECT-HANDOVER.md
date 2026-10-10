@@ -45,7 +45,9 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | --- | --- | --- |
 | `tools/Inspect-Client.bat` / `.ps1` | Generate a names/sizes-only inventory | No |
 | `tools/Check-Naxxramas-Client.bat` and `tools/Test-Naxxramas-Client.ps1` | Check client structure, executable version metadata, V/Z hashes, optional J/U, addons and realmlist | No |
-| `tools/Plan-Naxxramas-Install.bat` / `.ps1` | Preview possible V/Z, J/U and realmlist actions, blockers and backup needs (Milestone 2; Windows tests pending) | No |
+| `tools/Plan-Naxxramas-Install.bat` / `.ps1` | Preview V/Z, J/U and realmlist actions, blockers and backup needs (Milestone 2; Windows fixture tests passed) | No |
+| `tools/Review-Naxxramas-Recovery.ps1` | Evaluate local session manifests, original backup integrity and recovery conflicts, **without restoring files** | No |
+| `tests/Test-RecoveryPreview.ps1` and `.github/workflows/recovery-preview-tests.yml` | Disposable Windows PowerShell 5.1 recovery inspector tests; passed 10 October 2026 | No |
 | `tools/Get-Core-Patch-Hashes.bat` / `.ps1` | Display V/Z SHA-256 and sizes | No |
 | `tools/Prepare-Patch-Update.bat` / `.ps1` | Propose new patch metadata in `tools/patch-update-proposal.json` | No (writes a local *report* in repository tools folder) |
 | `config/client-patches.json` | Current V/Z and J/U policy, hashes, sizes, overlap warning | N/A |
@@ -58,6 +60,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/REALMLIST.md` | Manual realmlist backup/configuration guide | N/A |
 | `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
 | `docs/TRANSACTION-DESIGN.md` | Proposed backup, journal, write-gate, rollback and recovery safety contract; no implementation | N/A |
+| `docs/RECOVERY-PREVIEW.md` | How the read-only recovery inspector classifies safe suggestions and conflicts | N/A |
 | `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
 | `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 fixture workflow; passed on 10 October 2026 | N/A |
 | `docs/ROADMAP.md` | Detailed milestones, gates and progress log | N/A |
@@ -89,7 +92,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 - In-game precedence when J and U are both installed.
 - Internals, dependencies, origin and redistribution rights of V/Z patches.
 - Redistribution rights for J/U or any addon package.
-- Any safe automatic installation, repair, update, rollback or uninstall.
+- Any safe automatic installation, repair, update, rollback or uninstall. The new recovery inspection tool is **read-only** and does not restore files.
 
 Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 match or a staged plan as a completed end-to-end functional test.
 
@@ -121,7 +124,7 @@ Next checks before leaving Milestone 2:
 2. **Completed:** missing/nested-path, junction and malformed-policy fixture checks passed on Windows. **Still needed:** deterministic low-disk regression and additional fail-closed testing.
 3. **Completed for fixture scope:** JSON does not include absolute fixture paths; source and destination snapshots remain unchanged across tested previews. Continue reviewing data privacy for any new planner fields.
 4. **Completed:** updated the owner-facing milestone documentation and verified Windows results in this handover and ROADMAP. Document any further checks with the same precision.
-5. Read [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md) for the **design-only** transaction proposal. Build a separate read-only session/journal recovery evaluator before developing code capable of writing game files.
+5. **Completed:** [read-only recovery preview](RECOVERY-PREVIEW.md) evaluates session records and original backups and was tested against synthetic files. The [transaction design](TRANSACTION-DESIGN.md) remains design-only; no write-capable engine exists.
 
 Do **not** treat this task as permission to copy or distribute MPQ files. It is a design/validation step.
 
@@ -146,4 +149,5 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - Both Windows PowerShell 5.1 workflows passed on 10 October 2026 after opening PRs to trigger full checks. The original preflight workflow initially failed due to a stale child-process `LASTEXITCODE`; that harness bug was corrected and reverified.
 - Expanded tests merged in PR #2 and non-blocking valid-build fixture merged in PR #3. The read-only success path and core negative tests are now covered; real game runtime and installation remain untested.
 - Created [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md) with a transaction state machine, backup ownership rules, conflict-safe rollback and crash-recovery gates.
-- **Next engineering action:** finish low-space/fail-closed tests, then implement and test a **read-only journal-state recovery planner** against synthetic session data. Do not touch genuine client files.
+- PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) added the read-only recovery inspector and generated-file tests for backup integrity, conflict preservation, unsafe manifest rejection and no-write guarantees. Recovery and preflight workflows both passed on Windows 10 October 2026.
+- **Next engineering action:** finish deterministic low-disk/fail-closed tests, specify atomic journal update and authentication, and only then prototype write/recovery transactions on disposable fixtures after explicit review. Never alter the only working client.
