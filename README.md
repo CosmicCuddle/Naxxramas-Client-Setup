@@ -71,7 +71,7 @@ The [Milestone 6 recovery inspection](docs/INSTALLER-MILESTONE-6.md) adds read-o
 
 ## Windows graphical preview (development only)
 
-A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla or TBC login visuals, Vanilla loading screens, and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface does **not** offer Install, Apply, Rollback, downloading or any operation that modifies a WoW client.
+A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla or TBC login visuals, Vanilla loading screens, and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface has **no Install, Apply or Rollback** action for real clients. An explicit **Get patches** action downloads validated files only into a separate source folder, never into the game. A confirmation dialog appears before network access or writing sources.
 
 See [Milestone 7: Windows GUI preview](docs/INSTALLER-MILESTONE-7.md). This is a **development preview**, not a finished player installer. It uses Windows PowerShell 5.1 and WinForms; Windows CI validates window construction at narrow and wide sizes without showing it. The preview now supports Tab navigation, Alt+P / Alt+I shortcuts, Escape to close and cancelling a running check.
 

@@ -69,3 +69,35 @@ function New-NaxxPreviewRequest {
   Mode=$Mode
  }
 }
+
+
+# Downloading is distinct from read-only Plan/Inspect and never writes the client.
+function New-NaxxSourceDownloadRequest {
+ [CmdletBinding()]
+ param(
+  [Parameter(Mandatory=$true)][string]$ClientPath,
+  [Parameter(Mandatory=$true)][string]$PatchSourcePath,
+  [bool]$VanillaLogin=$false,
+  [bool]$TbcLogin=$false,
+  [bool]$VanillaLoading=$false,
+  [string]$RepositoryPath=(Split-Path -Parent $PSScriptRoot)
+ )
+ if([string]::IsNullOrWhiteSpace($PatchSourcePath)){
+  throw 'Choose an existing separate patch source folder before downloading.'
+ }
+ $readonly=New-NaxxPreviewRequest -Mode Plan -ClientPath $ClientPath -PatchSourcePath $PatchSourcePath -VanillaLogin $VanillaLogin -TbcLogin $TbcLogin -VanillaLoading $VanillaLoading -RepositoryPath $RepositoryPath
+ $engine=Join-Path (Join-Path $RepositoryPath 'tools') 'Get-Patch-Sources.ps1'
+ if(-not (Test-Path -LiteralPath $engine -PathType Leaf)){
+  throw 'Get-Patch-Sources.ps1 is missing. Download the complete current launcher ZIP.'
+ }
+ $parameters=@{
+  Action='Download'
+  ConfirmDownload=$true
+  ClientPath=$readonly.Parameters.ClientPath
+  PatchSourcePath=$readonly.Parameters.PatchSourcePath
+ }
+ if($VanillaLogin){$parameters.VanillaLogin=$true}
+ if($TbcLogin){$parameters.TbcLogin=$true}
+ if($VanillaLoading){$parameters.VanillaLoading=$true}
+ return [pscustomobject]@{ScriptPath=$engine;Parameters=$parameters;Mode='Download'}
+}

@@ -14,7 +14,7 @@ $source=[IO.File]::ReadAllText($gui)
 if($source -match '-Action\s+(Install|Rollback|Recover)' -or
    $source -notmatch "New-NaxxPreviewRequest" -or
    $source -notmatch 'Start-Job'){
- throw 'GUI is not restricted to safe asynchronous plan/inspect operations.'
+ throw 'GUI unexpectedly includes an install action or lacks background work safeguards.'
 }
 # Verify classic launcher composition and strictly read-only controls.
 $guiBlob=[IO.File]::ReadAllText($gui)
@@ -36,6 +36,10 @@ foreach($needle in @(
  'CLASSIC LAUNCHER LAYOUT TEST PASSED',
  '$result.AccessibleName=',
  'New-NaxxPreviewRequest',
+ 'New-NaxxSourceDownloadRequest',
+ '$download.Add_Click',
+ 'Get patches',
+ 'Confirm patch-source download',
  'TBC login (C)',
  '$tbc.Add_CheckedChanged',
  '-TbcLogin $tbc.Checked'
@@ -91,6 +95,8 @@ Write-Output ("ADDONS="+($Addons -join '|'))
 Write-Output "READ-ONLY PLAN COMPLETE"
 '@
  [IO.File]::WriteAllText($script,$fakeScript)
+ # A synthetic download stub is only used to validate the GUI argument builder.
+ [IO.File]::WriteAllText((Join-Path $repoFixture 'tools/Get-Patch-Sources.ps1'),'param()')
  $req=New-NaxxPreviewRequest -Mode Plan -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -VanillaLoading $true -Addons @('DungeonJournal','DungeonJournal','MultiBot') -RepositoryPath $repoFixture
  if($req.Parameters.Action -ne 'Plan' -or $req.Parameters.ContainsKey('Apply') -or
     $req.Parameters.ContainsKey('ConfirmDisposableFixture') -or
@@ -160,6 +166,19 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  $blocked=$false
  try{$null=New-NaxxPreviewRequest -Mode Plan -ClientPath $game -TbcLogin $true -VanillaLogin $true -RepositoryPath $repoFixture}catch{$blocked=$true}
  if(-not $blocked){throw 'GUI helper accepted both J and C.'}
+ $downloadReq=New-NaxxSourceDownloadRequest -ClientPath $game -PatchSourcePath $patches -TbcLogin $true -VanillaLoading $true -RepositoryPath $repoFixture
+ if($downloadReq.Mode -ne 'Download' -or -not $downloadReq.Parameters.ConfirmDownload -or
+    $downloadReq.Parameters.ContainsKey('Apply') -or
+    $downloadReq.Parameters.ContainsKey('ConfirmDisposableFixture') -or
+    -not $downloadReq.Parameters.TbcLogin){
+  throw 'Unsafe or incomplete GUI download request.'
+ }
+ $blocked=$false
+ try{$null=New-NaxxSourceDownloadRequest -ClientPath $game -PatchSourcePath '' -RepositoryPath $repoFixture}catch{$blocked=$true}
+ if(-not $blocked){throw 'Source download did not require a separate patch folder.'}
+ $blocked=$false
+ try{$null=New-NaxxSourceDownloadRequest -ClientPath $game -PatchSourcePath $patches -VanillaLogin $true -TbcLogin $true -RepositoryPath $repoFixture}catch{$blocked=$true}
+ if(-not $blocked){throw 'GUI download request accepted simultaneous Vanilla and TBC login options.'}
  $inspect=New-NaxxPreviewRequest -Mode Inspect -ClientPath $game -PatchSourcePath $patches -AddonSuiteArchivePath $zip -VanillaLogin $true -Addons @('DungeonJournal') -RepositoryPath $repoFixture
  if(@($inspect.Parameters.Keys).Count -ne 2 -or $inspect.Parameters.Action -ne 'Inspect'){
   throw 'Inspect mode should receive only Action and ClientPath.'

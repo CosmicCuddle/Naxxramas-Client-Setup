@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 Classic-inspired Naxxramas Windows launcher, development PREVIEW ONLY.
-No install, download, change, rollback, or update operations are available.
+Only an explicit, confirmed patch-source download may write files, always outside the game; no client installs, rollbacks, or modifications.
 The owner changes artwork by replacing assets/default/launcher-art.png in the package.
 #>
 [CmdletBinding()]
@@ -261,6 +261,7 @@ $inspect=Button '&Inspect' 118 '#5a4c39'
 $clear=Button 'C&lear' 105 '#41392f'
 $cancel=Button '&Cancel' 110 '#563c37'
 $cancel.Enabled=$false
+$download=Button '&Get patches' 138 '#4f5940'
 $preview=Button '&PREVIEW' 217 '#687a4c'
 $preview.Font=New-Object Drawing.Font('Georgia',15,[Drawing.FontStyle]::Bold)
 $form.AcceptButton=$preview
@@ -269,14 +270,16 @@ $reflow={
  $inspect.Location=New-Object Drawing.Point(12,10)
  $clear.Location=New-Object Drawing.Point(137,10)
  $cancel.Location=New-Object Drawing.Point(249,10)
+ $download.Location=New-Object Drawing.Point(366,10)
  $preview.Location=New-Object Drawing.Point(([math]::Max(650,$footer.ClientSize.Width-232)),9)
- $status.Left=([math]::Max(371,$preview.Left-205))
+ $status.Left=([math]::Max(515,$preview.Left-135))
  $status.Width=([math]::Max(100,$preview.Left-$status.Left-6))
 }.GetNewClosure()
 $footer.Add_SizeChanged($reflow);& $reflow
 $tip.SetToolTip($preview,'Alt+P or Enter: read-only verification.')
 $tip.SetToolTip($inspect,'Alt+I: read-only recovery-state inspection.')
-$tip.SetToolTip($cancel,'Cancel a lengthy read-only check.')
+$tip.SetToolTip($cancel,'Cancel an active preview or download. A cancelled download may leave a temporary partial file in the separate source folder.')
+$tip.SetToolTip($download,'Download and SHA-256 verify selected missing official MPQs into a separate source folder; never into your WoW client.')
 $script:activeJob=$null;$script:currentMode=''
 $timer=New-Object Windows.Forms.Timer
 $timer.Interval=350
@@ -290,21 +293,32 @@ $timer.Add_Tick({
  $result.Text=$message
  $ok=($job.State -eq 'Completed') -and
   (($script:currentMode -eq 'Plan' -and $message.Contains('READ-ONLY PLAN COMPLETE')) -or
-   ($script:currentMode -eq 'Inspect' -and $message.Contains('READ-ONLY INSPECTION COMPLETE')))
+   ($script:currentMode -eq 'Inspect' -and $message.Contains('READ-ONLY INSPECTION COMPLETE')) -or
+   ($script:currentMode -eq 'Download' -and $message.Contains('PATCH DOWNLOAD COMPLETE')))
  if($ok){$status.Text='PREVIEW COMPLETE';$status.ForeColor=$green}
  else{$status.Text='REVIEW ERRORS';$status.ForeColor=$red}
  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
- $preview.Enabled=$true;$inspect.Enabled=$true;$cancel.Enabled=$false
+ $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
 })
 function Launch([string]$action){
  if($null -ne $script:activeJob){return}
  try{
   $selected=@()
   foreach($d in $definitions){if($addonChecks[$d.Id].Checked){$selected+=([string]$d.Id)}}
-  $request=New-NaxxPreviewRequest -Mode $action -ClientPath $client.Text -PatchSourcePath $patch.Text -AddonSuiteArchivePath $zip.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked -Addons $selected
-  $preview.Enabled=$false;$inspect.Enabled=$false;$cancel.Enabled=$true
-  $status.Text='CHECKING FILES';$status.ForeColor=$gold
-  $result.Text='Reading local files. Checking large patches may take a little while...'
+  if($action -eq 'Download'){
+   $request=New-NaxxSourceDownloadRequest -ClientPath $client.Text -PatchSourcePath $patch.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked
+   $question='Download missing selected patches directly from the pinned Naxxramas GitHub Releases?' + [Environment]::NewLine + [Environment]::NewLine +
+    'Files will be saved ONLY to:' + [Environment]::NewLine + [string]$request.Parameters.PatchSourcePath + [Environment]::NewLine + [Environment]::NewLine +
+    'The World of Warcraft client will NOT be changed. Only SHA-256 verified downloads are retained. Continue?'
+   $answer=[Windows.Forms.MessageBox]::Show($form,$question,'Confirm patch-source download',[Windows.Forms.MessageBoxButtons]::YesNo,[Windows.Forms.MessageBoxIcon]::Question)
+   if($answer -ne [Windows.Forms.DialogResult]::Yes){return}
+  }else{
+   $request=New-NaxxPreviewRequest -Mode $action -ClientPath $client.Text -PatchSourcePath $patch.Text -AddonSuiteArchivePath $zip.Text -VanillaLogin $login.Checked -TbcLogin $tbc.Checked -VanillaLoading $loading.Checked -Addons $selected
+  }
+  $preview.Enabled=$false;$inspect.Enabled=$false;$download.Enabled=$false;$cancel.Enabled=$true
+  $status.Text=if($action -eq 'Download'){'GETTING PATCHES'}else{'CHECKING FILES'}
+  $status.ForeColor=$gold
+  $result.Text=if($action -eq 'Download'){'Downloading selected patch files into the separate source folder...'}else{'Reading local files. Checking large patches may take a little while...'}
   $script:currentMode=$action
   $script:activeJob=Start-Job -ScriptBlock {
    param([string]$entry,[hashtable]$options)
@@ -314,10 +328,11 @@ function Launch([string]$action){
  }catch{
   $status.Text='PREVIEW NOT READY';$status.ForeColor=$red
   $result.Text='Could not start preview: '+$_.Exception.Message
-  $preview.Enabled=$true;$inspect.Enabled=$true;$cancel.Enabled=$false
+  $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
  }
 }
 $preview.Add_Click({Launch 'Plan'})
+$download.Add_Click({Launch 'Download'})
 $inspect.Add_Click({Launch 'Inspect'})
 $clear.Add_Click({
  if($null -ne $script:activeJob){return}
@@ -328,9 +343,9 @@ $cancel.Add_Click({
  $timer.Stop();$job=$script:activeJob;$script:activeJob=$null
  Stop-Job -Job $job -ErrorAction SilentlyContinue
  Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
- $preview.Enabled=$true;$inspect.Enabled=$true;$cancel.Enabled=$false
+ $preview.Enabled=$true;$inspect.Enabled=$true;$download.Enabled=$true;$cancel.Enabled=$false
  $status.Text='CANCELLED';$status.ForeColor=$muted
- $result.Text='Read-only check cancelled. No installation was attempted.'
+ $result.Text='Operation cancelled. The WoW client was not changed. Incomplete source downloads may leave a .partial file outside the game.'
 })
 $form.Add_KeyDown({
  if($_.KeyCode -eq [Windows.Forms.Keys]::Escape){$_.Handled=$true;$form.Close()}
@@ -355,7 +370,8 @@ try{
       $null -eq $artImage -or $artLayout.RowCount -ne 1 -or
       $artLayout.ClientSize.Width -le 0 -or
       $mode.Text -ne 'READ-ONLY' -or
-      $null -eq $preview -or $form.AcceptButton -ne $preview -or $cancel.Enabled -or
+      $null -eq $preview -or $null -eq $download -or $form.AcceptButton -ne $preview -or $cancel.Enabled -or
+      $download.Right -ge $preview.Left -or
       $preview.Right -gt $footer.ClientSize.Width -or $options.ClientSize.Height -lt 300){
     throw "Classic launcher layout failed at width $($size.Width)."
    }

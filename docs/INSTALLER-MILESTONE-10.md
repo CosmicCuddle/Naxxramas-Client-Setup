@@ -16,6 +16,20 @@ The owner-published GitHub releases have these specific file identities, matchin
 
 The exact HTTPS URLs are held in `config/patch-downloads.json`. The downloader checks them against an exact allowlist and cross-checks the SHA-256 and file size against `config/client-patches.json`. It does not follow untrusted version feeds or choose “latest” automatically.
 
+## Download directly from the classic launcher
+
+1. Select your existing WoW client folder.
+2. Create a separate folder outside your WoW client and outside the launcher, for example `C:\Naxxramas-Patch-Sources`. Select this with the launcher’s **Local patch source** Browse button.
+3. Choose **Vanilla login (J)** or **TBC login (C)** (or neither). You may independently select **Vanilla loading (U)**.
+4. Click **Get patches** in the lower-left toolbar.
+5. Read the confirmation showing the destination folder, and choose **Yes** to download from the pinned GitHub release URLs. Choosing No does not download.
+6. The launcher downloads any missing required core files and optional selections to the separate source folder, verifies SHA-256 and byte size before accepting them, and reports status in the verification log.
+7. Click **PREVIEW** to review the setup plan against those local sources. **No game installation occurs.**
+
+**Important:** The **Cancel** button stops the active background task. If a download is interrupted, a temporary `.partial` file may remain inside the separate patch source folder and can be removed after the downloader has stopped. A failed verification never turns that partial file into an accepted MPQ.
+
+The publisher provides download links only; the preview does not bundle copyrighted MPQs. Players must have any rights required to obtain or use these files.
+
 ## Manual use in Windows PowerShell 5.1
 
 1. Extract the complete launcher project **outside** your WoW folder.
