@@ -59,13 +59,14 @@ When patch-V, patch-Z, Patch-J or Patch-U changes, **do not rename a patch or ov
 
 We reviewed the owner's read-only inventory and inspected the contents of both optional MPQ archives on 9 October 2026. See [Client inventory review](docs/CLIENT-INVENTORY-REVIEW.md) for the custom patch candidates, addon selection rules, and the remaining checks before an installer can be safely built.
 
-## Development roadmap
+## Development roadmap and project handover
 
-1. Identify the working client's folder structure and required custom modifications.
-2. Create an allowlist of files we are permitted to distribute.
-3. Build a backup-first installer that works against an existing client copy.
-4. Test install, update, rollback, and uninstall on a disposable copy.
-5. Publish versioned installer releases and documentation after validation.
+The detailed, continuously updated project records are:
+
+- [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
+- [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
+
+**Current next task:** a *read-only installer planner* that previews required patch, optional patch and realmlist changes without modifying the WoW client. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 
