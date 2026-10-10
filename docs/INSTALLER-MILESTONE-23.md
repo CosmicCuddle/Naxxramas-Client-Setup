@@ -1,6 +1,6 @@
 # Milestone 23 — Synthetic disk-space and changing-file fault checks
 
-**Development-only; Windows CI pending.** This milestone strengthens the tiny disposable M15 fixture experiment. It does **not** install, copy or distribute any real WoW client.
+**Development-only; Windows CI passed** ([run 38063285602](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602), implementation checkpoint `1bccc4df469e6e6709864db818ccbbab34cf2834`). This milestone strengthens the tiny disposable M15 fixture experiment. It does **not** install, copy or distribute any real WoW client.
 
 ## Starting point
 
@@ -41,4 +41,4 @@ None. Do **not** run the fixture copy tool on a real WoW folder, perform another
 
 After Windows CI passes, expand **synthetic-only** fault coverage to: external process changes between verification and promotion, interrupted owner-marker writes and cleanup, journal-replacement power-loss residues, and controlled manual orphan inspection. Do not claim the fault switches prove a production installer safe.
 
-**CI result:** Pending.
+**CI result:** Windows [run 38063285602](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602) completed successfully. Expanded copy/rollback fault simulations, M20/M22 read-only recovery and stage checks, prior security tests, WinForms smoke tests, and preview ZIP upload all passed. This validates disposable fixture behavior only, not actual game-installation durability.
