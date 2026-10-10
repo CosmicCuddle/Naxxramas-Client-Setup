@@ -2,7 +2,7 @@
 
 Official setup and update project for the **Naxxramas World of Warcraft 3.3.5a server**.
 
-> **Project status: read-only client checks and installer-plan preview prototype.** There is no finished installer or downloadable game client in this repository yet. The new planner's Windows test results still need verification.
+> **Project status: read-only client checks and installer-plan preview prototype.** There is no finished installer or downloadable game client in this repository yet. Windows PowerShell 5.1 synthetic fixture suites passed on 10 October 2026; actual install/update/rollback are not implemented.
 
 ## Purpose
 
@@ -72,7 +72,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** validate and harden the new read-only installer planner with Windows PowerShell fixture tests, then work through the remaining safety checks. Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** complete the outstanding planner failure-path checks and implement a read-only journal recovery evaluator. The proposed backup/write/rollback contract is documented in [Transaction Design](docs/TRANSACTION-DESIGN.md). Actual installation, updating and rollback remain future milestones. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 
