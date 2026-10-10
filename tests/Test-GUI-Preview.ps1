@@ -39,6 +39,12 @@ foreach($needle in @(
  'New-NaxxSourceDownloadRequest',
  'Get-NaxxBrowseInitialFolder $box.Text',
  'EMPTY FOLDER BROWSE TEST PASSED',
+ 'PASTE PATH REGRESSION TEST PASSED',
+ '$paste.Add_Click',
+ 'Get-NaxxCopiedPath',
+ 'Convert-NaxxCopiedPath',
+ 'Normalize-NaxxInputPath',
+ " $paste.Text='Paste'",
  '$download.Add_Click',
  'Get patches',
  'Confirm patch-source download',
@@ -129,7 +135,7 @@ Write-Output "READ-ONLY PLAN COMPLETE"
  } finally { Remove-Job -Job $job -Force -ErrorAction SilentlyContinue }
  $command=Join-Path $repo 'tools/Naxxramas-Preview.ps1'
  $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $command -SmokeTest 2>&1 | Out-String)
- if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED') -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED')) {
+ if ($LASTEXITCODE -ne 0 -or -not $display.Contains('GUI PREVIEW WINDOW CONSTRUCTED') -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('PASTE PATH REGRESSION TEST PASSED')) {
   throw ("Window construction smoke test failed: "+$display)
  }
  # Verify the fixed default image is loaded from a copy of the repository,
@@ -157,7 +163,7 @@ Write-Output "READ-ONLY PLAN COMPLETE"
   $newArtHash=(Get-FileHash -LiteralPath $fixedPath -Algorithm SHA256).Hash.ToLowerInvariant()
   if($previousArtHash -and $previousArtHash -eq $newArtHash){throw 'Replaced artwork was identical.'}
   $display=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File $packagedGui -SmokeTest 2>&1 | Out-String)
-  if($LASTEXITCODE -ne 0 -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains("DEFAULT ARTWORK SHA256: $newArtHash") -or
+  if($LASTEXITCODE -ne 0 -or -not $display.Contains('EMPTY FOLDER BROWSE TEST PASSED') -or -not $display.Contains('PASTE PATH REGRESSION TEST PASSED') -or -not $display.Contains("DEFAULT ARTWORK SHA256: $newArtHash") -or
      -not $display.Contains('CLASSIC LAUNCHER LAYOUT TEST PASSED')){
    throw ("Fixed default artwork smoke test failed: "+$display)
   }
