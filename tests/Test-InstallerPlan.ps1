@@ -268,6 +268,38 @@ public static class FixtureClient {
     Check ((Item $plan 'Data/patch-Z.mpq').action -eq 'no_change') 'Verified Z remains unchanged for non-blocking plan'
     Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'no_change') 'Verified realmlist remains unchanged for non-blocking plan'
 
+    # Exercise the *actual planner blocker* with a disposable script copy that
+    # changes only its isolated disk-space probe. There is deliberately NO
+    # public test switch that could bypass free-space checks in production.
+    Save (Join-Path $source 'Data/Patch-J.mpq') 'fixture-current-Patch-J.mpq'
+    $spaceFixture = Join-Path $tools 'Plan-Naxxramas-SpaceFixture.ps1'
+    $plannerOriginal = Get-Content -LiteralPath $planner -Raw
+    $probe = 'return [int64]$drive.AvailableFreeSpace'
+    Check ($plannerOriginal.Contains($probe)) 'Space-probe test injection location is present'
+    $spaceParams = @{
+        ClientPath = $client
+        PatchSourcePath = $source
+        VanillaLogin = $true
+        Json = $true
+    }
+    $beforeSpaceClient = Snapshot $client
+    $beforeSpaceSource = Snapshot $source
+
+    $lowSpaceScript = $plannerOriginal.Replace($probe,'return [int64]0')
+    Set-Content -LiteralPath $spaceFixture -Value $lowSpaceScript -Encoding UTF8
+    $lowSpacePlan = (& $spaceFixture @spaceParams | Out-String) | ConvertFrom-Json
+    Check ($lowSpacePlan.status -eq 'blocked') 'Insufficient simulated disk space blocks the plan'
+    Check (@($lowSpacePlan.blockers | Where-Object { $_ -like '*Insufficient destination free space*' }).Count -eq 1) 'Insufficient-space reason is explicit'
+    Check ($lowSpacePlan.estimated_space_bytes -gt 0) 'A staged optional patch requires disk space'
+
+    $unknownSpaceScript = $plannerOriginal.Replace($probe,"throw 'Fixture-only drive query failure'")
+    Set-Content -LiteralPath $spaceFixture -Value $unknownSpaceScript -Encoding UTF8
+    $unknownSpacePlan = (& $spaceFixture @spaceParams | Out-String) | ConvertFrom-Json
+    Check ($unknownSpacePlan.status -eq 'blocked') 'Failed drive-space query blocks the plan'
+    Check (@($unknownSpacePlan.blockers | Where-Object { $_ -like '*Could not verify free space*' }).Count -eq 1) 'Unknown-space reason is explicit'
+    Check ((Snapshot $client) -ceq $beforeSpaceClient) 'Space failure tests do not alter client'
+    Check ((Snapshot $source) -ceq $beforeSpaceSource) 'Space failure tests do not alter source'
+
     Write-Host ''
     Write-Host 'All synthetic read-only planner assertions passed.' -ForegroundColor Green
 }
