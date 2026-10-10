@@ -33,7 +33,7 @@ try {
   Write-Host 'Calculating SHA-256 of local patch files...'
   foreach ($patch in @($manifest.patches)) {
     $name = [IO.Path]::GetFileName([string]$patch.path)
-    if ($name -notmatch '^(?i:patch-[VZJU]\.mpq)$') {
+    if ($name -notmatch '^(?i:patch-[VZJUC]\.mpq)$') {
       throw "Unexpected patch entry in manifest: $($patch.path)"
     }
     $file = Join-Path (Join-Path $client 'Data') $name

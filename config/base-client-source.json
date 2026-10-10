@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "workflow": "full-client-fresh-install",
+  "target": {
+    "product": "World of Warcraft",
+    "version": "3.3.5a",
+    "build": 12340,
+    "locale": "enUS"
+  },
+  "state": "awaiting_verifiable_redistribution_authorisation",
+  "enabled": false,
+  "source": {
+    "url": null,
+    "archive_filename": null,
+    "archive_sha256": null,
+    "archive_size_bytes": null,
+    "redistribution_permission_evidence": null,
+    "rights_holder_permission_verified": false,
+    "signature_or_authenticated_release": null
+  },
+  "requirements": {
+    "no_full_client_payload_in_repository": true,
+    "require_authorized_distribution_source": true,
+    "require_full_archive_sha256": true,
+    "require_secure_archive_member_paths": true,
+    "require_file_manifest_and_build_check": true,
+    "require_unoccupied_destination": true,
+    "stage_outside_destination": true,
+    "backup_before_client_changes": true,
+    "separate_download_from_game_write": true,
+    "rollback_and_uninstall_required": true
+  },
+  "planned_steps": [
+    "Check and verify authorized full client source and redistribution rights",
+    "Select an empty destination and verify sufficient disk space",
+    "Download to a separate staging folder with integrity verification",
+    "Safely extract an authenticated client archive and confirm Wow.exe 3.3.5a build 12340",
+    "Fetch Naxxramas V and Z patches (mandatory); J or C and U optional",
+    "Verify official N-Addon Collection package and install NCore plus selected addons",
+    "Configure enUS realmlist using the pinned Naxxramas realm",
+    "Run post-install validation, preserve manifest/backups and offer reversible uninstall"
+  ],
+  "note": "This is a blocked design manifest, not a working complete-client downloader. A private GitHub repository and a checksum alone do not establish permission to redistribute game assets."
+}

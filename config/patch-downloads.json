@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "version": "patchset-0002",
+  "status": "owner_published_source_urls_not_redistribution_authorisation",
+  "description": "Locked GitHub release asset download URLs. Check SHA-256 and byte size against config/client-patches.json after download. Never download directly into World of Warcraft.",
+  "entries": [
+    {
+      "path": "Data/patch-V.mpq",
+      "release": "v1.0.6.8.4",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/v1.0.6.8.4/patch-V.mpq"
+    },
+    {
+      "path": "Data/patch-Z.mpq",
+      "release": "v1.0.6.7",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/v1.0.6.7/patch-Z.mpq"
+    },
+    {
+      "path": "Data/Patch-J.mpq",
+      "release": "optional-v1.0",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/optional-v1.0/Patch-J.mpq"
+    },
+    {
+      "path": "Data/Patch-C.mpq",
+      "release": "optional-v1.0",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/optional-v1.0/Patch-C.mpq"
+    },
+    {
+      "path": "Data/Patch-U.mpq",
+      "release": "optional-v1.0",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/optional-v1.0/Patch-U.mpq"
+    }
+  ]
+}

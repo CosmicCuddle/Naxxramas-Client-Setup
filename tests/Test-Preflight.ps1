@@ -30,7 +30,7 @@ foreach ($name in @('Test-Naxxramas-Client.ps1','Get-Core-Patch-Hashes.ps1','Pre
 if ($policy.schema_version -ne 1 -or [int]$policy.patch_set_revision -lt 1 -or $policy.patch_set_version -ne ('patchset-{0:D4}' -f [int]$policy.patch_set_revision)) {
   throw 'Unexpected baseline patch version.'
 }
-if (@($policy.patches).Count -ne 4) { throw 'Four patch entries expected.' }
+if (@($policy.patches).Count -ne 5) { throw 'Five patch entries expected.' }
 $versionPath = Join-Path $repo ('config/patch-versions/' + $policy.patch_set_version + '.json')
 $history = Get-Content -LiteralPath $versionPath -Raw | ConvertFrom-Json
 if ($history.revision -ne $policy.patch_set_revision -or $history.version -ne $policy.patch_set_version) { throw 'Invalid current version history.' }
@@ -73,6 +73,12 @@ try {
       $p.size_bytes = (Get-Item -LiteralPath $f).Length
     }
   }
+  # Tiny substitute for the GitHub release's TBC MPQ, with its own fixture hash.
+  $cFile=Join-Path $client 'Data/Patch-C.mpq'
+  [IO.File]::WriteAllText($cFile,'tiny C fixture')
+  $cReference=@($fakePolicy.patches | Where-Object {$_.path -ceq 'Data/Patch-C.mpq'})[0]
+  $cReference.sha256=(Get-FileHash -LiteralPath $cFile -Algorithm SHA256).Hash.ToLowerInvariant()
+  $cReference.size_bytes=(Get-Item -LiteralPath $cFile).Length
   $localManifest = Join-Path $testRepo 'config/client-patches.json'
   $fakePolicy | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $localManifest -Encoding UTF8
   $policyHash = (Get-FileHash -LiteralPath $localManifest -Algorithm SHA256).Hash
@@ -90,9 +96,27 @@ try {
   $r = Invoke-Fixture $preflight @('-RealmHost','example.org')
   if ($r.Code -ne 0 -or -not $r.Output.Contains('REALMLIST DIFFERENT')) { throw 'Realm override mismatch was not reported safely.' }
   $r = Invoke-Fixture $preflight @('-VanillaLogin')
-  if ($r.Code -eq 0 -or -not $r.Output.Contains('Missing selected optional patch')) {
-    throw 'Missing selected optional patch was not rejected.'
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('Cannot select Vanilla Patch J while TBC Patch C exists')) {
+    throw 'Installed TBC patch did not block Vanilla J.'
   }
+  $r = Invoke-Fixture $preflight @('-TbcLogin','-VanillaLoading')
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('Missing selected optional patch')) {
+    throw 'Missing optional U was not rejected with TBC.'
+  }
+  $r = Invoke-Fixture $preflight @('-TbcLogin')
+  if ($r.Code -ne 0 -or -not $r.Output.Contains('VERIFIED: Data/Patch-C.mpq')) {
+    throw ('Synthetic TBC C did not verify: '+$r.Output)
+  }
+  $r = Invoke-Fixture $preflight @('-VanillaLogin','-TbcLogin')
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('Choose only one login screen')) {
+    throw 'Preflight accepted both J and C.'
+  }
+  [IO.File]::WriteAllText((Join-Path $client 'Data/Patch-J.mpq'),'tiny J fixture')
+  $r = Invoke-Fixture $preflight @()
+  if ($r.Code -eq 0 -or -not $r.Output.Contains('Conflicting login patches J and C are both installed')) {
+    throw 'Existing conflicting J and C patches were accepted.'
+  }
+  Remove-Item -LiteralPath (Join-Path $client 'Data/Patch-J.mpq') -Force
   $r = Invoke-Fixture $preflight @('-RealmHost','https://invalid/address')
   if ($r.Code -eq 0) { throw 'Invalid realmlist format was accepted.' }
 
@@ -124,3 +148,6 @@ try {
 finally {
   if (Test-Path -LiteralPath $fixture) { Remove-Item -LiteralPath $fixture -Recurse -Force }
 }
+
+# Clear the last expected failure code from child PowerShell smoke tests.
+exit 0

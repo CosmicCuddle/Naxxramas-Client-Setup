@@ -36,7 +36,7 @@ We will identify permitted custom assets and create an installer manifest. The i
 
 - Check that a compatible 3.3.5a installation is selected.
 - Require and verify `Data/patch-V.mpq` and `Data/patch-Z.mpq`; never offer to disable or skip these two core patches.
-- Offer `Data/Patch-J.mpq` as optional Vanilla login-screen visuals and `Data/Patch-U.mpq` as optional Vanilla loading screens. Their two overlapping texture paths need in-game testing.
+- Offer `Data/Patch-J.mpq` as optional Vanilla login-screen visuals, `Data/Patch-C.mpq` as the mutually exclusive TBC login screen, and `Data/Patch-U.mpq` as optional Vanilla loading screens. J/U have two overlapping texture paths that still need in-game testing.
 - Offer a separate installation copy rather than overwriting the player's only client.
 - Back up any overwritten configuration or addon files.
 - Make changes only after explicit confirmation.

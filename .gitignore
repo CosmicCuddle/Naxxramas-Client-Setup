@@ -36,3 +36,12 @@ Thumbs.db
 
 # Local patch version proposals from the owner's client; review privately.
 patch-update-proposal.json
+
+# Personal-use locally supplied launcher artwork is never published.
+/assets/local/
+
+# Sanitised local client reference reports, never committed automatically.
+/tools/client-reference-*.json
+
+# Whitelisted personal game-file inventory outputs. Keep private.
+/tools/game-files-*.json

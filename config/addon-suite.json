@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "source_repository": "https://github.com/CosmicCuddle/N-Addon-Collection",
+  "reference_release": "v2.0.0",
+  "reference_release_url": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
+  "release_archive_sha256": "07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324",
+  "authentication": "pinned_zip_verified_at_source_stream_in_disposable_fixture_alpha",
+  "note": "Direct ZIP source in Setup-Prototype.ps1 validates SHA-256, size, ZIP member paths and required TOCs, streams selected files from the open verified archive to journaled staging and verifies their per-file digests. Arbitrary extracted folders are still not trusted. This is a fixture-only prototype and does not confer distribution rights or proof of origin beyond pinned GitHub asset metadata.",
+  "required_framework": "NCore",
+  "optional_modules": [
+    "IndividualProgressionAddon",
+    "DungeonJournal",
+    "MultiBot",
+    "NaxxLootLottery"
+  ],
+  "excluded": [
+    "NClassicBattlegrounds",
+    "ServerDungeonJournal",
+    "NTalentCalculator"
+  ],
+  "protected_existing_addons": true,
+  "require_dependency_validation": true,
+  "release_asset_name": "N-Addon-Collection-v2.0.0.zip",
+  "release_archive_size_bytes": 26762217,
+  "release_archive_digest_source": "GitHub v2.0.0 release asset metadata observed 2026-10-09; not a detached signature"
+}
