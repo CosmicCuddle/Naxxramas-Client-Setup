@@ -171,6 +171,42 @@ try {
     } catch { $collisionThrown = $true }
     Check $collisionThrown 'Source and destination collision is rejected'
 
+    $nestedThrown = $false
+    try {
+        $null = & $planner -ClientPath $client -PatchSourcePath (Join-Path $client 'Data') -Json 2>&1 | Out-String
+    } catch { $nestedThrown = $true }
+    Check $nestedThrown 'Nested source and destination are rejected'
+
+    $missingThrown = $false
+    try {
+        $null = & $planner -ClientPath (Join-Path $work 'missing-client-folder') -Json 2>&1 | Out-String
+    } catch { $missingThrown = $true }
+    Check $missingThrown 'Missing client path is rejected'
+
+    $realmFile = Join-Path $client 'Data/enUS/realmlist.wtf'
+    Save $realmFile ("set realmlist naxx.example.test" + "`r`n" + '# user comment')
+    $plan = Plan
+    Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'leave_existing') 'Additional realmlist content is preserved'
+    Save $realmFile 'set realmlist naxx.example.test'
+
+    # A junction is created only within this disposable fixture, and may be
+    # unavailable without elevated privileges on some local Windows machines.
+    $junction = Join-Path $work 'junction-client'
+    $createdJunction = $false
+    try {
+        $null = New-Item -ItemType Junction -Path $junction -Target $client -ErrorAction Stop
+        $createdJunction = $true
+    } catch {
+        Write-Host 'SKIP: Junction creation not available on this Windows configuration.'
+    }
+    if ($createdJunction) {
+        $linkThrown = $false
+        try {
+            $null = & $planner -ClientPath $junction -Json 2>&1 | Out-String
+        } catch { $linkThrown = $true }
+        Check $linkThrown 'Junction-backed client path is rejected'
+    }
+
     Write-Host ''
     Write-Host 'All synthetic read-only planner assertions passed.' -ForegroundColor Green
 }
