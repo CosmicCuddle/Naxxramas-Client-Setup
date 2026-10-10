@@ -25,6 +25,11 @@ foreach($needle in @(
  'launcher-art.png',
  'launcher-logo.png',
  'assets/local',
+ '$artImage.SizeMode=[Windows.Forms.PictureBoxSizeMode]::Zoom',
+ '$artPick.Add_Click',
+ 'LAUNCHER ARTWORK NOT SELECTED',
+ '$mode.TextAlign=',
+ 'READ-ONLY',
  '$form.AcceptButton=$preview',
  '$form.Add_KeyDown',
  '$cancel.Add_Click',
@@ -33,6 +38,9 @@ foreach($needle in @(
  'New-NaxxPreviewRequest'
 )){
  if(-not $guiBlob.Contains($needle)){throw ("Missing classic launcher feature: "+$needle)}
+}
+if($guiBlob.Contains('$art.Add_Paint')){
+ throw 'Old manually painted artwork frame was not removed.'
 }
 if($guiBlob -match '-Action\s+(Install|Rollback|Recover)' -or
    $guiBlob -match 'Invoke-WebRequest|Start-BitsTransfer'){

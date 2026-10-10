@@ -26,7 +26,9 @@ assets/local/launcher-logo.png
 
 The artwork is loaded **from disk at runtime**. The filenames are exact and case-insensitive on standard Windows filesystems. The application doesn't download or upload them and doesn't modify the user's source files.
 
-The art panel crops the background like a classic launcher and scales the logo to fit. If either file is absent, its fallback is displayed. PNG files larger than 30 MiB are rejected.
+The artwork is displayed using a standard Windows image control, preserving its aspect ratio rather than painting multiple overlapping borders. The logo, when provided, appears in the **top launcher title band**. If no artwork is present, a clearly labelled placeholder appears. Images larger than 30 MiB are rejected.
+
+**New:** Click **Choose artwork...** underneath the large image area to select a PNG or JPEG directly from your computer without manually renaming it. This file is loaded in memory for the current preview only. To keep an image as the automatic default next time, put it in the local `assets/local` folder using the filenames above. The chooser never copies the selected file into the client.
 
 The local-art folder is excluded from Git by `.gitignore`. When a release becomes downloadable, it must not automatically include third-party copyrighted assets just because development happens in a private repository.
 

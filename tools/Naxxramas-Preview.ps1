@@ -54,11 +54,15 @@ $top=New-Object Windows.Forms.Panel
 $top.Dock='Fill';$top.BackColor=C '#231c15';$top.BorderStyle='FixedSingle'
 $top.Margin=New-Object Windows.Forms.Padding(0,0,0,7)
 $grid.Controls.Add($top,0,0)
-[void](Label $top 'NAXXRAMAS' 19 8 295 43 $title $gold)
-[void](Label $top 'CLASSIC CLIENT LAUNCHER  /  3.3.5a BUILD 12340' 325 20 540 23 $f $cream)
-$mode=Label $top 'PREVIEW ONLY' 0 21 144 24 $heading $green
+$topTitle=Label $top 'NAXXRAMAS' 19 8 295 43 $title $gold
+[void](Label $top 'CLASSIC CLIENT LAUNCHER  /  3.3.5a BUILD 12340' 325 20 430 23 $f $cream)
+$mode=Label $top 'READ-ONLY' 0 16 140 27 $f $green
+$mode.TextAlign='MiddleCenter'
+$mode.AutoEllipsis=$true
 $mode.Anchor='Top,Right'
-$top.Add_SizeChanged({$mode.Left=[math]::Max(770,$top.ClientSize.Width-160)}.GetNewClosure())
+$top.Add_SizeChanged({
+ $mode.Left=[math]::Max(756,$top.ClientSize.Width-$mode.Width-18)
+}.GetNewClosure())
 $main=New-Object Windows.Forms.TableLayoutPanel
 $main.Dock='Fill';$main.ColumnCount=2;$main.RowCount=1
 $main.Margin=New-Object Windows.Forms.Padding(0,0,0,7)
@@ -79,11 +83,15 @@ $assetPath=if([string]::IsNullOrWhiteSpace($ArtRoot)){
  Join-Path (Split-Path -Parent $PSScriptRoot) 'assets/local'
 }else{$ArtRoot}
 $images=New-Object 'System.Collections.Generic.List[System.Drawing.Image]'
-function LoadImage([string]$filename){
- $path=Join-Path $assetPath $filename
- if(-not (Test-Path -LiteralPath $path -PathType Leaf)){return $null}
- $item=Get-Item -LiteralPath $path -Force
- if($item.Length -gt 31457280){throw 'Local launcher image exceeds the 30 MB limit.'}
+function Read-LauncherImage([string]$fullPath){
+ if(-not (Test-Path -LiteralPath $fullPath -PathType Leaf)){return $null}
+ $item=Get-Item -LiteralPath $fullPath -Force
+ if($item.Extension.ToLowerInvariant() -notin @('.png','.jpg','.jpeg')){
+  throw 'Choose a PNG or JPEG image for your personal launcher.'
+ }
+ if($item.Length -le 0 -or $item.Length -gt 31457280){
+  throw 'Launcher artwork must be a nonempty image smaller than 30 MB.'
+ }
  $stream=[IO.File]::Open($item.FullName,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
  try{
   $src=[Drawing.Image]::FromStream($stream)
@@ -93,54 +101,88 @@ function LoadImage([string]$filename){
   return $copy
  }finally{$stream.Dispose()}
 }
+function LoadImage([string]$filename){
+ return Read-LauncherImage (Join-Path $assetPath $filename)
+}
 $hero=LoadImage 'launcher-art.png'
 $logo=LoadImage 'launcher-logo.png'
-$art.Add_Paint({
- param($sender,$e)
- $g=$e.Graphics
- $g.SmoothingMode=[Drawing.Drawing2D.SmoothingMode]::AntiAlias
- $bounds=$sender.ClientRectangle
- if($null -ne $hero){
-  $scale=[math]::Max($bounds.Width/[double]$hero.Width,$bounds.Height/[double]$hero.Height)
-  $sw=[int][math]::Ceiling($bounds.Width/$scale)
-  $sh=[int][math]::Ceiling($bounds.Height/$scale)
-  $sx=[int][math]::Max(0,($hero.Width-$sw)/2)
-  $sy=[int][math]::Max(0,($hero.Height-$sh)/2)
-  $g.DrawImage($hero,$bounds,([Drawing.Rectangle]::new($sx,$sy,$sw,$sh)),[Drawing.GraphicsUnit]::Pixel)
- }else{
-  $grad=[Drawing.Drawing2D.LinearGradientBrush]::new($bounds,(C '#183b42'),(C '#080e16'),[Drawing.Drawing2D.LinearGradientMode]::Vertical)
-  try{$g.FillRectangle($grad,$bounds)}
-  finally{$grad.Dispose()}
-  $pen=[Drawing.Pen]::new((C '#3e5960'),2)
-  try{
-   foreach($i in @(1,2,3,4)){
-    $x=[int]($bounds.Width*$i/5)
-    $g.DrawArc($pen,($x-53),([int]($bounds.Height*.17)),106,190,190,160)
-   }
-  }finally{$pen.Dispose()}
- }
- $shade=[Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(160,3,8,13))
- try{$g.FillRectangle($shade,0,0,$bounds.Width,125)}
- finally{$shade.Dispose()}
- if($null -ne $logo){
-  $w=[int][math]::Min($bounds.Width-70,420)
-  $h=[int]($w*$logo.Height/[double]$logo.Width)
-  if($h -gt 110){$h=110;$w=[int]($h*$logo.Width/[double]$logo.Height)}
-  $g.DrawImage($logo,([Drawing.Rectangle]::new(([int](($bounds.Width-$w)/2)),14,$w,$h)))
- }else{
-  $brush=[Drawing.SolidBrush]::new($gold)
-  try{$g.DrawString('NAXXRAMAS',$title,$brush,25,25)}
-  finally{$brush.Dispose()}
- }
- $framePen=[Drawing.Pen]::new($gold,2)
- try{
-  $g.DrawRectangle($framePen,6,6,[math]::Max(0,$bounds.Width-13),[math]::Max(0,$bounds.Height-13))
-  $g.DrawLine($framePen,24,[math]::Max(0,$bounds.Height-47),[math]::Max(24,$bounds.Width-24),[math]::Max(0,$bounds.Height-47))
- }finally{$framePen.Dispose()}
- $subBrush=[Drawing.SolidBrush]::new($cream)
- try{$g.DrawString('PREPARE YOUR JOURNEY',$heading,$subBrush,24,[math]::Max(6,$bounds.Height-40))}
- finally{$subBrush.Dispose()}
+# Old custom GDI drawing left disjointed borders and resized badly.
+# The classic launcher now uses real WinForms image controls.
+$artLayout=New-Object Windows.Forms.TableLayoutPanel
+$artLayout.Dock='Fill';$artLayout.ColumnCount=1;$artLayout.RowCount=2
+$artLayout.BackColor=C '#101d22'
+$artLayout.Margin=New-Object Windows.Forms.Padding(0)
+$artLayout.ColumnStyles.Add((New-Object Windows.Forms.ColumnStyle([Windows.Forms.SizeType]::Percent,100)))|Out-Null
+$artLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Percent,100)))|Out-Null
+$artLayout.RowStyles.Add((New-Object Windows.Forms.RowStyle([Windows.Forms.SizeType]::Absolute,44)))|Out-Null
+$art.Controls.Add($artLayout)
+$artCanvas=New-Object Windows.Forms.Panel
+$artCanvas.Dock='Fill';$artCanvas.Margin=New-Object Windows.Forms.Padding(7)
+$artCanvas.BackColor=C '#102129'
+$artLayout.Controls.Add($artCanvas,0,0)
+$artImage=New-Object Windows.Forms.PictureBox
+$artImage.Dock='Fill'
+$artImage.SizeMode=[Windows.Forms.PictureBoxSizeMode]::Zoom
+$artImage.BackColor=C '#0b161b'
+$artImage.Image=$hero
+$artImage.Visible=($null -ne $hero)
+$artCanvas.Controls.Add($artImage)
+$emptyArt=New-Object Windows.Forms.Label
+$emptyArt.Dock='Fill'
+$emptyArt.BackColor=C '#102129'
+$emptyArt.ForeColor=$gold
+$emptyArt.Font=New-Object Drawing.Font('Georgia',13)
+$emptyArt.TextAlign='MiddleCenter'
+$emptyArt.Text='LAUNCHER ARTWORK NOT SELECTED'+[Environment]::NewLine+[Environment]::NewLine+'Choose a local image below'
+$emptyArt.Visible=($null -eq $hero)
+$artCanvas.Controls.Add($emptyArt)
+$artBar=New-Object Windows.Forms.Panel
+$artBar.Dock='Fill';$artBar.Margin=New-Object Windows.Forms.Padding(4,0,4,4)
+$artBar.BackColor=C '#201b18'
+$artLayout.Controls.Add($artBar,0,1)
+$artStatus=Label $artBar 'Local artwork only - not bundled' 10 11 330 23 $small $muted
+$artPick=New-Object Windows.Forms.Button
+$artPick.Text='Choose artwork...'
+$artPick.Size=New-Object Drawing.Size(142,30)
+$artPick.FlatStyle='Flat'
+$artPick.BackColor=C '#554731';$artPick.ForeColor=$cream
+$artPick.TabIndex=19
+$artBar.Controls.Add($artPick)
+$artBar.Add_SizeChanged({
+ $artPick.Location=New-Object Drawing.Point(
+  ([math]::Max(180,$artBar.ClientSize.Width-$artPick.Width-8)),5)
+ $artStatus.Width=[math]::Max(135,$artPick.Left-17)
 }.GetNewClosure())
+$artPick.Add_Click({
+ $dialog=New-Object Windows.Forms.OpenFileDialog
+ $dialog.Title='Choose your own local launcher illustration'
+ $dialog.Filter='Pictures (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg'
+ $dialog.CheckFileExists=$true
+ if($dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK){
+  try{
+   $loaded=Read-LauncherImage $dialog.FileName
+   $artImage.Image=$loaded
+   $artImage.Visible=$true
+   $emptyArt.Visible=$false
+   $artStatus.Text='Local artwork loaded (preview only)'
+  }catch{
+   [Windows.Forms.MessageBox]::Show(
+    $_.Exception.Message,'Artwork could not be loaded',
+    [Windows.Forms.MessageBoxButtons]::OK,
+    [Windows.Forms.MessageBoxIcon]::Warning)|Out-Null
+  }
+ }
+}.GetNewClosure())
+if($null -ne $logo){
+ $topLogo=New-Object Windows.Forms.PictureBox
+ $topLogo.Image=$logo
+ $topLogo.SizeMode=[Windows.Forms.PictureBoxSizeMode]::Zoom
+ $topLogo.Location=New-Object Drawing.Point(17,4)
+ $topLogo.Size=New-Object Drawing.Size(297,50)
+ $topLogo.BackColor=$top.BackColor
+ $top.Controls.Add($topLogo)
+ $topTitle.Visible=$false
+}
 $news=Card $left $surface
 $news.Margin=New-Object Windows.Forms.Padding(0)
 [void](Label $news 'LATEST NEWS  /  VERIFICATION LOG' 12 8 500 27 $heading $gold)
@@ -344,12 +386,19 @@ try{
    $grid.PerformLayout();$main.PerformLayout()
    $right.PerformLayout();$footer.PerformLayout();$left.PerformLayout()
    if($null -eq $art -or $null -eq $result -or $null -eq $options -or
+      $null -eq $artImage -or $null -eq $artPick -or
+      $artLayout.ClientSize.Width -le 0 -or
+      $mode.Text -ne 'READ-ONLY' -or
       $null -eq $preview -or $form.AcceptButton -ne $preview -or $cancel.Enabled -or
       $preview.Right -gt $footer.ClientSize.Width -or $options.ClientSize.Height -lt 300){
     throw "Classic launcher layout failed at width $($size.Width)."
    }
   }
-  # Render the illustration in CI; constructing a control alone does not test Paint.
+  # Ensure the image placeholder and image control behave consistently.
+  if(($null -eq $hero -and $artImage.Visible) -or
+     ($null -ne $hero -and $artImage.Image -ne $hero)){
+   throw 'Artwork image state is inconsistent.'
+  }
   $drawing=[Drawing.Bitmap]::new([int][math]::Max(80,$art.ClientSize.Width),[int][math]::Max(80,$art.ClientSize.Height))
   try{
    $art.DrawToBitmap($drawing,[Drawing.Rectangle]::new(0,0,$drawing.Width,$drawing.Height))
