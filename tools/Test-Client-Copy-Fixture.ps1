@@ -16,7 +16,10 @@ param(
  [ValidateRange(0,20)][int]$SimulateRollbackInterruptionAfter=0,
  [ValidateRange(-1,104857600)][long]$SimulateAvailableDiskBytes=-1,
  [ValidateRange(0,8)][int]$SimulateDiskWriteFailureAfterStagedFiles=0,
- [switch]$SimulateStagedFileMutationBeforePromotion
+ [switch]$SimulateStagedFileMutationBeforePromotion,
+ [switch]$SimulateInterruptedStageOwnerWrite,
+ [switch]$SimulateInterruptedJournalWrite,
+ [switch]$SimulateDestinationCollisionBeforePromotion
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -302,7 +305,10 @@ try{
  if($Action -ne 'Copy'){
   Require ($SimulateAvailableDiskBytes -eq -1 -and
    $SimulateDiskWriteFailureAfterStagedFiles -eq 0 -and
-   -not [bool]$SimulateStagedFileMutationBeforePromotion) 'Fault switches are allowed only during explicitly confirmed synthetic Copy.'
+   -not [bool]$SimulateStagedFileMutationBeforePromotion -and
+   -not [bool]$SimulateInterruptedStageOwnerWrite -and
+   -not [bool]$SimulateInterruptedJournalWrite -and
+   -not [bool]$SimulateDestinationCollisionBeforePromotion) 'Fault switches are allowed only during explicitly confirmed synthetic Copy.'
  }
  Require (-not (Test-Path -LiteralPath $journalPath)) 'Existing fixture journal must be reviewed or rolled back first.'
  $destEntries=@(Get-ChildItem -LiteralPath $dest -Force)
@@ -345,10 +351,17 @@ try{
    [ordered]@{relative_path=$_.relative_path;sha256=$_.sha256;byte_size=$_.byte_size}
   })
  }
+ # Partial owner marker must not authorise cleanup.
+ if([bool]$SimulateInterruptedStageOwnerWrite){
+  [IO.File]::WriteAllText((Join-Path $stage '.naxx-fixture-stage-owner.json'),'{')
+  throw 'SIMULATED SYNTHETIC STAGE OWNER MARKER INTERRUPTION; stage retained.'
+ }
  # Durable identity marker created before any staged file. If power fails before
  # this write, the unmarked directory remains untrusted and is never auto-cleaned.
  WriteJournal (Join-Path $stage '.naxx-fixture-stage-owner.json') $stageOwner
  $promoted=New-Object 'System.Collections.Generic.List[string]'
+ $journalWriteUncertain=$false
+ $injectedDestinationCollision=$false
  try{
   [int]$stagedCount=0
   foreach($record in $rows){
@@ -390,6 +403,14 @@ try{
    files=@($rows|ForEach-Object {[ordered]@{relative_path=$_.relative_path;sha256=$_.sha256;byte_size=$_.byte_size}})
   }
   # Record ownership before promotion so an interruption is visible.
+  # Interrupted journal is deliberately truncated, must be preserved.
+  if([bool]$SimulateInterruptedJournalWrite){
+   $journalWriteUncertain=$true
+   $partial=[Text.UTF8Encoding]::new($false).GetBytes('{"schema_version":1,"kind":')
+   $stream=[IO.File]::Open($journalPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+   try{$stream.Write($partial,0,$partial.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+   throw 'SIMULATED SYNTHETIC JOURNAL WRITE INTERRUPTION; partial journal retained.'
+  }
   # "applying" permits verified partial rollback after interruption.
   WriteJournal $journalPath $session
   foreach($record in $rows){
@@ -399,6 +420,13 @@ try{
    [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($to))|Out-Null
    ProbeFile (Join-Path $src $rel) $record
    ProbeFile $from $record
+   if([bool]$SimulateDestinationCollisionBeforePromotion -and -not $injectedDestinationCollision){
+    Require (-not (Test-Path -LiteralPath $to)) 'Target was occupied before test collision.'
+    $bytes=[Text.UTF8Encoding]::new($false).GetBytes('UNOWNED SYNTHETIC COLLISION; NEVER OVERWRITE')
+    $stream=[IO.File]::Open($to,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+    try{$stream.Write($bytes,0,$bytes.Length);$stream.Flush($true)}finally{$stream.Dispose()}
+    $injectedDestinationCollision=$true
+   }
    Require (-not (Test-Path -LiteralPath $to)) 'Destination file unexpectedly appeared.'
    [IO.File]::Move($from,$to)
    $promoted.Add($to)
@@ -432,9 +460,15 @@ try{
     if(@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0){[IO.Directory]::Delete($dir)}
    }
   }
-  if(-not $incomplete -and (Test-Path -LiteralPath $journalPath)) {[IO.File]::Delete($journalPath)}
-  foreach($residue in @($journalPath+'.writing',$journalPath+'.previous')){if(Test-Path -LiteralPath $residue){[IO.File]::Delete($residue)}}
-  throw ('Copy failed: '+$failure+'. '+$(if($incomplete){'Manual intervention required; journal retained.'}else{'Verified partial copy rolled back.'}))
+  if(-not $incomplete -and -not $journalWriteUncertain -and (Test-Path -LiteralPath $journalPath)){
+   [IO.File]::Delete($journalPath)
+  }
+  # Uncertain journal sidecars must never be silently deleted.
+  foreach($residue in @($journalPath+'.writing',$journalPath+'.previous')){
+   if(Test-Path -LiteralPath $residue){$incomplete=$true}
+  }
+  $needsReview=$incomplete -or $journalWriteUncertain
+  throw ('Copy failed: '+$failure+'. '+$(if($needsReview){'Manual intervention required; uncertain journal or copied files retained.'}else{'Verified partial copy rolled back.'}))
  }finally{
   if(Test-Path -LiteralPath $stage){
    try{CleanupOwnedStage $stage $rows $src $dest}
