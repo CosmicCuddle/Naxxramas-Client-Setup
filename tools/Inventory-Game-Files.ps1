@@ -84,7 +84,7 @@ try{
  try{$version=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $root 'Wow.exe')).FileVersion}catch{}
  if($version -and $version -match '(^|[.,\s])12340($|[.,\s])'){$buildConfirmed=$true}
  # Deliberately allowlisted root names. Do not enumerate/cache personal config.
- $rootNames=@('Wow.exe','Launcher.exe','Repair.exe','BackgroundDownloader.exe','Scan.dll','Storm.dll','DivxDecoder.dll','unicows.dll')
+ $rootNames=@('Wow.exe','Launcher.exe','Repair.exe','BackgroundDownloader.exe','Scan.dll','Storm.dll','DivxDecoder.dll','unicows.dll','ijl15.dll','dbghelp.dll')
  $records=New-Object 'System.Collections.Generic.List[object]'
  foreach($name in $rootNames){
   $path=Join-Path $root $name

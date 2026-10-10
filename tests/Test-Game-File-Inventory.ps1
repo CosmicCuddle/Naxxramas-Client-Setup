@@ -18,6 +18,9 @@ try{
  $policy=Get-Content -LiteralPath (Join-Path $repo 'config/client-patches.json') -Raw | ConvertFrom-Json
  [IO.File]::WriteAllText((Join-Path $game 'Wow.exe'),'DUMMY EXECUTABLE: NEVER A VERIFIED BUILD')
  [IO.File]::WriteAllText((Join-Path $game 'Launcher.exe'),'dummy launcher')
+ [IO.File]::WriteAllText((Join-Path $game 'ijl15.dll'),'SYNTHETIC IJL15')
+ [IO.File]::WriteAllText((Join-Path $game 'DBGHELP.DLL'),'SYNTHETIC DBGHELP')
+ [IO.File]::WriteAllText((Join-Path $game 'fmodex.dll'),'EXCLUDED OPTIONAL CANDIDATE')
  [IO.File]::WriteAllText((Join-Path $game 'Data/common.MPQ'),'dummy base MPQ')
  [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/locale-enUS.MPQ'),'dummy locale archive')
  [IO.File]::WriteAllText((Join-Path $game 'Data/enUS/base-enUS.MPQ'),'dummy base locale resource')
@@ -77,6 +80,57 @@ try{
     $found[0].integrity -cne 'not_pinned' -or [string]::IsNullOrWhiteSpace([string]$found[0].sha256)){
    throw ('New locale candidate not correctly classified: '+$n)
   }
+ }
+ foreach($n in @('ijl15.dll','DBGHELP.DLL')){
+  $matches=@($report.files|Where-Object {$_.relative_path -ceq $n})
+  if($matches.Count -ne 1 -or $matches[0].component -cne 'client_binary_candidate' -or
+    $matches[0].integrity -cne 'not_pinned' -or [long]$matches[0].byte_size -lt 1 -or
+    [string]$matches[0].sha256 -cnotmatch '^[0-9a-f]{64}
+ foreach($forbidden in @('SECRET_PERSON','VERY_PRIVATE_ACCOUNT_DATA','PRIVATE_NAME','DO_NOT_SHOW_FILENAME','PRIVATE_REALM_VALUE','PersonalAddon','SECRET_ADDON_INFO','PRIVATE_SCREENSHOT','EXCLUDED OPTIONAL CANDIDATE','fmodex.dll',$game)){
+  if($text.Contains($forbidden)){throw 'Private data leaked into manifest: '+$forbidden}
+ }
+ $quickFile=Join-Path $base 'reports/files-quick.json'
+ $quickRun=Run $quickFile @('-Quick')
+ if($quickRun.Code -ne 0){throw ('Quick inventory failed: '+$quickRun.Text)}
+ $quick=Get-Content -LiteralPath $quickFile -Raw|ConvertFrom-Json
+ foreach($n in @('ijl15.dll','DBGHELP.DLL')){
+  $entry=@($quick.files|Where-Object {$_.relative_path -ceq $n})
+  if($entry.Count -ne 1 -or $null -ne $entry[0].sha256 -or
+    $entry[0].integrity -cne 'not_pinned'){
+    throw ('Quick scan omitted or invented a hash for '+$n)
+  }
+ }
+ if($quick.hash_mode -cne 'sizes_only_unverified' -or
+    @($quick.files|Where-Object {$null -ne $_.sha256}).Count -ne 0 -or
+    @($quick.pinned_patches|Where-Object {$_.required -and $_.status -cne 'not_checked_quick_mode'}).Count -ne 0){
+  throw 'Quick mode was incorrectly treated as hash verified.'
+ }
+ $duplicate=Run $output @()
+ if($duplicate.Code -eq 0 -or -not $duplicate.Text.Contains('already exists')){throw 'Existing report was overwritten.'}
+ $unsafe=Run (Join-Path $game 'client-report.json') @()
+ if($unsafe.Code -eq 0 -or -not $unsafe.Text.Contains('inside the WoW client')){
+  throw 'Report inside game was not rejected.'
+ }
+ [IO.File]::WriteAllText((Join-Path $game 'Data/patch-Z.mpq'),'tampered')
+ $tamperFile=Join-Path $base 'reports/files-tampered.json'
+ $tamperRun=Run $tamperFile @()
+ if($tamperRun.Code -ne 0){throw ('Tamper test scanner failed: '+$tamperRun.Text)}
+ $tamper=Get-Content -LiteralPath $tamperFile -Raw|ConvertFrom-Json
+ $z=@($tamper.pinned_patches|Where-Object {$_.relative_path -ceq 'Data/patch-Z.mpq'})[0]
+ if($z.status -cne 'pinned_mismatch'){throw 'Corrupted mandatory patch was incorrectly verified.'}
+ if((Get-FileHash -LiteralPath $private -Algorithm SHA256).Hash -ne $before){throw 'Client personal data was modified.'}
+ if(Test-Path -LiteralPath (Join-Path $game 'client-report.json')){throw 'A report was written into game.'}
+ Write-Host 'ALL WHITELISTED GAME FILE INVENTORY TESTS PASSED'
+}finally{
+ if(Test-Path -LiteralPath $base){Remove-Item -LiteralPath $base -Recurse -Force}
+}
+exit 0
+){
+    throw ('Expected new unpinned support candidate in full report: '+$n)
+  }
+ }
+ if(@($report.files|Where-Object {$_.relative_path -ieq 'fmodex.dll'}).Count -ne 0){
+  throw 'Non-allowlisted root candidate leaked into inventory.'
  }
  $text=Get-Content -LiteralPath $output -Raw
  foreach($forbidden in @('SECRET_PERSON','VERY_PRIVATE_ACCOUNT_DATA','PRIVATE_NAME','DO_NOT_SHOW_FILENAME','PRIVATE_REALM_VALUE','PersonalAddon','SECRET_ADDON_INFO','PRIVATE_SCREENSHOT',$game)){
