@@ -61,6 +61,7 @@ The read-only client inventory reported **22 MPQ archives** (~16.56 GiB by round
 | `docs/INSTALLER-PLAN.md` | How to run and interpret the new read-only planner | N/A |
 | `docs/TRANSACTION-DESIGN.md` | Proposed backup, journal, write-gate, rollback and recovery safety contract; no implementation | N/A |
 | `docs/JOURNAL-DURABILITY.md` | Design-only crash boundaries, journal authority and interruption safety checklist | N/A |
+| `docs/JOURNAL-AUTHORITY.md` | Proposed signed session ownership, DPAPI/HMAC design and replay caveats; **not implemented** | N/A |
 | `docs/RECOVERY-PREVIEW.md` | How the read-only recovery inspector classifies safe suggestions and conflicts | N/A |
 | `tests/Test-InstallerPlan.ps1` | Synthetic generated-file test cases; not a real game-client test | No |
 | `.github/workflows/client-planner-tests.yml` | Windows PowerShell 5.1 fixture workflow; passed on 10 October 2026 | N/A |
@@ -117,7 +118,7 @@ Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 ma
 Current implemented slice:
 1. `tools/Plan-Naxxramas-Install.ps1` emits a console plan or optional JSON using the existing patch and realm manifests, with no writes. Windows drag-and-drop launcher added.
 2. V/Z are mandatory, J/U independent, and unselected existing optional files are preserved. Current, missing, known-older and unknown versions are classified; unrecognised selected patches are blocked.
-3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked.
+3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked. Optional `-BackupRoot` now allows a **read-only** second-drive space and folder-isolation check; drive-root comparison is preliminary, not authoritative.
 4. `tests/Test-InstallerPlan.ps1` covers required/optional patches, realm safety, invalid source/path/policy, junctions and a test-only generated versioned executable. Its Windows PowerShell CI run **passed** on 10 October 2026. It checks before/after file fingerprints to catch unexpected writes.
 
 Next checks before leaving Milestone 2:
@@ -153,4 +154,6 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) added the read-only recovery inspector and generated-file tests for backup integrity, conflict preservation, unsafe manifest rejection and no-write guarantees. Recovery and preflight workflows both passed on Windows 10 October 2026.
 - PR [#5](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/5) added low/unknown-disk-space failure tests to disposable planner copies, no public bypass option, and recovery guards against incomplete checkpoints/sessions and shared original backups. **All three Windows PowerShell suites passed** on its test commit.
 - [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) now records proposed write ordering and crash boundaries, plus outstanding filesystem durability and trusted-journal ownership decisions; **it is not implemented**.
-- **Next engineering action:** resolve journal authority/authentication, safe atomic file replacement, backing up on a potentially separate volume and crash-injection design. Only after explicit approval should development move to fixture-only writes. Never modify the working game client.
+- PR [#6](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/6) adds optional `-BackupRoot` to the **read-only** planner. Existing separate folder required; client/source/backup nesting and volume-root selections rejected. Same-drive budgets aggregate, while simulated different-drive free space is checked independently. Windows planner and preflight fixture suites passed. No client or backup file was written.
+- Wrote [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) proposing per-installation DPAPI-protected HMAC keys and signed sequence anchors. **No signed journal, key creation, installer or rollback engine exists.**
+- **Next engineering action:** establish authentic volume identifiers, a reviewed signed schema, backup-space enforcement in future writer and crash-safe journal/anchor ordering; test trust failures read-only. No actual client writes or patch redistribution.
