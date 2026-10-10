@@ -1,6 +1,6 @@
 # Milestone 22 — Read-only orphan staging inspection
 
-**Status:** development preview, Windows CI pending. This is strictly a **disposable synthetic fixture** feature, not a WoW installer, game repair tool, or orphan-folder cleaner.
+**Status:** Windows CI passed — [run 38062420201](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38062420201) on verified implementation commit `844f2a91cecf11cc243c41a0c1185d2549037eb1`. This is strictly a disposable synthetic-fixture feature. This is strictly a **disposable synthetic fixture** feature, not a WoW installer, game repair tool, or orphan-folder cleaner.
 
 ## Background
 
@@ -30,3 +30,7 @@ Existing M15 dummy-only copy/rollback CI also tests the guarded stage cleanup in
 - Full client file download, proprietary MPQ distribution and production client installation are disabled, pending trusted sources and applicable rights.
 
 **Owner action:** None. Preserve the known-good WoW backup; do not run developer fixture tools against a real client.
+
+## Verified Windows result
+
+[Run 38062420201](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38062420201) passed the new stage inspector tests, guarded synthetic copy/rollback tests, previous safety suites, GUI smoke tests and preview ZIP packaging. It does **not** validate real WoW file copying or authorise stage cleanup outside disposable fixtures.
