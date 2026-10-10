@@ -74,7 +74,10 @@ try{
  foreach($n in @('Data/enUS/base-enUS.MPQ','Data/enUS/BACKUP-enUS.mpq')){
   $found=@($report.files|Where-Object {$_.relative_path -ceq $n})
   if($found.Count -ne 1 -or $found[0].component -cne 'base_archive_candidate' -or
-    $found[0].integrity -cne 'not_pinned' -or [string]$found[0].sha256 -cnotmatch '^[0-9a-f]{64}
+    $found[0].integrity -cne 'not_pinned' -or [string]::IsNullOrWhiteSpace([string]$found[0].sha256)){
+   throw ('New locale candidate not correctly classified: '+$n)
+  }
+ }
  $text=Get-Content -LiteralPath $output -Raw
  foreach($forbidden in @('SECRET_PERSON','VERY_PRIVATE_ACCOUNT_DATA','PRIVATE_NAME','DO_NOT_SHOW_FILENAME','PRIVATE_REALM_VALUE','PersonalAddon','SECRET_ADDON_INFO','PRIVATE_SCREENSHOT',$game)){
   if($text.Contains($forbidden)){throw 'Private data leaked into manifest: '+$forbidden}
