@@ -43,3 +43,5 @@ The report does **not** authenticate those 16 base-file candidate hashes against
 - Fresh client downloading remains blocked in `config/base-client-source.json`. No real-client installation or public release is authorised.
 
 **Testing:** dummy-only offline Windows fixtures check recognised vs unclassified MPQs, direct-scope enumeration, private-directory omission, and no additional files or modified archives.
+
+**Verified Windows CI:** [run 38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893) completed successfully on implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`. New synthetic classification tests, previous safety tests, WinForms smoke tests, and the updated preview ZIP upload all passed. No real game installation was attempted.

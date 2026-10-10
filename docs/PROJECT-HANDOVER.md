@@ -2,7 +2,7 @@
 
 **Purpose:** Permanent continuation reference for future chats, maintainers, and development sessions. **Read this document first** when starting again after context loss. Update the *Current checkpoint*, *Completed work*, *Open decisions* and *Next steps* whenever a milestone or recovery fix is completed. Keep it in the repository, not only in a conversation.
 
-**Status as of 10 October 2026:** Milestones 15 and 16 passed Windows CI (M16 run [38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809)). The owner has now supplied and successfully reviewed a private M14 full-hash inventory; aggregate results and two unknown MPQ follow-up documented under M17 (Windows CI pending). No full-game download, public client or production installation is enabled.
+**Status as of 10 October 2026:** Milestones 15 and 16 passed Windows CI (M16 run [38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809)). The owner has now supplied and successfully reviewed a private M14 full-hash inventory; aggregate results and two unknown MPQ follow-up documented under M17 (Windows CI [38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893) **passed**). No full-game download, public client or production installation is enabled.
 
 ## 1. Project and critical GitHub links
 
@@ -10,6 +10,7 @@
 - **Development branch:** `feature/backup-first-installer-alpha`
 - **Draft PR #1:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/1
 - **GitHub Actions:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/workflows/validate-tools.yml
+- **Milestone 17 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893 (implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`)
 - **Milestone 16 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809 (commit `3ab55d8791dc153b3c761d54c6d70730ae305c60`)
 - **Milestone 15 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054045414 (implementation commit `8350949c6ffde50ca10c459a6d8f7f4f3e99970c`)
 - **Milestone 14 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38053138014
@@ -82,7 +83,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M14 — complete** | Whitelisted local per-file game binary/MPQ inventory, SHA-256 by default, `-Quick` sizes-only mode, privacy exclusions, dummy-file Windows tests. **CI 38053138014 passed**. |
 | **M15 — complete** | Disposable **synthetic-only** copy/verify/rollback prototype: strict test markers, manifest type, tiny-file size cap, separate staging, SHA-256 verification, journal and rollback, failure injection. **CI 38054045414 passed.** Not a real WoW installer. |
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
-| **M17 — pending CI** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
+| **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -112,7 +113,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** Milestone 15, synthetic fixture-only copy, hash verification and rollback, implementation commit `8350949c`, fully successful Windows CI run `38054045414`. M16 report reviewer and new Windows fixture tests passed full workflow and preview packaging at https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809, implementation commit `3ab55d8791dc153b3c761d54c6d70730ae305c60`. This proves synthetic fixture behavior, **not** real-client validity.
+**Last verified implementation step:** Milestone 17 read-only MPQ metadata classification and report coverage documentation, implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`, full Windows CI and preview packaging **passed** in run [38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893). Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
