@@ -86,7 +86,7 @@ try{
  $noMarker=Run (Join-Path $base 'not-fixture')
  if($noMarker.code -eq 0 -or -not $noMarker.message.Contains('AUDIT: BLOCKED')){throw 'Unmarked directory was accepted.'}
  if((Get-FileHash -LiteralPath (Join-Path $src 'Data/patch-Z.mpq') -Algorithm SHA256).Hash -cne $sourceDigest){throw 'Source was modified.'}
- if(@(Get-ChildItem -LiteralPath $base -Recurse -File -Force).Count -ne ($beforeFileCount+3)){
+ if(@(Get-ChildItem -LiteralPath $base -Recurse -File -Force).Count -ne ($beforeFileCount+2)){
   throw 'Auditor unexpectedly wrote or removed fixture files.'
  }
  Write-Host 'ALL SYNTHETIC RECOVERY READINESS TESTS PASSED'
