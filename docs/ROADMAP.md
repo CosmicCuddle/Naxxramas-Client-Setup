@@ -66,6 +66,8 @@ Keep the installer independent of the AzerothCore server, individual-progression
 **Write-capable development remains blocked by provenance/approval decisions and remaining failure-path coverage.** A [backup/transaction design](TRANSACTION-DESIGN.md) has been drafted; no game-file writing engine exists.
 
 - [x] Draft the [backup-first transaction and rollback design](TRANSACTION-DESIGN.md), including journal states and recovery tests.
+- [x] Implement the [read-only recovery preview](RECOVERY-PREVIEW.md) to evaluate synthetic journal records, original backups and player-modified files without writing.
+- [x] Verify read-only recovery preview fixture tests on GitHub Windows PowerShell 5.1 CI (10 October 2026; PR #4).
 - [ ] Build a transaction engine for allowlisted configuration/approved assets only after design and sources are approved.
 - [ ] Require explicit confirmation and client-closed checks before writing.
 - [ ] Stage files, verify SHA-256 and size, then commit by safe replacement.
@@ -141,4 +143,5 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - On 10 October 2026, GitHub's Windows PowerShell 5.1 workflows for read-only planner fixtures **passed**, including the synthetic supported-build no-blockers scenario. The legacy preflight suite also **passed** after fixing an inherited exit-code issue.
 - PR [#2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2) merged expanded safety fixtures and corrected legacy test exit-code handling. PR [#3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3) merged a generated versioned executable fixture to test the non-blocking preview.
 - Recorded the write-capable design separately in [TRANSACTION-DESIGN.md](TRANSACTION-DESIGN.md), without introducing any installation code.
-- **Next task:** finish remaining low-space and fail-closed planner tests, then design a *read-only* journal-state recovery evaluator. Do not alter a real game client.
+- PR [#4](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/4) merged a validated read-only recovery inspector, synthetic safety tests and [recovery guide](RECOVERY-PREVIEW.md). Both new recovery and existing preflight workflows passed on Windows.
+- **Next task:** finish deterministic low-space and other failure-path checks, then refine journal durability/authenticity and implement only disposable-fixture write/rollback experiments **after separate approval**. No real client writes.
