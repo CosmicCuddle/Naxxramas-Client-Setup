@@ -11,7 +11,7 @@ function Require([bool]$ok,[string]$why){if(-not $ok){throw $why}}
 function AllowPath([string]$p){
  if($p -in @('Wow.exe','Launcher.exe','Repair.exe','BackgroundDownloader.exe','Scan.dll','Storm.dll','DivxDecoder.dll','unicows.dll')){return $true}
  if($p -match '^Data/(common(?:-2)?|expansion|lichking|patch(?:-[0-9]+)?|patch-[VZJCU])\.mpq$'){return $true}
- if($p -match '^Data/enUS/((?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?)\.mpq$'){return $true}
+ if($p -match '^Data/enUS/((?:base-enUS|backup-enUS|(?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?))\.mpq$'){return $true}
  return $false
 }
 function NoLinks([string]$path){

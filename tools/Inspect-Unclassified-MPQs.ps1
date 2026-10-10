@@ -26,7 +26,7 @@ try{
   $null=NoLink $p
  }
  $rootPattern='^(common(?:-2)?|expansion|lichking|patch(?:-[0-9]+)?|patch-[VZJCU])\.mpq$'
- $localePattern='^((?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?)\.mpq$'
+ $localePattern='^((?:base-enUS|backup-enUS|(?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?))\.mpq$'
  $items=New-Object 'System.Collections.Generic.List[object]'
  [int]$known=0
  foreach($scope in @(@{dir=$data;prefix='Data';pattern=$rootPattern},

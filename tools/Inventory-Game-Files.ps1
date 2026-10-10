@@ -94,7 +94,7 @@ try{
  }
  # No recursion. Unknown MPQs/files stay out of the report, but are counted.
  $rootPattern='^(common(?:-2)?|expansion|lichking|patch(?:-[0-9]+)?|patch-[VZJCU])\.mpq$'
- $localePattern='^((?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?)\.mpq$'
+ $localePattern='^((?:base-enUS|backup-enUS|(?:locale|speech|expansion-locale|expansion-speech|lichking-locale|lichking-speech)-enUS|patch-enUS(?:-[0-9]+)?))\.mpq$'
  [int]$excludedCount=0
  foreach($scope in @(@{folder=$data;prefix='Data';pattern=$rootPattern},
                      @{folder=$locale;prefix='Data/enUS';pattern=$localePattern})){
