@@ -45,6 +45,12 @@ The server owner requires **both `Data/patch-V.mpq` and `Data/patch-Z.mpq`** for
 
 The [patch policy manifest](config/client-patches.json) records those installer requirements. **It does not provide or license the MPQ files.** No installer has been implemented yet.
 
+## Verified patch source downloads (development)
+
+Milestone 10 adds a separate **patch-source download tool**, not an installer. It uses pinned GitHub Releases for V (v1.0.6.8.4), Z (v1.0.6.7), and optional J/C/U (optional-v1.0). All five URLs and their published digests were checked against `patchset-0002`.
+
+`tools/Get-Patch-Sources.ps1` defaults to an entirely read-only download plan. Its explicit `-Action Download -ConfirmDownload` option saves only missing, hash-verified MPQs to a **separate directory outside both the game and the launcher**. It never overwrites a mismatched source, never writes to the game folder, and never changes existing client patches. See [Milestone 10](docs/INSTALLER-MILESTONE-10.md) for how to use it and how to troubleshoot download failures.
+
 ## Test-only local installer alpha
 
 A transaction prototype is under development in `tools/Setup-Prototype.ps1`. It plans patch/realmlist changes and selected local N Addon Suite folders, stages files, backs up originals, and supports interrupted-session recovery and rollback in disposable test fixtures. **All write operations are deliberately locked to disposable test fixtures**, not real game installations. See [Milestone 2](docs/INSTALLER-MILESTONE-2.md) and [Milestone 3 safety checks](docs/INSTALLER-MILESTONE-3.md).

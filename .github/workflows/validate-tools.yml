@@ -24,6 +24,9 @@ jobs:
       - name: Verified addon ZIP extraction fixture tests
         shell: powershell
         run: .\tests\Test-Verified-Extraction.ps1
+      - name: Offline verified patch downloader fixture tests
+        shell: powershell
+        run: .\tests\Test-Patch-Downloads.ps1
       - name: Headless Windows GUI preview safety tests
         shell: powershell
         run: .\tests\Test-GUI-Preview.ps1
@@ -38,11 +41,14 @@ jobs:
             'tools/Naxxramas-Preview.ps1'
             'tools/GUI-Preview-Lib.ps1'
             'tools/Setup-Prototype.ps1'
+            'tools/Get-Patch-Sources.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
+            'config/patch-downloads.json'
             'config/addon-suite.json'
             'config/realm.json'
             'docs/INSTALLER-MILESTONE-8.md'
+            'docs/INSTALLER-MILESTONE-10.md'
             'assets/README.md'
           )
           foreach ($relative in $files) {
