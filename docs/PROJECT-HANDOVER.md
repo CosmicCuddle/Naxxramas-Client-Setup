@@ -29,7 +29,9 @@
 
 - **Milestone 23 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602 (tested implementation checkpoint `1bccc4df469e6e6709864db818ccbbab34cf2834`)
 
-**M24 — Windows CI pending:** Enhanced M15's tiny synthetic Copy with deterministic interrupted stage-marker/journal writes and a last-moment destination collision. Unknown journals/stages or unowned destination files are preserved; Copy-only switches are rejected by Plan/Rollback. Existing fixture limits and disabled real-client source are unchanged. Refer to `docs/INSTALLER-MILESTONE-24.md`.
+**M24 verified (Windows [run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936) passed):** Enhanced M15's tiny synthetic Copy with deterministic interrupted stage-marker/journal writes and a last-moment destination collision. Unknown journals/stages or unowned destination files are preserved; Copy-only switches are rejected by Plan/Rollback. Existing fixture limits and disabled real-client source are unchanged. Refer to `docs/INSTALLER-MILESTONE-24.md`.
+
+- **Milestone 24 passing Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936 (tested implementation commit `39cc99e20f7444b09eec3cc6d1d168cdb856dfd2`)
 
 ## 1. Project and critical GitHub links
 
@@ -130,7 +132,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M21 — complete (CI 38061485117)** | Durable `rolling_back` journal state, simulated interrupted rollback, explicit resume, unexpected empty-folder and journal-sidecar blockers, plus M20 read-only-state coverage. Synthetic-only; no game writes. |
 | **M22 — complete (CI 38062420201)** | Synthetic stage owner marker, nonrecursive guarded cleanup, and developer-only read-only single-stage inspection with unknown-folder/tamper tests. No automated orphan removal. |
 | **M23 — complete (CI 38063285602)** | Controlled low-space, interrupted stage-write and staged-file mutation fault switches, with prepromotion source/stage verification; tiny synthetic fixtures only, not real concurrent writes. |
-| **M24 — Windows CI pending** | Deterministic interrupted stage-owner and destination-journal writes, promotion-time dummy collision, conservative retention of uncertain state; synthetic-only fixture tests. |
+| **M24 — complete (CI 38064037936)** | Deterministic interrupted stage-owner and destination-journal writes, promotion-time dummy collision, conservative retention of uncertain state; synthetic-only fixture tests. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -167,11 +169,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M23 deterministic synthetic low-space, partial staged-write and changed-stage fault testing, with added source/stage digest checks before promotion. New and existing fixture safety tests, GUI and packaged preview all passed at commit `1bccc4df469e6e6709864db818ccbbab34cf2834`, [run 38063285602](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602). This does **not** prove real concurrent races, genuine disk exhaustion, power-loss durability, or rights to distribute game content. The preceding M22 stage safety step passed [run 38062628104](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38062628104).
+**Last verified implementation step:** M24 deterministically simulated interrupted stage-owner writes, truncated destination journals and promotion-time destination collisions in tiny, locked M15 disposable fixtures. It preserves unknown markers/journals and unowned destination bytes, and refuses use of Copy-only fault switches for Plan/Rollback. New tests plus earlier safety, GUI and preview ZIP packaging passed at `39cc99e20f7444b09eec3cc6d1d168cdb856dfd2` in [run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936). This does not validate production filesystem races or real-client installation. Prior M23 passed [run 38063451573](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063451573).
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M24 synthetic interruption/collision checks implemented (Windows CI pending). Do not request any owner local test. Validate full Windows CI, then next work: read-only transaction health/status reporting, explicit manual review of staged/journal residues, and more realistic test-only concurrent file/path changes. Never disable exact fixture markers, fixed eight dummy file names, 256 KiB/file and 1 MiB limits, source/patch integrity locks or the blocked real-client downloader. Keep PR draft and require explicit owner approval before merge.
+**Current next task:** M24 full Windows regression suite and preview packaging **passed** ([run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936)). No owner test is needed. Next developer work: read-only transaction-health/status inspection that explains partial journals, stage-owner markers and journal sidecar residues without reading player accounts; then design deliberately confirmed, non-destructive recovery actions. Improve real external process/path-change fixture tests, but never imply that deterministic injection proves race freedom. Keep draft PR, disabled full-client downloader, exact synthetic markers and strict 1 MiB cap.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -192,7 +194,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “No PC work is needed for Milestone 24. It tests only dummy files and preserves uncertain data rather than erasing it. After passing Windows CI we'll build a clearer read-only recovery-state review.”
+**Owner-facing next instruction:** “Milestone 24 has passed Windows validation. You do not need to run anything, repeat the client hash scan, or change your WoW folder. Next we'll make the synthetic recovery state easier to inspect before designing any manual repair functions.”
 
 ---
 

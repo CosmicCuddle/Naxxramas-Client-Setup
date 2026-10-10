@@ -1,6 +1,6 @@
 # Milestone 24 — Interrupted journal writes and destination-collision safety
 
-**Status:** Windows validation pending. Work applies only to **tiny, expressly marked disposable synthetic fixtures**. It does not make real WoW installation or download available.
+**Status:** Windows validation **passed** — [run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936) at tested implementation commit `39cc99e20f7444b09eec3cc6d1d168cdb856dfd2`. Work applies only to **tiny, expressly marked disposable synthetic fixtures**. It does not make real WoW installation or download available.
 
 ## Starting checkpoint
 
@@ -45,4 +45,4 @@ All existing M14–M23 tests must still pass, along with WinForms smoke tests an
 
 Build a strictly **read-only, privacy-safe synthetic transaction status report** covering valid/invalid destination journals and stage sidecars, then design explicit manual recovery choices. Validate concurrent path changes and journal replacement residues in more realistic isolated tests before considering any production installation design.
 
-**Windows CI:** pending.
+**Windows CI passed:** [run 38064037936](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38064037936). The new interrupted-journal, invalid stage marker and destination collision tests passed alongside all existing fixture safety tests, WinForms smoke checks and preview ZIP packaging. These are controlled synthetic simulations, not proofs of production crash durability or real concurrent file protection.
