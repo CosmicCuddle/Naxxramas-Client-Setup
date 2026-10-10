@@ -41,8 +41,15 @@ function Read-FixtureJson([string]$Path) {
     }
     $decoder = New-Object System.Text.UTF8Encoding($false,$true)
     $raw = $decoder.GetString([IO.File]::ReadAllBytes($f))
-    try { return ,@(ConvertFrom-Json -InputObject $raw -ErrorAction Stop) }
-    catch { throw 'Fixture JSON is malformed.' }
+    # Use the Windows .NET JSON reader so a top-level JSON array retains
+    # its exact shape instead of PowerShell pipeline array enumeration.
+    try {
+        Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop
+        $serializer = New-Object System.Web.Script.Serialization.JavaScriptSerializer
+        $parsed = $serializer.DeserializeObject($raw)
+        if (-not ($parsed -is [array])) { throw 'Expected a JSON array.' }
+        return ,$parsed
+    } catch { throw 'Fixture JSON must be a valid top-level array.' }
 }
 function Require-Hex([string]$Value) {
     if ($Value -cnotmatch '^[0-9a-f]{64}$') { throw 'Malformed signed SHA-256/HMAC field.' }
