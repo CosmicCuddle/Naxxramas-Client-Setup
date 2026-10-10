@@ -71,7 +71,7 @@ The [Milestone 6 recovery inspection](docs/INSTALLER-MILESTONE-6.md) adds read-o
 
 ## Windows graphical preview (development only)
 
-The path selectors support a dedicated **Paste** button for folder and addon ZIP paths copied from Windows File Explorer, including quoted **Copy as path** entries. You can also enter or paste directly into the dark path fields using Ctrl+V. Invalid or missing folders show a helpful message instead of an unhandled exception.
+The path fields are directly editable. Click a dark field and press **Ctrl+V** to paste a path from File Explorer, including a quoted **Copy as path** value. The launcher strips surrounding quotation marks when you leave the field. Each location keeps only a single **Browse** button for a cleaner look.
 
 A first Windows graphical interface is available at `tools/Launch-Naxxramas-Preview.bat`. It allows users to select their existing client, an optional separate patch source, and a locally downloaded official N Addon Suite ZIP; choose optional Vanilla or TBC login visuals, Vanilla loading screens, and addon modules; and run a **read-only installation preview** or transaction-state inspection. Large file checks run in the background. The interface has **no Install, Apply or Rollback** action for real clients. An explicit **Get patches** action downloads validated files only into a separate source folder, never into the game. A confirmation dialog appears before network access or writing sources.
 

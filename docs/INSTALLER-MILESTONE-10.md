@@ -16,18 +16,13 @@ The owner-published GitHub releases have these specific file identities, matchin
 
 The exact HTTPS URLs are held in `config/patch-downloads.json`. The downloader checks them against an exact allowlist and cross-checks the SHA-256 and file size against `config/client-patches.json`. It does not follow untrusted version feeds or choose “latest” automatically.
 
-## Faster folder selection — Paste path
+## Enter or copy a path
 
-The classic launcher has **Browse** and **Paste** buttons next to each location field (game client, separate patch source, optional addon ZIP).
+A single **Browse** button remains next to each path field. There is no separate Paste button.
 
-1. Open the desired folder in Windows File Explorer.
-2. Use **Copy as path** (or click the Explorer address bar and copy the full path with Ctrl+C).
-3. In the launcher, press **Paste** beside the matching field.
-4. The launcher removes surrounding quotation marks, checks that the location exists, and fills the editable path field. It does not change your game files.
+You can also copy a folder path in File Explorer and press **Ctrl+V** in the dark path field. When you leave the field, the launcher removes surrounding quotation marks and whitespace, as used by Windows **Copy as path**.
 
-**Ctrl+V directly inside a path field also works.** The launcher cleans up the surrounding quotes after you leave the field. The separate Browse dialogs remain available for navigating visually.
-
-When pasting an addon ZIP, copy its **file** path, not its containing folder. A copied ZIP file is not accepted as a WoW folder, and a directory is not accepted as an addon ZIP. Errors appear as small messages rather than unhandled Windows exceptions.
+For the optional addon archive, provide the path to the **.zip file** itself. The regular preview/download safety validation still applies.
 
 ## Download directly from the classic launcher
 

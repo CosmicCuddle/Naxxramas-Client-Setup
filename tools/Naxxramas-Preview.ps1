@@ -198,41 +198,11 @@ function Normalize-NaxxInputPath([string]$value){
  }
  return $candidate
 }
-function Convert-NaxxCopiedPath([string]$text,[bool]$isZip){
- $candidate=Normalize-NaxxInputPath $text
- if([string]::IsNullOrWhiteSpace($candidate)){
-  throw 'Copy a folder path from File Explorer first, then click Paste.'
- }
- if($candidate.Contains([char]10) -or $candidate.Contains([char]13)){
-  throw 'The clipboard contains multiple lines. Copy one folder or ZIP path.'
- }
- $kind=if($isZip){'Leaf'}else{'Container'}
- if(-not (Test-Path -LiteralPath $candidate -PathType $kind -ErrorAction Stop)){
-  if($isZip){throw 'The copied ZIP file does not exist. Copy an existing .zip file path.'}
-  throw 'The copied folder does not exist. Copy an existing folder path.'
- }
- if($isZip -and [IO.Path]::GetExtension($candidate) -ine '.zip'){
-  throw 'The copied addon archive must have a .zip filename.'
- }
- return (Resolve-Path -LiteralPath $candidate -ErrorAction Stop).ProviderPath
-}
-function Get-NaxxCopiedPath{
- if([Windows.Forms.Clipboard]::ContainsText()){
-  return [Windows.Forms.Clipboard]::GetText()
- }
- if([Windows.Forms.Clipboard]::ContainsFileDropList()){
-  $drop=[Windows.Forms.Clipboard]::GetFileDropList()
-  if($drop.Count -ne 1){throw 'Copy just one folder or ZIP file.'}
-  return [string]$drop[0]
- }
- throw 'No folder path was found on the clipboard. Use File Explorer > Copy as path.'
-}
-$script:pasteButtons=New-Object 'System.Collections.Generic.List[System.Windows.Forms.Button]'
 function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
  [void](Label $options $caption 2 $y 380 20 $small $muted)
  $box=New-Object Windows.Forms.TextBox
  $box.Location=New-Object Drawing.Point(2,($y+21))
- $box.Size=New-Object Drawing.Size(175,25);$box.Anchor='Top,Left'
+ $box.Size=New-Object Drawing.Size(272,25);$box.Anchor='Top,Left,Right'
  $box.BackColor=$well;$box.ForeColor=$cream
  $box.BorderStyle='FixedSingle';$box.TabIndex=$tab
  $options.Controls.Add($box)
@@ -241,35 +211,15 @@ function Picker([string]$caption,[int]$y,[bool]$zipMode,[int]$tab){
   if($box.Text -cne $normal){$box.Text=$normal}
  }.GetNewClosure())
  $tip.SetToolTip($box,'Type a path or press Ctrl+V to paste a path from File Explorer. Quoted paths work.')
- $paste=New-Object Windows.Forms.Button
- $paste.Text='Paste';$paste.Location=New-Object Drawing.Point(211,($y+20))
- $paste.Size=New-Object Drawing.Size(62,26)
- $paste.BackColor=C '#42514c';$paste.ForeColor=$cream
- $paste.FlatStyle='Flat';$paste.TabIndex=($tab+1)
- $options.Controls.Add($paste)
- $script:pasteButtons.Add($paste)
- $tip.SetToolTip($paste,'Paste a copied folder or ZIP path. No files are modified.')
- $paste.Add_Click({
-  try{
-   $copied=Get-NaxxCopiedPath
-   $box.Text=Convert-NaxxCopiedPath -text $copied -isZip $zipMode
-  }catch{
-   [void][Windows.Forms.MessageBox]::Show(
-    $form,$_.Exception.Message,'Naxxramas - Paste path',
-    [Windows.Forms.MessageBoxButtons]::OK,
-    [Windows.Forms.MessageBoxIcon]::Information)
-  }
- }.GetNewClosure())
  $browse=New-Object Windows.Forms.Button
  $browse.Text='Browse';$browse.Location=New-Object Drawing.Point(284,($y+20))
  $browse.Size=New-Object Drawing.Size(74,26)
  $browse.BackColor=C '#63523a';$browse.ForeColor=$cream
- $browse.FlatStyle='Flat';$browse.TabIndex=($tab+2)
+ $browse.FlatStyle='Flat';$browse.TabIndex=($tab+1)
  $options.Controls.Add($browse)
  $resize={
-  $browse.Left=[math]::Max(263,$options.ClientSize.Width-82)
-  $paste.Left=$browse.Left-$paste.Width-8
-  $box.Width=[math]::Max(150,$paste.Left-10)
+  $browse.Left=[math]::Max(270,$options.ClientSize.Width-82)
+  $box.Width=[math]::Max(175,$browse.Left-10)
  }.GetNewClosure()
  $options.Add_SizeChanged($resize);& $resize
  $browse.Add_Click({
@@ -482,32 +432,15 @@ try{
   if($null -ne (Get-NaxxBrowseInitialFolder $missing)){
    throw 'Browse accepted a nonexistent directory.'
   }
-  # Quoted Copy-as-path text, invalid and blank paths, folder vs ZIP types.
-  if((Convert-NaxxCopiedPath ('"'+$validFolder+'"') $false) -cne $validFolder){
-   throw 'A quoted Windows folder path was not accepted.'
+  # Ctrl+V into editable fields works, and quoted Explorer paths are cleaned.
+  $quoted='"'+$validFolder+'"'
+  if((Normalize-NaxxInputPath $quoted) -cne $validFolder){throw 'Quoted Explorer path did not normalize.'}
+  if((Normalize-NaxxInputPath ('  "'+$validFolder+'"  ')) -cne $validFolder){throw 'Quoted path with whitespace did not normalize.'}
+  if((Normalize-NaxxInputPath '   ') -cne ''){throw 'Blank path did not normalize safely.'}
+  if(@($options.Controls | Where-Object {$_.Text -eq 'Paste'}).Count -ne 0){
+   throw 'An unwanted Paste button remains.'
   }
-  $scratchZip=Join-Path ([IO.Path]::GetTempPath()) ('naxx copied path '+[guid]::NewGuid().ToString('N')+'.zip')
-  try{
-   [IO.File]::WriteAllBytes($scratchZip,[byte[]]@(1,2,3))
-   if((Convert-NaxxCopiedPath ('"'+$scratchZip+'"') $true) -cne $scratchZip){
-    throw 'Copied ZIP file path was not accepted.'
-   }
-   $bad=$false
-   try{$null=Convert-NaxxCopiedPath $scratchZip $false}catch{$bad=$true}
-   if(-not $bad){throw 'ZIP file accepted as game folder.'}
-   $bad=$false
-   try{$null=Convert-NaxxCopiedPath $validFolder $true}catch{$bad=$true}
-   if(-not $bad){throw 'Folder accepted as addon ZIP.'}
-  }finally{
-   if(Test-Path -LiteralPath $scratchZip){Remove-Item -LiteralPath $scratchZip -Force}
-  }
-  foreach($invalid in @('', '  ', ($validFolder+[char]10+$validFolder), $missing)){
-   $bad=$false
-   try{$null=Convert-NaxxCopiedPath $invalid $false}catch{$bad=$true}
-   if(-not $bad){throw 'Invalid or multiple copied folder paths were accepted.'}
-  }
-  if($script:pasteButtons.Count -ne 3){throw 'Paste button missing from a path selector.'}
-  Write-Host 'PASTE PATH REGRESSION TEST PASSED'
+  Write-Host 'DIRECT CTRL+V PATH TEST PASSED'
   Write-Host 'EMPTY FOLDER BROWSE TEST PASSED'
   # Ensure the image placeholder and image control behave consistently.
   if(($null -eq $hero -and $artImage.Visible) -or
