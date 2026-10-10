@@ -191,8 +191,8 @@ foreach ($patch in @($patchManifest.patches)) {
         source_state = $sourceState
         action = $action
         backup_required = ($action -eq 'replace_after_backup')
-        existing_sha256 = if ($existing) { $existing.sha256 } else { $null }
-        existing_size_bytes = if ($existing) { $existing.size_bytes } else { $null }
+        existing_sha256 = $(if ($existing) { $existing.sha256 } else { $null })
+        existing_size_bytes = $(if ($existing) { $existing.size_bytes } else { $null })
         expected_sha256 = [string]$patch.sha256
         expected_size_bytes = [int64]$patch.size_bytes
         reason = $reason
@@ -302,7 +302,7 @@ $plan = [pscustomobject][ordered]@{
     }
     realm_host = $realmTargetHost
     estimated_space_bytes = $needed
-    status = if ($blockers.Count -eq 0) { 'review_only_no_blockers' } else { 'blocked' }
+    status = $(if ($blockers.Count -eq 0) { 'review_only_no_blockers' } else { 'blocked' })
     blockers = @($blockers.ToArray())
     warnings = @($warnings.ToArray())
     files = @($items.ToArray())
