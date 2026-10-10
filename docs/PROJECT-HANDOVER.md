@@ -57,6 +57,12 @@ The owner supplied the local M14 `game-files-*.json` in SHA-256-per-file mode. M
 
 M17 adds a **local-console-only** inspection of those unclassified filenames/sizes, without writing a report or altering the client. Do not guess their names, remove them or treat them as malicious solely for being unclassified.
 
+### Owner's M17 classification result (10 October 2026)
+
+The owner's local-only screenshot identifies `Data/enUS/backup-enUS.MPQ` (167,245,856 bytes) and `Data/enUS/base-enUS.MPQ` (29,176,975 bytes). Both are now recognised **by filename only** as unpinned `base_archive_candidate` files by the read-only M14 inventory, M16 reviewer and M17 local classifier (Windows CI on these updates pending). No owner game bytes, original base-client checksums, or private scan JSON were committed. Do not remove, rename, rewrite, or upload either MPQ.
+
+Numerical reconciliation: the previous 23-file scan (including four binaries) plus those two files yields an **estimated** 25 allowlisted files (18 base MPQs, three Naxxramas MPQs and four binaries) and an MPQ-only total of **17,773,795,353 bytes**, exactly matching the earlier reference aggregate. This supports the count reconciliation, **not** base-client authenticity, runtime compatibility or redistribution rights. New totals remain estimates until rerun. See `docs/INSTALLER-MILESTONE-17.md`.
+
 ## 4. Pinned component and source policy
 
 Read source-of-truth manifests rather than hardcoding new fingerprints:
@@ -117,7 +123,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** The owner has **completed the M14 full-hash inventory and M16 consistency review**. Use M17's `Inspect-Unclassified-MPQs.bat` on a separate backed-up development copy to identify the 2 unclassified MPQ filenames/byte sizes locally. Review privately before sharing; do not upload MPQs, personal paths or the inventory JSON to GitHub. Then assess missing non-MPQ client support files and a separately authenticated base reference; M15's dummy-only locks stay enforced.
+**Current next task:** Owner completed M14 full-hash inventory, M16 JSON review and M17 local filename classification. Both extra enUS MPQs are identified and are now incorporated in the three read-only tool allowlists (updated Windows CI pending). Once verified, owner may optionally make a **new** full-hash inventory of their separate backed-up development client and review it. On an unchanged copy expect 25 allowlisted files, 18 base candidates and zero unclassified MPQs; confirm rather than assume. Preserve the prior private report, do not upload MPQs, and leave all M15 fixture-only write locks. Next: independently authenticated base-file reference and necessary non-MPQ support-file coverage.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -138,7 +144,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Your full-hash JSON is received and reviewed. On a separate backed-up client copy, drag the folder containing `Wow.exe` onto `tools/Inspect-Unclassified-MPQs.bat`. The names and sizes of the two unclassified MPQs appear locally, with no report created. Only share them privately if comfortable, and do not delete any files.”
+**Owner-facing next instruction:** “Both previously unclassified locale MPQs have been identified; keep them as they are. Once Windows CI passes, the updated scanner can include both. When convenient, drag the backed-up development client onto `tools/Inventory-Game-Files.bat` from the new preview and privately review the new report; keep the old JSON as well. Do not upload game archives or reports to public GitHub.”
 
 ---
 

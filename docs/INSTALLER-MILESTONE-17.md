@@ -45,3 +45,19 @@ The report does **not** authenticate those 16 base-file candidate hashes against
 **Testing:** dummy-only offline Windows fixtures check recognised vs unclassified MPQs, direct-scope enumeration, private-directory omission, and no additional files or modified archives.
 
 **Verified Windows CI:** [run 38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893) completed successfully on implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`. New synthetic classification tests, previous safety tests, WinForms smoke tests, and the updated preview ZIP upload all passed. No real game installation was attempted.
+
+## Owner follow-up — locale MPQs identified (10 October 2026)
+
+The owner's local-only classification screenshot showed:
+- `Data/enUS/backup-enUS.MPQ` — **167,245,856 bytes**
+- `Data/enUS/base-enUS.MPQ` — **29,176,975 bytes**
+
+Both are now **recognised by exact filename** as **unpinned base archive candidates** in the M14 inventory scanner, M16 JSON reviewer and M17 local classifier. This is not a trusted-source hash match, playable-client validation or permission to redistribute the game archives. The scanner recognises these exact files directly under `Data/enUS`, not similarly named files elsewhere. No WoW game file has been changed.
+
+The prior private scan's 23 allowlisted files (19 MPQs plus 4 root binaries) excluded these two MPQs. They add **196,422,831 bytes**, so **if the client's files remain unchanged**, the next scan should see **25 allowlisted files, 18 base archive candidates and 0 unclassified MPQs**. The projected 21-MPQ combined total is **17,773,795,353 bytes**, exactly matching the earlier owner's aggregate MPQ report. The projected total of all 25 allowlisted files is **17,782,201,789 bytes**. These are **arithmetic projections**, not the results of a new verified full hash scan.
+
+The original private JSON, unpublished base hashes and client files remain off GitHub. The previous scan stays a valid historical record: the updated tools **do not overwrite** it.
+
+**Optional next check:** After the updated tool's Windows CI passes, run `Inventory-Game-Files.bat` on a separately backed-up development client, selecting a **new** report filename, then run `Review-Game-File-Report.bat`. The full per-file hash scan may take several minutes.
+
+**Follow-up implementation CI:** pending validation for the 2-file allowlist update and expanded synthetic fixture tests.

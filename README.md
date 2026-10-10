@@ -124,6 +124,10 @@ After running the Milestone 14 file inventory on a **backed-up development clien
 
 The owner's private full-hash report is internally consistent: **23 allowlisted files, 16 base archive candidates, required V/Z plus optional U verified, and 2 unclassified MPQ filenames**. No private report has been committed. To inspect the two unclassified names without uploading files, drag a **separate backed-up development client** onto `tools/Inspect-Unclassified-MPQs.bat`. It only displays filenames and byte sizes locally and writes nothing. See [Milestone 17](docs/INSTALLER-MILESTONE-17.md). It is not a full-client verification or installer.
 
+### Expanded enUS MPQ filename coverage
+
+The owner's local-only scan identified `Data/enUS/base-enUS.MPQ` and `Data/enUS/backup-enUS.MPQ`. Updated **read-only** tools recognise both as **unpinned base archive candidates**, not authenticated clean-client assets. An unchanged reference copy is now expected to have 25 allowlisted files (21 MPQs plus four binaries); this is a projection until a fresh scan. Do not delete either archive or publish a private inventory. See [Milestone 17](docs/INSTALLER-MILESTONE-17.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.
