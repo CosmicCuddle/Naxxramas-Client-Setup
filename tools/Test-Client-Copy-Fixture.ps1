@@ -51,6 +51,50 @@ function NoLinkAncestors([string]$path){
   $walk=$parent.FullName
  }
 }
+# Read-only Windows object identity, not just path/name/hash. This proof-of-concept
+# catches ordinary directory replacement at fixture checkpoints, not every TOCTOU.
+# Win32 opens the DIRECTORY ITSELF with FILE_FLAG_OPEN_REPARSE_POINT.
+function GetFixtureDirectoryIdentity([string]$folder){
+ NoLinkAncestors $folder
+ Require (Test-Path -LiteralPath $folder -PathType Container) 'Expected fixture folder missing or replaced.'
+ if(-not ('NaxxSyntheticDirectoryIdentity' -as [type])){
+  Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
+public static class NaxxSyntheticDirectoryIdentity {
+ [StructLayout(LayoutKind.Sequential)] private struct NativeFileTime {
+  public uint Low; public uint High;
+ }
+ [StructLayout(LayoutKind.Sequential)] private struct NativeFileInfo {
+  public uint Attributes;
+  public NativeFileTime Created, Accessed, Written;
+  public uint Volume, SizeHi, SizeLo, Links, IndexHi, IndexLo;
+ }
+ [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)]
+ private static extern SafeFileHandle CreateFile(string path, uint access, uint sharing,
+  IntPtr security, uint disposition, uint flags, IntPtr templateFile);
+ [DllImport("kernel32.dll", SetLastError=true)]
+ private static extern bool GetFileInformationByHandle(SafeFileHandle handle, out NativeFileInfo info);
+ public static string Read(string path) {
+  using(var handle=CreateFile(path, 0x80u, 7u, IntPtr.Zero, 3u, 0x02200000u, IntPtr.Zero)) {
+   if(handle.IsInvalid) throw new Win32Exception(Marshal.GetLastWin32Error());
+   NativeFileInfo info;
+   if(!GetFileInformationByHandle(handle,out info)) throw new Win32Exception(Marshal.GetLastWin32Error());
+   if((info.Attributes & 0x400u)!=0u) throw new InvalidOperationException("Linked directories are forbidden.");
+   if((info.Attributes & 0x10u)==0u) throw new InvalidOperationException("Fixture path was not a directory.");
+   return info.Volume.ToString("X8") + ":" + info.IndexHi.ToString("X8") + info.IndexLo.ToString("X8");
+  }
+ }
+}
+'@ -ErrorAction Stop
+ }
+ return [NaxxSyntheticDirectoryIdentity]::Read([IO.Path]::GetFullPath($folder))
+}
+function RequireSameFixtureDirectory([string]$folder,[string]$expected){
+ Require ((GetFixtureDirectoryIdentity $folder) -ceq $expected) 'Fixture directory identity changed; manual review required.'
+}
 function SafeRelative([string]$path){
  Require (-not [string]::IsNullOrWhiteSpace($path)) 'Empty manifest relative path.'
  # Small, FIXED fixture allowlist: never use this to copy arbitrary game files.
@@ -332,6 +376,10 @@ try{
   exit 0
  }
  Require ([bool]$ConfirmDisposableFixture) 'Copy requires -ConfirmDisposableFixture.'
+ # Capture native volume+file-index identity only for an explicitly confirmed
+ # synthetic Copy. A replaced root with identical marker text is NOT trusted.
+ $sourceIdentity=GetFixtureDirectoryIdentity $src
+ $destinationIdentity=GetFixtureDirectoryIdentity $dest
  Require ($SimulateDiskWriteFailureAfterStagedFiles -eq 0 -or
   $SimulateDiskWriteFailureAfterStagedFiles -le $rows.Count) 'Injected disk-write failure count is outside synthetic manifest.'
  Require ($SimulateFailureAfter -eq 0 -or $SimulateFailureAfter -le $rows.Count) 'Invalid simulated failure count.'
@@ -367,6 +415,7 @@ try{
  # Durable identity marker created before any staged file. If power fails before
  # this write, the unmarked directory remains untrusted and is never auto-cleaned.
  WriteJournal (Join-Path $stage '.naxx-fixture-stage-owner.json') $stageOwner
+ $stageIdentity=GetFixtureDirectoryIdentity $stage
  $promoted=New-Object 'System.Collections.Generic.List[string]'
  $journalWriteUncertain=$false
  $injectedDestinationCollision=$false
@@ -428,6 +477,11 @@ try{
    [Threading.Thread]::Sleep($SyntheticExternalPauseBeforePromotionSeconds*1000)
   }
   foreach($record in $rows){
+   RequireSameFixtureDirectory $src $sourceIdentity
+   RequireSameFixtureDirectory $dest $destinationIdentity
+   RequireSameFixtureDirectory $stage $stageIdentity
+   CheckMarker $src $sourceMarker 'NAXX_SYNTHETIC_COPY_SOURCE_V1'
+   CheckMarker $dest $destMarker 'NAXX_SYNTHETIC_COPY_DESTINATION_V1'
    $rel=SafeRelative ([string]$record.relative_path)
    $from=Join-Path $stage $rel
    $to=Join-Path $dest $rel
@@ -461,21 +515,38 @@ try{
   Write-Host 'SYNTHETIC FIXTURE COPY SUCCESS: hashes verified; rollback journal created.'
  }catch{
   $failure=$_.Exception.Message
-  # Automatic failure rollback: only files we just promoted AND still match.
+  # If the source/stage/destination has been replaced, DO NOT remove
+  # anything in the new destination. Preserve journal and untrusted data.
   $incomplete=$false
-  foreach($target in @($promoted.ToArray())){
-   $rel=$target.Substring($dest.Length).TrimStart([char[]]@('\','/')).Replace([IO.Path]::DirectorySeparatorChar,'/')
-   $record=@($rows|Where-Object {$_.relative_path -ceq $rel})[0]
-   try{ProbeFile $target $record;[IO.File]::Delete($target)}catch{$incomplete=$true}
-  }
-  foreach($sub in @('Data/enUS','Data')){
-   $dir=Join-Path $dest ($sub.Replace('/',[IO.Path]::DirectorySeparatorChar))
-   if(Test-Path -LiteralPath $dir -PathType Container){
-    if(@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0){[IO.Directory]::Delete($dir)}
+  $identityChanged=$false
+  try{
+   RequireSameFixtureDirectory $src $sourceIdentity
+   RequireSameFixtureDirectory $dest $destinationIdentity
+   RequireSameFixtureDirectory $stage $stageIdentity
+  }catch{$identityChanged=$true;$incomplete=$true}
+  if(-not $identityChanged){
+   foreach($target in @($promoted.ToArray())){
+    $rel=$target.Substring($dest.Length).TrimStart([char[]]@('\','/')).Replace([IO.Path]::DirectorySeparatorChar,'/')
+    $record=@($rows|Where-Object {$_.relative_path -ceq $rel})[0]
+    try{
+     RequireSameFixtureDirectory $dest $destinationIdentity
+     ProbeFile $target $record
+     [IO.File]::Delete($target)
+    }catch{$incomplete=$true}
    }
-  }
-  if(-not $incomplete -and -not $journalWriteUncertain -and (Test-Path -LiteralPath $journalPath)){
-   [IO.File]::Delete($journalPath)
+   foreach($sub in @('Data/enUS','Data')){
+    $dir=Join-Path $dest ($sub.Replace('/',[IO.Path]::DirectorySeparatorChar))
+    if(Test-Path -LiteralPath $dir -PathType Container){
+     try{
+      RequireSameFixtureDirectory $dest $destinationIdentity
+      if(@(Get-ChildItem -LiteralPath $dir -Force).Count -eq 0){[IO.Directory]::Delete($dir)}
+     }catch{$incomplete=$true}
+    }
+   }
+   if(-not $incomplete -and -not $journalWriteUncertain -and (Test-Path -LiteralPath $journalPath)){
+    RequireSameFixtureDirectory $dest $destinationIdentity
+    [IO.File]::Delete($journalPath)
+   }
   }
   # Uncertain journal sidecars must never be silently deleted.
   foreach($residue in @($journalPath+'.writing',$journalPath+'.previous')){
@@ -485,8 +556,11 @@ try{
   throw ('Copy failed: '+$failure+'. '+$(if($needsReview){'Manual intervention required; uncertain journal or copied files retained.'}else{'Verified partial copy rolled back.'}))
  }finally{
   if(Test-Path -LiteralPath $stage){
-   try{CleanupOwnedStage $stage $rows $src $dest}
-   catch{Write-Warning 'Synthetic staging was not safely removable; retained for manual read-only inspection.'}
+   try{
+    # A forged same-named stage with a copied marker is NOT owned.
+    RequireSameFixtureDirectory $stage $stageIdentity
+    CleanupOwnedStage $stage $rows $src $dest
+   }catch{Write-Warning 'Stage identity changed or content is untrusted; retained for manual inspection.'}
   }
  }
  exit 0
