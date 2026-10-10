@@ -1,0 +1,27 @@
+name: Read-only recovery preview tests
+
+on:
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-Recovery.ps1'
+      - 'tests/Test-RecoveryPreview.ps1'
+      - '.github/workflows/recovery-preview-tests.yml'
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-Recovery.ps1'
+      - 'tests/Test-RecoveryPreview.ps1'
+      - '.github/workflows/recovery-preview-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out read-only scripts
+        uses: actions/checkout@v4
+      - name: Run synthetic recovery preview tests
+        shell: powershell
+        run: .\tests\Test-RecoveryPreview.ps1
