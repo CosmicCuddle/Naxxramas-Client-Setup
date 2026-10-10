@@ -63,7 +63,7 @@ The [Recovery Preview](docs/RECOVERY-PREVIEW.md) can inspect **synthetic develop
 
 ## Synthetic signed journal checks (developer-only)
 
-The [signed journal v2 fixture](docs/JOURNAL-V2-FIXTURE.md) demonstrates **read-only** HMAC/event-chain checks on randomly generated synthetic records in Windows PowerShell. It does not create trusted installation records or verify ownership of any real client. No DPAPI-protected key, durable replay-proof anchor, write-capable installer or rollback engine exists. This developer tool is separate from the existing recovery preview and **must not be used to justify file changes**.
+The [signed journal v2 fixture](docs/JOURNAL-V2-FIXTURE.md) demonstrates **read-only** HMAC/event-chain checks and an optional **independently keyed synthetic witness** on generated records in Windows PowerShell. A newer, separately retained witness detects an older journal and its old anchor, but replaying all inputs together remains possible. It does not create trusted installation records or verify ownership of any real client. No DPAPI-protected key, durable replay-proof anchor, write-capable installer or rollback engine exists. This developer tool is separate from the existing recovery preview and **must not be used to justify file changes**.
 
 ## Updating core and optional patches
 
