@@ -89,6 +89,14 @@ try{
   throw ('Unknown empty folder was not protected: '+$blocked.text)
  }
  [IO.Directory]::Delete($empty)
+ # A stray sidecar from an interrupted journal replacement must block deletion.
+ $sidecar=$journal+'.rollback-writing'
+ [IO.File]::WriteAllText($sidecar,'DUMMY INTERRUPTED STATE')
+ $sidecarBlocked=Call $dst 'Rollback' @('-ConfirmDisposableFixture')
+ if($sidecarBlocked.code -eq 0 -or -not $sidecarBlocked.text.Contains('replacement residue')){
+  throw 'Rollback accepted an unreviewed journal replacement sidecar.'
+ }
+ [IO.File]::Delete($sidecar)
  $halted=Call $dst 'Rollback' @('-ConfirmDisposableFixture','-SimulateRollbackInterruptionAfter','2')
  if($halted.code -eq 0 -or -not $halted.text.Contains('SIMULATED FIXTURE ROLLBACK INTERRUPTION')){
   throw ('Expected controlled rollback interruption: '+$halted.text)
