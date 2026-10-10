@@ -44,7 +44,7 @@ foreach($needle in @(
  'Get-NaxxCopiedPath',
  'Convert-NaxxCopiedPath',
  'Normalize-NaxxInputPath',
- " $paste.Text='Paste'",
+ ' $paste.Text=''Paste''',
  '$download.Add_Click',
  'Get patches',
  'Confirm patch-source download',
