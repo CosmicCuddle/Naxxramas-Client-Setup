@@ -53,12 +53,23 @@ jobs:
             New-Item -Path (Split-Path -Parent $target) -ItemType Directory -Force | Out-Null
             Copy-Item -LiteralPath $relative -Destination $target
           }
+          # Only ship default art when intentionally placed in assets/default.
+          # Never ship private per-user overrides stored in assets/local.
+          foreach ($relative in @('assets/default/launcher-art.png', 'assets/default/launcher-logo.png')) {
+            if (Test-Path -LiteralPath $relative -PathType Leaf) {
+              $target = Join-Path $stage $relative
+              New-Item -Path (Split-Path -Parent $target) -ItemType Directory -Force | Out-Null
+              Copy-Item -LiteralPath $relative -Destination $target
+            }
+          }
           @'
           NAXXRAMAS CLIENT LAUNCHER - DEVELOPMENT PREVIEW
           ------------------------------------------------
           Open tools\Launch-Naxxramas-Preview.bat on Windows.
           This preview can read and check your existing client but CANNOT install it.
-          No game client or copyrighted WoW artwork is included.
+          No WoW client or proprietary MPQ archives are included.
+          Optional default artwork (if present) is shipped from assets\default.
+          Ensure artwork rights are reviewed before distributing to others.
           Optional personal art can be added as assets\local\launcher-art.png
           and assets\local\launcher-logo.png on your own computer.
           Do not use this as a public installer.

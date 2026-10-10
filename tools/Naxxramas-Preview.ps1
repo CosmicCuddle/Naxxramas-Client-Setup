@@ -79,9 +79,13 @@ $main.Controls.Add($left,0,0)
 $art=Card $left (C '#1d2c2f')
 $art.Margin=New-Object Windows.Forms.Padding(0,0,0,8)
 $art.AccessibleName='Launcher artwork'
+# An included default is deliberately replaceable. Optional personal artwork
+# overrides the packaged default; neither location touches the WoW client.
+$repositoryRoot=Split-Path -Parent $PSScriptRoot
 $assetPath=if([string]::IsNullOrWhiteSpace($ArtRoot)){
- Join-Path (Split-Path -Parent $PSScriptRoot) 'assets/local'
+ Join-Path $repositoryRoot 'assets/local'
 }else{$ArtRoot}
+$defaultArtPath=Join-Path $repositoryRoot 'assets/default'
 $images=New-Object 'System.Collections.Generic.List[System.Drawing.Image]'
 function Read-LauncherImage([string]$fullPath){
  if(-not (Test-Path -LiteralPath $fullPath -PathType Leaf)){return $null}
@@ -102,7 +106,12 @@ function Read-LauncherImage([string]$fullPath){
  }finally{$stream.Dispose()}
 }
 function LoadImage([string]$filename){
- return Read-LauncherImage (Join-Path $assetPath $filename)
+ $personal=Join-Path $assetPath $filename
+ if(Test-Path -LiteralPath $personal -PathType Leaf){
+  return Read-LauncherImage $personal
+ }
+ # A package may ship curated defaults; the app also works without any.
+ return Read-LauncherImage (Join-Path $defaultArtPath $filename)
 }
 $hero=LoadImage 'launcher-art.png'
 $logo=LoadImage 'launcher-logo.png'
@@ -140,7 +149,12 @@ $artBar=New-Object Windows.Forms.Panel
 $artBar.Dock='Fill';$artBar.Margin=New-Object Windows.Forms.Padding(4,0,4,4)
 $artBar.BackColor=C '#201b18'
 $artLayout.Controls.Add($artBar,0,1)
-$artStatus=Label $artBar 'Local artwork only - not bundled' 10 11 330 23 $small $muted
+$artMessage=if($null -ne $hero){
+ if(Test-Path -LiteralPath (Join-Path $assetPath 'launcher-art.png') -PathType Leaf){
+  'Personal artwork - overrides default'
+ }else{'Included artwork - can be replaced'}
+}else{'Artwork not set - choose an image'}
+$artStatus=Label $artBar $artMessage 10 11 330 23 $small $muted
 $artPick=New-Object Windows.Forms.Button
 $artPick.Text='Choose artwork...'
 $artPick.Size=New-Object Drawing.Size(142,30)
