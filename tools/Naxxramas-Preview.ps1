@@ -399,14 +399,14 @@ try{
      ($null -ne $hero -and $artImage.Image -ne $hero)){
    throw 'Artwork image state is inconsistent.'
   }
-  $drawing=[Drawing.Bitmap]::new([int][math]::Max(80,$art.ClientSize.Width),[int][math]::Max(80,$art.ClientSize.Height))
-  try{
-   $art.DrawToBitmap($drawing,[Drawing.Rectangle]::new(0,0,$drawing.Width,$drawing.Height))
-  }catch{
-   throw ("Classic launcher artwork rendering failed: "+$_.Exception.Message)
-  }finally{$drawing.Dispose()}
+  # Avoid DrawToBitmap on nested native image controls in a hidden STA form:
+  # WinForms may block waiting for a paint message that cannot be dispatched.
+  # Validate dimensions and the image source without capturing hidden controls.
+  if($artCanvas.ClientSize.Width -lt 100 -or $artCanvas.ClientSize.Height -lt 60) {
+   throw 'Launcher artwork region has invalid layout dimensions.'
+  }
   Write-Host 'GUI PREVIEW WINDOW CONSTRUCTED; NO CLIENT WRITES'
-  Write-Host 'CLASSIC LAUNCHER ART RENDERED'
+  Write-Host 'CLASSIC LAUNCHER ART IMAGE CONTROL CHECKED'
   Write-Host 'CLASSIC LAUNCHER LAYOUT TEST PASSED'
  }else{[void]$form.ShowDialog()}
 }finally{
