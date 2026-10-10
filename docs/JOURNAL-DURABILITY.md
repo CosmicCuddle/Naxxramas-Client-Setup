@@ -87,16 +87,16 @@ Treat each as **manual review required**, not an automatic destructive rollback.
 ## Current tests and limits
 
 - Windows PowerShell 5.1 synthetic tests previously passed for preflight, read-only planner, and recovery inspector.
-- The next regression tests must include deterministic disk-capacity failures without any bypass parameter in the public planner, plus incomplete/forged checkpoint records and duplicate backup paths.
-- No current test demonstrates the ability to survive a crash in a **write-capable** transaction. All current tools are read-only with respect to the client.
+- Read-only regression tests now include destination and backup drive capacity failures without a production bypass, plus incomplete checkpoints and duplicate backup references. These do not validate durable write transactions.
+- No current test demonstrates the ability to survive a crash in a **write-capable** transaction. All current tools are read-only with respect to the client. The separate [Journal Authority proposal](JOURNAL-AUTHORITY.md) discusses signed records, copied journals, replay and lost-key recovery.
 
 ## Decision gates before fixture-only writing is considered
 
-- [ ] Written design review of trusted session ownership and tamper detection.
+- [ ] Written design review of trusted session ownership and tamper detection. A [concrete proposal](JOURNAL-AUTHORITY.md) now exists; neither signed records nor keys are implemented.
 - [ ] Concrete, testable journal checkpoint schema and backup retention policy.
 - [ ] Atomic replacement and flush/durability semantics documented per supported Windows filesystem.
 - [ ] Automated failures at every stage on disposable fixtures.
-- [ ] Disk-budget enforcement on **both** volumes and safe fallback when the size is unknown.
+- [ ] Disk-budget enforcement on **both** volumes and safe fallback when the size is unknown in a **write-capable transaction**. The new optional `-BackupRoot` read-only planner preview/tests cover estimates only; physical volume identity and write-time rechecks remain unresolved.
 - [ ] Security review of path traversal, reparse points, changes made between plan and commit (TOCTOU), and process locks.
 - [ ] Separate approval for controlled fixture-only file-writing prototype.
 - [ ] Independent approval/verification of patch source/provenance before any real-client or public installer.
