@@ -152,6 +152,10 @@ New synthetic copy stages contain an explicit owner marker, and stage cleanup no
 
 The M15 dummy-only copy prototype can now simulate **zero available space**, **staging write failure**, and **staged-file mutation** without filling a drive or changing any real client file. It rechecks source and staged content before promotion. The M22 inspector refuses altered stages, which are preserved for manual review. These are deterministic fixtures, not proof against every concurrent filesystem race. Read [Milestone 23](docs/INSTALLER-MILESTONE-23.md).
 
+## Milestone 24 — Synthetic journal and destination-collision tests
+
+The developer-only copy fixture now simulates a **partly written stage marker**, a **truncated copy journal** and a **new file appearing at the destination immediately before promotion**. Uncertain journals/stages are retained for manual review and existing files are never intentionally overwritten. These are deterministic tiny-file tests, not proof of a production filesystem transaction. See [Milestone 24](docs/INSTALLER-MILESTONE-24.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.

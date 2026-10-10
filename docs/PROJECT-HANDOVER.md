@@ -29,6 +29,8 @@
 
 - **Milestone 23 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602 (tested implementation checkpoint `1bccc4df469e6e6709864db818ccbbab34cf2834`)
 
+**M24 — Windows CI pending:** Enhanced M15's tiny synthetic Copy with deterministic interrupted stage-marker/journal writes and a last-moment destination collision. Unknown journals/stages or unowned destination files are preserved; Copy-only switches are rejected by Plan/Rollback. Existing fixture limits and disabled real-client source are unchanged. Refer to `docs/INSTALLER-MILESTONE-24.md`.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -128,6 +130,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M21 — complete (CI 38061485117)** | Durable `rolling_back` journal state, simulated interrupted rollback, explicit resume, unexpected empty-folder and journal-sidecar blockers, plus M20 read-only-state coverage. Synthetic-only; no game writes. |
 | **M22 — complete (CI 38062420201)** | Synthetic stage owner marker, nonrecursive guarded cleanup, and developer-only read-only single-stage inspection with unknown-folder/tamper tests. No automated orphan removal. |
 | **M23 — complete (CI 38063285602)** | Controlled low-space, interrupted stage-write and staged-file mutation fault switches, with prepromotion source/stage verification; tiny synthetic fixtures only, not real concurrent writes. |
+| **M24 — Windows CI pending** | Deterministic interrupted stage-owner and destination-journal writes, promotion-time dummy collision, conservative retention of uncertain state; synthetic-only fixture tests. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -149,6 +152,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M21:** M15's `Test-Client-Copy-Fixture.ps1` now supports `rolling_back` and injected rollback interruption for marked disposable fixtures only. Remaining confirmed rollback can be resumed; `Inspect-Fixture-Recovery.ps1` sees the new state. Not a player feature. 
 - **M22:** `tools/Inspect-Fixture-Stage.ps1`: developer-only, read-only review of a single explicit disposable stage folder. M15 writes stage-owner metadata and keeps suspicious stages, not recursive cleanup.
 - **M23:** M15 dummy-only copy adds `-SimulateAvailableDiskBytes`, `-SimulateDiskWriteFailureAfterStagedFiles`, and `-SimulateStagedFileMutationBeforePromotion`. All are explicitly confirmed Copy-only test switches; staged mutation never changes a real source.
+- **M24:** M15 synthetic copy adds `-SimulateInterruptedStageOwnerWrite`, `-SimulateInterruptedJournalWrite`, and `-SimulateDestinationCollisionBeforePromotion`. Added fixtures check partial journal retention, invalid stage marker rejection, non-overwriting collision. No real-client copy.
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -167,7 +171,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M23 implementation tests **passed** Windows [run 38063285602](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38063285602). No action is required from the owner. Next: design stronger dummy-only TOCTOU/concurrent path-change tests and interrupted stage-owner/journal-write behavior; consider a read-only state report before any cleanup. Do not conflate deterministic simulated faults with production resilience. Preserve M15 fixed paths, markers, 1 MiB ceiling, patch/source integrity locks, privacy exclusions, unmerged draft PR and explicit owner approval for releases.
+**Current next task:** M24 synthetic interruption/collision checks implemented (Windows CI pending). Do not request any owner local test. Validate full Windows CI, then next work: read-only transaction health/status reporting, explicit manual review of staged/journal residues, and more realistic test-only concurrent file/path changes. Never disable exact fixture markers, fixed eight dummy file names, 256 KiB/file and 1 MiB limits, source/patch integrity locks or the blocked real-client downloader. Keep PR draft and require explicit owner approval before merge.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -188,7 +192,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 23 Windows tests passed. You do not need to run anything locally or repeat the full client hash scan. The tests use tiny fake files only. Next development will focus on stronger file-change race and journal interruption checks before considering real-client installation.”
+**Owner-facing next instruction:** “No PC work is needed for Milestone 24. It tests only dummy files and preserves uncertain data rather than erasing it. After passing Windows CI we'll build a clearer read-only recovery-state review.”
 
 ---
 
