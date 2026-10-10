@@ -215,6 +215,9 @@ try {
     $olderEnvelope[0] = 2
     $olderEnvelope[1] = $singleEventList
     Save-Json $envelopeFile $olderEnvelope
+    $savedOldJson = [IO.File]::ReadAllText($envelopeFile)
+    Write-Host ("SYNTHETIC SINGLE EVENT JSON SHAPE: " +
+        $savedOldJson.Substring(0,[Math]::Min(100,$savedOldJson.Length)))
     Save-Json $anchorFile (Make-Anchor 1 $v.FirstHash)
     $unwitnessed = (& $validator -EnvelopePath $envelopeFile -AnchorPath $anchorFile -FixtureKeyPath $keyFile -Json | Out-String) | ConvertFrom-Json
     Assert ($unwitnessed.status -eq 'fixture_chain_and_anchor_match') 'Old chain plus matching old anchor can pass unpinned fixture checks'
