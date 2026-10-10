@@ -130,14 +130,14 @@ if ($PatchSourcePath) {
         throw 'Patch source and client destination must be separate, non-nested folders.'
     }
 }
-$backupRoot = $null
+$resolvedBackupRoot = $null
 if ($BackupRoot) {
-    $backupRoot = Require-Root $BackupRoot
-    if ((Is-SameOrChild $backupRoot $dest) -or (Is-SameOrChild $dest $backupRoot)) {
+    $resolvedBackupRoot = Require-Root $BackupRoot
+    if ((Is-SameOrChild $resolvedBackupRoot $dest) -or (Is-SameOrChild $dest $resolvedBackupRoot)) {
         throw 'Backup and client destination must be separate, non-nested folders.'
     }
-    if ($sourceRoot -and ((Is-SameOrChild $backupRoot $sourceRoot) -or
-        (Is-SameOrChild $sourceRoot $backupRoot))) {
+    if ($sourceRoot -and ((Is-SameOrChild $resolvedBackupRoot $sourceRoot) -or
+        (Is-SameOrChild $sourceRoot $resolvedBackupRoot))) {
         throw 'Backup and patch source must be separate, non-nested folders.'
     }
 }
@@ -323,7 +323,7 @@ foreach ($entry in $items) {
 [int64]$backupNeeded = 0
 if ($newBytes -gt 0) {
     $clientNeeded = (2 * $newBytes) + 67108864 # staging plus same-volume temp + 64 MiB
-    if ($backupRoot) {
+    if ($resolvedBackupRoot) {
         $backupNeeded = $originalBytes + 67108864 # immutable backups and journal reserve
     } else {
         # Legacy single-volume estimate, not an approved future backup location.
@@ -332,8 +332,8 @@ if ($newBytes -gt 0) {
     }
 }
 $spaceMode = 'backup_not_selected'
-if ($backupRoot) {
-    $spaceMode = if ((Get-StorageKey $backupRoot) -eq (Get-StorageKey $dest)) {
+if ($resolvedBackupRoot) {
+    $spaceMode = if ((Get-StorageKey $resolvedBackupRoot) -eq (Get-StorageKey $dest)) {
         'shared_volume'
     } else { 'separate_volumes' }
     $warnings.Add('Volume identity uses drive roots in this preview only; revalidate actual volumes before future writes.')
@@ -352,9 +352,9 @@ if ($clientNeeded -gt 0) {
         $blockers.Add('Could not verify free space on the destination drive.')
     }
 }
-if ($backupRoot -and $spaceMode -eq 'separate_volumes' -and $backupNeeded -gt 0) {
+if ($resolvedBackupRoot -and $spaceMode -eq 'separate_volumes' -and $backupNeeded -gt 0) {
     try {
-        $backupAvailableBytes = Get-AvailableSpaceBytes $backupRoot
+        $backupAvailableBytes = Get-AvailableSpaceBytes $resolvedBackupRoot
         if ($backupAvailableBytes -lt 0) {
             $blockers.Add('Available backup space was invalid; preview must be blocked.')
         } elseif ($backupAvailableBytes -lt $backupNeeded) {
@@ -382,7 +382,7 @@ $plan = [pscustomobject][ordered]@{
     estimated_space_bytes = $needed
     space_budget = [pscustomobject][ordered]@{
         mode = $spaceMode
-        backup_location_selected = [bool]$backupRoot
+        backup_location_selected = [bool]$resolvedBackupRoot
         client_volume_required_bytes = $clientNeeded
         backup_volume_required_bytes = $backupNeeded
         combined_volume_required_bytes = $(if ($spaceMode -eq 'shared_volume') { $needed } else { $null })
