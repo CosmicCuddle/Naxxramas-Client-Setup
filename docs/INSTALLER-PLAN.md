@@ -63,7 +63,7 @@ Each patch entry includes `required`, `selected`, `destination_state`, `source_s
 
 ## Automated synthetic tests
 
-The repository includes `tests/Test-InstallerPlan.ps1` and a Windows PowerShell GitHub Actions workflow. Test fixtures consist only of tiny generated text files pretending to be patch binaries. No real WoW client is needed for the tests.
+The repository includes `tests/Test-InstallerPlan.ps1` and a Windows PowerShell GitHub Actions workflow. Test fixtures contain tiny generated text files pretending to be patches and a **test-only generated executable** with synthetic build-12340 metadata. No real WoW client or proprietary game assets are needed for the tests.
 
 The test script exercises: mandatory patches current/missing, verified source vs no source, unknown versions, known older versions, individual optional choices, preserving unselected optional files, J/U warning, realmlist changes, incorrect source hashes, source/destination collision and checksums of all client fixture files before/after each preview.
 
@@ -79,4 +79,6 @@ The tests create and then delete their **own** disposable temporary fixtures. Th
 
 A finished setup GUI, an installation plan approved for execution, private asset provenance/permissions checking, addons installation, automatic backups, staged copying, failure recovery, update, rollback, uninstall and public distribution remain future milestones. See [ROADMAP.md](ROADMAP.md) and [PROJECT-HANDOVER.md](PROJECT-HANDOVER.md).
 
-**Next action:** confirm Windows synthetic test results; resolve any failures; improve planner validation and test coverage before developing a separate backup-first transaction engine.
+**Verified 10 October 2026:** GitHub's Windows PowerShell 5.1 fixture suite passed on [PR #3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3), including the non-blocking supported-build preview. The existing preflight tests also passed after its test-harness exit-code fix on [PR #2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2). These are **synthetic tests only**, not a demonstration against real game assets or an installer.
+
+**Next action:** add deterministic low-space and remaining failure-path tests, then build a separate **read-only** journal recovery evaluator based on [Transaction Design](TRANSACTION-DESIGN.md).
