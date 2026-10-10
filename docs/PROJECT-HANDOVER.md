@@ -8,7 +8,10 @@
 
 **Milestone 18 (Windows CI [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220) passed):** A read-only, console-only support candidate audit checks 13 fixed root-level filenames and four directory-presence statuses, with no client file contents or personal data read and no reports saved. See `docs/INSTALLER-MILESTONE-18.md`. No fresh game downloads or production installation.
 
+- **Latest M19 passing Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057 (checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`)
 - **Latest M18 passing Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220 (implementation checkpoint `477b138e46714fcf6579cb50b205b4081f82ce0e`)
+
+**M19 implementation verified:** [Windows CI run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) passed at checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`. The M14/M16 root allowlists now recognise `ijl15.dll`/`dbghelp.dll` as **unpinned candidates**; M18 screenshot observations are recorded in M19. The workflow also parses all PowerShell tests before executing them.
 
 ## 1. Project and critical GitHub links
 
@@ -104,7 +107,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M16 — complete (CI 38054974809)** | Read-only M14 JSON report consistency review: privacy allowlist, per-file size/hash and pinned V/Z/J/C/U patch summary comparisons, no game file reads. |
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 | **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
-| **M19 — awaiting Windows CI** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
+| **M19 — complete (CI 38059211057)** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -136,11 +139,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M18 local-only non-MPQ support-file audit (13 root file candidates and four directory presence checks) with passing fixture tests, launcher preview and packaging, implementation checkpoint `477b138e46714fcf6579cb50b205b4081f82ce0e`, Windows run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
+**Last verified implementation step:** M19 added two observed non-MPQ support DLL names to the M14 read-only inventory and M16 JSON reviewer, with expanded Windows tests and no changes to production clients; checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`, successful CI [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057). Before that, M18 passed Windows CI run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** The owner has completed M18's read-only support audit. M19 incorporated the two additional observed DLL names into the fixed allowlist and JSON reviewer (Windows CI pending), without changing any files on the game client. The owner need not perform another 17+ GB scan now. Next engineering priorities: independently authorised/verified base-game source plus better synthetic interruption, disk-space, rollback and concurrency tests. Keep the draft PR, existing M15 fixture-only write locks, patchset versioning and disabled fresh-client source.
+**Current next task:** The owner has completed M18's read-only support audit. M19 incorporated the two additional observed DLL names into the fixed allowlist and JSON reviewer (Windows CI [38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) passed), without changing any files on the game client. The owner need not perform another 17+ GB scan now. Next engineering priorities: independently authorised/verified base-game source plus better synthetic interruption, disk-space, rollback and concurrency tests. Keep the draft PR, existing M15 fixture-only write locks, patchset versioning and disabled fresh-client source.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -161,7 +164,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Your M18 screenshot is recorded. No corrective action is needed for the seven absent optional file candidates. M19 is expanding the read-only M14/M16 filename policy for two known DLLs. After CI we can continue synthetic recovery testing; keep your client backed up and untouched. A new full hash scan is optional only, with a new private report path.”
+**Owner-facing next instruction:** “Your M18 audit is recorded and M19 Windows CI passed. Do not repair or remove any of the seven absent support candidates based on this audit. No further owner test is required at present; keep your original client backed up. The next work is synthetic-only crash/rollback/disconnection and disk-space protections, without enabling real-client installation. A new private full-hash report is optional if you want to confirm the predicted 27 entries.”
 
 ---
 

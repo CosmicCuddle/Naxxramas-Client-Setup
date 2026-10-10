@@ -64,4 +64,4 @@ Once Windows CI passes, a future full-hash scan on a **separate backed-up develo
 
 Continue developing synthetic-only interruption/crash recovery, disk-space and concurrent-change protections before any legitimate local client-copy feature is considered. Keep full-client distribution blocked until source permissions and file authenticity are independently resolved.
 
-**Windows CI:** awaiting run result.
+**Verified Windows CI:** [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) completed successfully on implementation and test-fix checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`. Full PowerShell test syntax validation, the updated M14/M16 scanner/reviewer synthetic fixtures, earlier safety checks, GUI smoke tests and preview ZIP upload all passed. No client installation or real WoW content was used.
