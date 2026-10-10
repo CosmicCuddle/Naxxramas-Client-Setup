@@ -51,6 +51,9 @@ jobs:
       - name: Read-only interrupted fixture recovery readiness tests
         shell: powershell
         run: .\tests\Test-Fixture-Recovery.ps1
+      - name: Read-only synthetic staging and orphan metadata tests
+        shell: powershell
+        run: .\tests\Test-Fixture-Stage.ps1
       - name: Installer alpha fixture tests (dummy files only)
         shell: powershell
         run: .\tests\Test-Installer-Prototype.ps1
@@ -96,6 +99,7 @@ jobs:
             'tools/Inspect-Client-Support-Files.bat'
             'tools/Test-Client-Copy-Fixture.ps1'
             'tools/Inspect-Fixture-Recovery.ps1'
+            'tools/Inspect-Fixture-Stage.ps1'
             'tools/Verified-Addon-Zip.ps1'
             'config/client-patches.json'
             'config/patch-downloads.json'
@@ -115,6 +119,7 @@ jobs:
             'docs/INSTALLER-MILESTONE-19.md'
             'docs/INSTALLER-MILESTONE-20.md'
             'docs/INSTALLER-MILESTONE-21.md'
+            'docs/INSTALLER-MILESTONE-22.md'
             'docs/PROJECT-HANDOVER.md'
             'assets/README.md'
           )

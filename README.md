@@ -144,6 +144,10 @@ A new developer-only `tools/Inspect-Fixture-Recovery.ps1` inspects the status of
 
 The M15 **disposable dummy-file** copy prototype can now mark rollback as `rolling_back` before deletion, pause after an injected interruption, and resume only after another explicit confirmation. It rejects unexpected empty folders, changed files and leftover journal-replacement sidecars. The M20 read-only recovery inspector recognises the new state. **No real WoW client files are affected** and no installer downloads are enabled. See [Milestone 21](docs/INSTALLER-MILESTONE-21.md).
 
+## Milestone 22 — Orphan stage inspection (disposable fixtures only)
+
+New synthetic copy stages contain an explicit owner marker, and stage cleanup no longer uses uncontrolled recursive deletion. A separate developer-only `tools/Inspect-Fixture-Stage.ps1` examines **one nominated stage** read-only, checking ownership metadata, file hashes and unexpected contents, but never deletes anything. Orphan cleanup remains a future manual workflow. [Milestone 22 documentation](docs/INSTALLER-MILESTONE-22.md).
+
 ## Read-only preflight tools
 
 Download the repository ZIP and drag your WoW folder onto `tools/Check-Naxxramas-Client.bat` to check mandatory patches and client structure. V/Z reference fingerprints are retained in `patchset-0001`; the new optional TBC reference is recorded in `patchset-0002` from the owner's 9 October 2026 hash report. Use `tools/Get-Core-Patch-Hashes.bat` to independently check locally held copies. These tools only read files; **they do not install or modify anything**. The preflight displays the active patchset reference, validates mandatory V/Z hashes, and reports existing optional J/C/U patches separately from selected installation options.

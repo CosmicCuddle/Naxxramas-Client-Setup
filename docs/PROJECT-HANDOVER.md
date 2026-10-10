@@ -21,6 +21,8 @@
 
 - **Milestone 21 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117 (tested implementation commit `e5e4c7a14fb1120eed78f06fb99f6c8bea313843`)
 
+**M22 development checkpoint (CI pending):** New stage-owner metadata is written before disposable dummy files enter an M15 staging folder. Unconditional recursive stage deletion is replaced by verified, narrowly scoped cleanup. A separate M22 read-only auditor checks one explicitly supplied orphan stage and refuses unknown/changed content. No game-client file writes or automatic orphan cleanup.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
@@ -118,6 +120,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M19 — complete (CI 38059211057)** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
 | **M20 — complete (CI 38060443793)** | Developer-only read-only recovery readiness audit for disposable partial/completed copy fixtures; detects changed/unknown contents and validates M15 journal vs manifest without modifying anything. |
 | **M21 — complete (CI 38061485117)** | Durable `rolling_back` journal state, simulated interrupted rollback, explicit resume, unexpected empty-folder and journal-sidecar blockers, plus M20 read-only-state coverage. Synthetic-only; no game writes. |
+| **M22 — Windows CI pending** | Synthetic stage owner marker, nonrecursive guarded cleanup, and developer-only read-only single-stage inspection with unknown-folder/tamper tests. No automated orphan removal. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -137,6 +140,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - **M19:** no additional player tool; extends M14 root allowlist and M16 JSON validator for exactly ijl15.dll/dbghelp.dll. Existing Windows dummy fixture tests expanded, no new permissions.
 - **M20:** `tools/Inspect-Fixture-Recovery.ps1`: developer-only, read-only audit for M15 synthetic fixture journal+manifest after interruption. READY is a recovery *inspection*, not rollback or game repair.
 - **M21:** M15's `Test-Client-Copy-Fixture.ps1` now supports `rolling_back` and injected rollback interruption for marked disposable fixtures only. Remaining confirmed rollback can be resumed; `Inspect-Fixture-Recovery.ps1` sees the new state. Not a player feature. 
+- **M22:** `tools/Inspect-Fixture-Stage.ps1`: developer-only, read-only review of a single explicit disposable stage folder. M15 writes stage-owner metadata and keeps suspicious stages, not recursive cleanup.
 - `tests/*.ps1`: Windows-only disposable synthetic fixtures. CI does not need any full WoW archive, personal data or actual large MPQs.
 
 ## 7. Test, packaging and branch workflow
@@ -155,7 +159,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** M21 resumable synthetic rollback completed and Windows CI [38061485117](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38061485117) passed. No owner action is needed. Next, inspect orphan staging folders read-only and design synthetic-only manual cleanup, disk-exhaustion and concurrent-change tests. Never loosen the M15 1 MiB cap, exact markers or root constraints; fresh-client sources remain disabled, and the draft PR must not be merged without owner approval.
+**Current next task:** M22 now provides synthetic-only stage-owner metadata, controlled nonrecursive cleanup, and a read-only explicit stage inspector (**Windows CI pending**). No owner tests or 17+ GB rehash. Once validated, add disk-space and file-mutation fault injection on tiny disposable data. Preserve exact M15 markers, 1 MiB cap, draft PR and disabled full-client source; never automatically remove unknown orphan contents.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
@@ -176,7 +180,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 - Never rely on previous chat's sandbox download URLs or expired files. Refresh artifacts via GitHub Actions; only link sandbox files created/verified in the current runtime.
 - When the user says **“continue”**, resume from section 8 of this handover, inspect branch/CI, do substantive work, test it, and update this file.
 
-**Owner-facing next instruction:** “Milestone 21 Windows tests passed. No local actions or 17+ GB rescan are needed, and the WoW installation remains untouched. Next we'll handle orphan staging and disk-space/concurrent-change safety in dummy-only tests.”
+**Owner-facing next instruction:** “No PC testing is needed for M22. It concerns only dummy staging folders created in automated tests. Your original client remains untouched. We'll verify orphan-stage inspection and guarded cleanup on Windows, then move to disk-space and concurrent-change testing.”
 
 ---
 
