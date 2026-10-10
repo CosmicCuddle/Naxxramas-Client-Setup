@@ -13,7 +13,9 @@
 
 **M19 implementation verified:** [Windows CI run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057) passed at checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`. The M14/M16 root allowlists now recognise `ijl15.dll`/`dbghelp.dll` as **unpinned candidates**; M18 screenshot observations are recorded in M19. The workflow also parses all PowerShell tests before executing them.
 
-**M20 in development (Windows CI pending):** A separate read-only inspector checks the safety of explicitly marked tiny synthetic copy fixtures after interrupted M15 operations. It verifies journal identity, manifest file hashes, partial/complete states and unknown contents. It never removes anything or accesses a real WoW installation. Next work is durable recovery and safe stage cleanup in synthetic tests.
+**M20 validated (Windows CI [38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793) passed):** A separate read-only inspector checks the safety of explicitly marked tiny synthetic copy fixtures after interrupted M15 operations. It verifies journal identity, manifest file hashes, partial/complete states and unknown contents. It never removes anything or accesses a real WoW installation. Next work is durable recovery and safe stage cleanup in synthetic tests.
+
+- **Milestone 20 successful Windows CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793 (tested implementation checkpoint `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53`)
 
 ## 1. Project and critical GitHub links
 
@@ -110,7 +112,7 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 | **M17 — complete (CI 38056648893)** | Owner's private scan aggregate review plus a local-console-only tool to identify unclassified MPQ filenames and sizes; no output report and no game modifications. |
 | **M18 — complete (CI 38058231220)** | Local-only metadata scan of 13 explicit root support file candidates and 4 directory-presence checks. Absent candidates are informational; no contents, hashes, personal files, game writes or downloads. |
 | **M19 — complete (CI 38059211057)** | Owner M18 result reviewed; only ijl15.dll and dbghelp.dll added to read-only root binary inventory and JSON reviewer, with dummy-only tests. No write/download enabled. |
-| **M20 — pending CI** | Developer-only read-only recovery readiness audit for disposable partial/completed copy fixtures; detects changed/unknown contents and validates M15 journal vs manifest without modifying anything. |
+| **M20 — complete (CI 38060443793)** | Developer-only read-only recovery readiness audit for disposable partial/completed copy fixtures; detects changed/unknown contents and validates M15 journal vs manifest without modifying anything. |
 
 **Read:** `docs/INSTALLER-MILESTONE-8.md` through `docs/INSTALLER-MILESTONE-15.md` for detailed rationale.
 
@@ -143,11 +145,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** M19 added two observed non-MPQ support DLL names to the M14 read-only inventory and M16 JSON reviewer, with expanded Windows tests and no changes to production clients; checkpoint `4ad1618fa464cdabe97a3cf21a89f984de14062a`, successful CI [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057). Before that, M18 passed Windows CI run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
+**Last verified implementation step:** M20 read-only recovery readiness audit for disposable M15 copy fixtures. Synthetic partial/completed journal, file integrity and unexpected-entry tests; full Windows CI and preview package **passed** at commit `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53` in [run 38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793). Before M20, M19 passed [run 38059211057](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38059211057). Before that, M18 passed Windows CI run [38058231220](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38058231220). The previous M17 coverage work passed run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** The M18 owner audit and M19 observed-DLL coverage are complete. M20 adds a read-only synthetic-only journal/manifest recovery readiness check (Windows CI pending). No owner action, game archive download or full-file rehash is required. After verification, develop interruption-safe manual rollback and staging cleanup with *strictly disposable* fixture files and new tests for concurrent modifications/disk exhaustion. Preserve M15 1 MiB test caps, exact markers, existing source restrictions, draft PR, disabled fresh-client source and independent ownership/authenticity gates.
+**Current next task:** The M18 owner audit and M19 observed-DLL coverage are complete. M20 added a read-only synthetic-only journal/manifest recovery readiness check (Windows CI [38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793) passed). No owner action, game archive download or full-file rehash is required. After verification, develop interruption-safe manual rollback and staging cleanup with *strictly disposable* fixture files and new tests for concurrent modifications/disk exhaustion. Preserve M15 1 MiB test caps, exact markers, existing source restrictions, draft PR, disabled fresh-client source and independent ownership/authenticity gates.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.

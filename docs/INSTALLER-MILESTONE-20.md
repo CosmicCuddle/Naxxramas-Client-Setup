@@ -1,6 +1,6 @@
 # Milestone 20 — Synthetic interruption-recovery readiness audit
 
-**Status:** development branch, pending successful Windows CI. **Not** a real WoW recovery tool or installer.
+**Status:** **Windows CI passed** — [run 38060443793](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38060443793) at tested implementation commit `22ccd6a3558ed202bc1676eb63abfc6f7a7cde53`. All tests, preview ZIP packaging and prior safety fixtures passed. **Not** a real WoW recovery tool or installer.
 
 ## Purpose
 
@@ -8,14 +8,14 @@ M15 already has an explicit journal, simulated ordinary failures, verified sourc
 
 ## Added utility (no writes)
 
-- \`tools/Inspect-Fixture-Recovery.ps1\`, used only by developers and Windows synthetic tests.
-- Requires exact M15 source and destination marker files, a \`naxx_synthetic_copy_fixture\` JSON manifest and the existing \`.naxx-fixture-copy-journal.json\`.
+- `tools/Inspect-Fixture-Recovery.ps1`, used only by developers and Windows synthetic tests.
+- Requires exact M15 source and destination marker files, a `naxx_synthetic_copy_fixture` JSON manifest and the existing `.naxx-fixture-copy-journal.json`.
 - Requires source/destination to be distinct folders outside the repository, with no symbolic links/junctions.
-- Manifest paths remain the **same eight-item maximum allowlist** used by M15, including required dummy \`Wow.exe\`, V and Z, tiny files (at most 256 KiB each), maximum 1 MiB in total.
+- Manifest paths remain the **same eight-item maximum allowlist** used by M15, including required dummy `Wow.exe`, V and Z, tiny files (at most 256 KiB each), maximum 1 MiB in total.
 - Journal source, destination, file paths, sizes and hashes must exactly agree with the local synthetic manifest.
 - Checks only explicitly expected fixture folder levels; unknown files and **unknown empty folders** block readiness, and unknown names are not printed.
-- For \`applying\`, missing expected files are acceptable after an interruption; any present expected file must match its expected length and SHA-256.
-- For \`copied\`, every expected file must be present and hash-matched.
+- For `applying`, missing expected files are acceptable after an interruption; any present expected file must match its expected length and SHA-256.
+- For `copied`, every expected file must be present and hash-matched.
 - **READY_FOR_MANUAL_ROLLBACK** is not an action or promise of full recovery; it means only that the examined snapshot meets the conservative conditions to consider a separate, explicitly confirmed M15 fixture-only Rollback.
 - Refuses forged journals, modified files, unexpected destination entries, missing markers and missing journals.
 - Does **not** enumerate or delete orphan stage folders outside destination, copy files, perform rollback, install or download.
@@ -23,7 +23,7 @@ M15 already has an explicit journal, simulated ordinary failures, verified sourc
 
 ## Windows dummy-fixture validation
 
-A new \`tests/Test-Fixture-Recovery.ps1\` builds a disposable marked client fake and tests empty applying, partial applying, falsely completed, modified copy, unknown file, unknown empty folder, forged journal, missing journal and missing marker. The test must confirm source bytes remain unchanged and **the auditor creates no files**.
+A new `tests/Test-Fixture-Recovery.ps1` builds a disposable marked client fake and tests empty applying, partial applying, falsely completed, modified copy, unknown file, unknown empty folder, forged journal, missing journal and missing marker. The test must confirm source bytes remain unchanged and **the auditor creates no files**.
 
 **Known remaining gaps:** M15 rollback is not atomic across multiple files; interruption *during* rollback, interrupted journal replacement, orphan staging cleanup, disk exhaustion and concurrent changes remain to be handled in separate strictly synthetic milestones. The new auditor is deliberately read-only and makes none of those problems disappear.
 
