@@ -60,4 +60,4 @@ The original private JSON, unpublished base hashes and client files remain off G
 
 **Optional next check:** After the updated tool's Windows CI passes, run `Inventory-Game-Files.bat` on a separately backed-up development client, selecting a **new** report filename, then run `Review-Game-File-Report.bat`. The full per-file hash scan may take several minutes.
 
-**Follow-up implementation CI:** pending validation for the 2-file allowlist update and expanded synthetic fixture tests.
+**Follow-up Windows CI passed:** [run 38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710), implementation/fix checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`. All three upgraded read-only tool fixtures passed, as did existing rollback, download, GUI and preview ZIP tests. No WoW game files were installed or modified.

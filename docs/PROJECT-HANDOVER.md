@@ -4,12 +4,15 @@
 
 **Status as of 10 October 2026:** Milestones 15 and 16 passed Windows CI (M16 run [38054974809](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809)). The owner has now supplied and successfully reviewed a private M14 full-hash inventory; aggregate results and two unknown MPQ follow-up documented under M17 (Windows CI [38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893) **passed**). No full-game download, public client or production installation is enabled.
 
+**Latest M17 locale allowlist follow-up:** Windows run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710) **completed successfully** on checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`. M14 scanner, M16 reviewer and M17 classifier all recognise base-enUS/backup-enUS by filename only; synthetic fixture tests passed. No real-client installation is enabled.
+
 ## 1. Project and critical GitHub links
 
 - **Main repository:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup
 - **Development branch:** `feature/backup-first-installer-alpha`
 - **Draft PR #1:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/1
 - **GitHub Actions:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/workflows/validate-tools.yml
+- **Milestone 17 locale allowlist follow-up CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710 (checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`)
 - **Milestone 17 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893 (implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`)
 - **Milestone 16 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054974809 (commit `3ab55d8791dc153b3c761d54c6d70730ae305c60`)
 - **Milestone 15 passing CI:** https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38054045414 (implementation commit `8350949c6ffde50ca10c459a6d8f7f4f3e99970c`)
@@ -119,11 +122,11 @@ Read source-of-truth manifests rather than hardcoding new fingerprints:
 
 ## 8. Current checkpoint and exactly where to resume
 
-**Last verified implementation step:** Milestone 17 read-only MPQ metadata classification and report coverage documentation, implementation commit `94838fba72a4dc9733f9d3cd433e8f405b59307d`, full Windows CI and preview packaging **passed** in run [38056648893](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38056648893). Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
+**Last verified implementation step:** M17 additional locale allowlist coverage and regression tests (three read-only tools), checkpoint `8d1c717e9640f1f6327f8a0a4de4befd613ecfaf`, all Windows tests and preview ZIP **passed** in run [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710). Before that, initial M17 classification passed run `38056648893`. Before that, M16 passed run `38054974809` and M15 passed run `38054045414`. These prove synthetic fixture behavior, **not** full real-client validity.
 
 **Previous step:** Milestone 14, read-only privacy-limited per-file inventory, commit `f69aa149`, successful CI run `38053138014`. Before that was Milestone 13, source classification, commit `d2016a9` and passing CI run `38051954866`.
 
-**Current next task:** Owner completed M14 full-hash inventory, M16 JSON review and M17 local filename classification. Both extra enUS MPQs are identified and are now incorporated in the three read-only tool allowlists (updated Windows CI pending). Once verified, owner may optionally make a **new** full-hash inventory of their separate backed-up development client and review it. On an unchanged copy expect 25 allowlisted files, 18 base candidates and zero unclassified MPQs; confirm rather than assume. Preserve the prior private report, do not upload MPQs, and leave all M15 fixture-only write locks. Next: independently authenticated base-file reference and necessary non-MPQ support-file coverage.
+**Current next task:** Owner completed M14 full-hash inventory, M16 JSON review and M17 local filename classification. Both extra enUS MPQs are identified and are now incorporated in the three read-only tool allowlists (Windows CI [38057682710](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38057682710) **passed**). Once verified, owner may optionally make a **new** full-hash inventory of their separate backed-up development client and review it. On an unchanged copy expect 25 allowlisted files, 18 base candidates and zero unclassified MPQs; confirm rather than assume. Preserve the prior private report, do not upload MPQs, and leave all M15 fixture-only write locks. Next: independently authenticated base-file reference and necessary non-MPQ support-file coverage.
 
 **Remaining work after M14–M16:**
 1. Owner first preserves an untouched full backup, then makes a **separate development copy**.
