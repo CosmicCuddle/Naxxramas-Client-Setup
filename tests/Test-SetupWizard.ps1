@@ -58,6 +58,7 @@ try{
     Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 900 -and
         $layout.optional_controls_do_not_overlap -and $layout.preview_inside_scroll_extent) 'Stacked choices and lower review remain available by vertical scrolling'
     Check ($layout.form_height -le $layout.working_area_height) 'Initial wizard fits within Windows desktop working-area height'
+    Check ($layout.folder_browse_buttons_inside_viewport -and $layout.action_buttons_inside_viewport) 'Right-anchored browse and review controls fit inside initial viewport'
     Check ($layout.default_keyboard_action -ceq 'ReviewOnly' -and
         $layout.cancel_keyboard_action -ceq 'CloseWizard') 'Enter reviews only; Escape closes safely'
     Check (@($layout.action_labels).Count -eq 7 -and
