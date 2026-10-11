@@ -1,6 +1,6 @@
 # Naxxramas Client Setup — Project Handover
 
-**Updated:** 10 October 2026  
+**Updated:** 11 October 2026  
 **Repository:** [CosmicCuddle/Naxxramas-Client-Setup](https://github.com/CosmicCuddle/Naxxramas-Client-Setup)  
 **Starting reference for this handover:** `main` commit `869c9c6` on 9 October 2026, before these continuity documents were added.  
 **Active patch reference:** `patchset-0001`
@@ -121,7 +121,7 @@ Do **not** reinterpret an owner screenshot, a tool implementation, an SHA-256 ma
 Current implemented slice:
 1. `tools/Plan-Naxxramas-Install.ps1` emits a console plan or optional JSON using the existing patch and realm manifests, with no writes. Windows drag-and-drop launcher added.
 2. V/Z are mandatory, J/U independent, and unselected existing optional files are preserved. Current, missing, known-older and unknown versions are classified; unrecognised selected patches are blocked.
-3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked. Optional `-BackupRoot` now allows a **read-only** second-drive space and folder-isolation check; drive-root comparison is preliminary, not authoritative.
+3. Realmlist is previewed from `config/realm.json`. Future replacements require backup. J/U overlap, path collisions, reparse points, version metadata and estimated free space are checked. Optional `-BackupRoot` provides a **read-only** backup space/isolation check now using *Win32 logical volume GUIDs* and selected-directory free space, rather than drive letters. This is still **not** physical disk independence or write-time authorisation.
 4. `tests/Test-InstallerPlan.ps1` covers required/optional patches, realm safety, invalid source/path/policy, junctions and a test-only generated versioned executable. Its Windows PowerShell CI run **passed** on 10 October 2026. It checks before/after file fingerprints to catch unexpected writes.
 
 Next checks before leaving Milestone 2:
@@ -162,4 +162,6 @@ Do **not** treat this task as permission to copy or distribute MPQ files. It is 
 - PR [#7](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/7) adds a strictly read-only **synthetic signed v2 journal inspector** and fixture-only tests; no game files, rollback authority or persistent keys. Windows PowerShell tests cover tampered/reordered events, wrong key, broken links, stale anchor against a newer chain, unknown paths and valid fixture checks. A journal and matching signed anchor copied/replayed together **are not detected** without an external latest-state trust anchor.
 - PR [#8](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/8) adds `-FixtureWitnessPath` and `-FixtureWitnessKeyPath` to the synthetic v2 inspector. Separate key and latest-state fixture reject old signed journals and anchors only when the witness remains newer. Tests also deliberately demonstrate that replay of journal, anchor and witness **together** still passes; this is not secure production anti-rollback.
 - Documentation and read-only fixture tests updated; no persistent trusted anchors, DPAPI keys, installed client identities or file-writing operations exist.
-- **Next engineering action:** design and validate genuine protected latest-state authority, key portability/DPAPI lifecycle, durable journal checkpoints and authoritative Windows volume/installation identity. Do not alter the working client or distribute MPQs.
+- PR [#9](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/9) replaces drive-root comparisons with local Windows GUID-volume checks (`GetVolumePathNameW` + `GetVolumeNameForVolumeMountPointW`) and directory-specific availability (`GetDiskFreeSpaceExW`). Inability to resolve local volume identity **blocks** the planner. Synthetic Windows tests include alias, distinct and unresolvable logical volumes; **no actual client writes**.
+- See [WINDOWS-VOLUME-PREFLIGHT.md](WINDOWS-VOLUME-PREFLIGHT.md) for assumptions and physical-disk limitations. The planner still rejects reparse-point paths **including mounted folders**, so no actual mount-folder support is claimed. Volume IDs are **not** included in the public JSON report.
+- **Next engineering action:** review a durable and non-rollbackable latest-state trust anchor, legitimate Windows game-folder identity and crash-ordering protocol; prepare further read-only failure tests. DPAPI alone does not guarantee monotonic state. Do not touch the working client or distribute MPQs.

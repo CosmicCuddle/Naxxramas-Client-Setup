@@ -96,7 +96,7 @@ Treat each as **manual review required**, not an automatic destructive rollback.
 - [ ] Concrete, testable journal checkpoint schema and backup retention policy.
 - [ ] Atomic replacement and flush/durability semantics documented per supported Windows filesystem.
 - [ ] Automated failures at every stage on disposable fixtures.
-- [ ] Disk-budget enforcement on **both** volumes and safe fallback when the size is unknown in a **write-capable transaction**. The new optional `-BackupRoot` read-only planner preview/tests cover estimates only; physical volume identity and write-time rechecks remain unresolved.
+- [ ] Disk-budget enforcement on **both** volumes and safe fallback when the size is unknown in a **write-capable transaction**. [Read-only volume preflight](WINDOWS-VOLUME-PREFLIGHT.md) now uses Win32 logical volume GUIDs and selected-directory capacity. **Physical disk identity and write-time rechecks remain unresolved.**
 - [ ] Security review of path traversal, reparse points, changes made between plan and commit (TOCTOU), and process locks.
 - [ ] Separate approval for controlled fixture-only file-writing prototype.
 - [ ] Independent approval/verification of patch source/provenance before any real-client or public installer.

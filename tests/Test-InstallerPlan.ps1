@@ -274,7 +274,7 @@ public static class FixtureClient {
     Save (Join-Path $source 'Data/Patch-J.mpq') 'fixture-current-Patch-J.mpq'
     $spaceFixture = Join-Path $tools 'Plan-Naxxramas-SpaceFixture.ps1'
     $plannerOriginal = Get-Content -LiteralPath $planner -Raw
-    $probe = 'return [int64]$drive.AvailableFreeSpace'
+    $probe = 'return [int64]$available'
     Check ($plannerOriginal.Contains($probe)) 'Space-probe test injection location is present'
     $spaceParams = @{
         ClientPath = $client
@@ -356,7 +356,7 @@ public static class FixtureClient {
     } catch { $rootBackupRejected = $true }
     Check $rootBackupRejected 'A whole drive cannot be a backup root'
 
-    $storageProbe = 'return ([IO.Path]::GetPathRoot($Directory)).ToUpperInvariant()'
+    $storageProbe = 'return $identity'
     Check ($plannerOriginal.Contains($storageProbe)) 'Storage identity test insertion location is present'
     $mockVolumes = $plannerOriginal.Replace(
         $storageProbe,
@@ -368,9 +368,31 @@ public static class FixtureClient {
     Check ($separatePlan.space_budget.mode -eq 'separate_volumes') 'Distinct mocked volume identities are budgeted independently'
     Check ($null -eq $separatePlan.space_budget.combined_volume_required_bytes) 'Separate-volume preview does not claim one combined-disk requirement'
 
+    # A GUID alias may be mounted under a different path/letter. This fixture
+    # returns the SAME GUID for both directories, so space is checked ONCE
+    # against the combined requirement instead of being double-counted.
+    $aliasVolumes = $plannerOriginal.Replace($storageProbe,"return 'FIXTURE-SHARED-GUID'")
+    Set-Content -LiteralPath $spaceFixture -Value $aliasVolumes -Encoding UTF8
+    $aliasPlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
+    Check ($aliasPlan.space_budget.mode -eq 'shared_volume') 'Equal mocked volume IDs are classified as shared regardless of folder roots'
+    Check ($aliasPlan.space_budget.combined_volume_required_bytes -eq $aliasPlan.estimated_space_bytes) 'Shared alias estimate combines both budgets'
+
+    # Unknown volume identity MUST block, even if free-space probes succeed.
+    $noVolume = $plannerOriginal.Replace($storageProbe,"throw 'Fixture unresolvable volume GUID'")
+    Set-Content -LiteralPath $spaceFixture -Value $noVolume -Encoding UTF8
+    $unverified = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
+    Check ($unverified.status -eq 'blocked') 'Unknown volume ID blocks the backup plan'
+    Check ($unverified.space_budget.mode -eq 'unverified') 'Unknown volume ID is reported explicitly'
+    Check (@($unverified.blockers | Where-Object { $_ -like '*Could not verify local Windows volume identity*' }).Count -eq 1) 'Identity failure has a clear blocker'
+
+    # Exact-directory free space is required (mount-folder aware), not a
+    # drive-root DriveInfo approximation.
+    Check ($plannerOriginal.Contains('GetDiskFreeSpaceEx(')) 'Real free-space probe uses path-aware Win32 API'
+    Check ($plannerOriginal.Contains('GetVolumeNameForVolumeMountPoint(')) 'Real identity probe resolves mounted volume GUID'
+
     $backupLow = $mockVolumes.Replace(
         $probe,
-        'if ($Directory -eq $resolvedBackupRoot) { return [int64]0 } else { return [int64]$drive.AvailableFreeSpace }'
+        'if ($Directory -eq $resolvedBackupRoot) { return [int64]0 } else { return [int64]$available }'
     )
     Set-Content -LiteralPath $spaceFixture -Value $backupLow -Encoding UTF8
     $backupLowPlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json
@@ -379,7 +401,7 @@ public static class FixtureClient {
 
     $backupFailed = $mockVolumes.Replace(
         $probe,
-        'if ($Directory -eq $resolvedBackupRoot) { throw ''Fixture backup probe failure'' } else { return [int64]$drive.AvailableFreeSpace }'
+        'if ($Directory -eq $resolvedBackupRoot) { throw ''Fixture backup probe failure'' } else { return [int64]$available }'
     )
     Set-Content -LiteralPath $spaceFixture -Value $backupFailed -Encoding UTF8
     $backupFailurePlan = (& $spaceFixture @backupParams | Out-String) | ConvertFrom-Json

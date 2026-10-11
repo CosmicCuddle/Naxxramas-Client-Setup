@@ -44,9 +44,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Plan-Naxxramas-
 
 **What it checks:** The backup path must already exist. It must not be the same folder as, inside, or enclosing the selected client or patch source. Whole drive roots and linked/junction paths are rejected.
 
-The JSON contains `space_budget`: `client_volume_required_bytes`, `backup_volume_required_bytes`, `mode`, and an explicit `approximation_only` flag. The planner estimates space for staging, same-volume temporary files, originals and a journal contingency. If the chosen backup directory appears to be on the *same drive*, the space requirements are added and checked together. On apparently distinct drives, it checks available capacity for both.
+The JSON contains `space_budget`: `client_volume_required_bytes`, `backup_volume_required_bytes`, `mode`, and an explicit `approximation_only` flag. Windows **logical volume GUIDs**, not drive-letter strings, determine whether two selected folders share storage. Shared-volume requirements are combined; distinct-volume requirements are checked separately. The disk-space query measures availability at each selected directory. A failed volume identity check is **blocked** (`mode: unverified`). See [Windows Volume Preflight](WINDOWS-VOLUME-PREFLIGHT.md).
 
-**Critical limitation:** This preview compares drive roots, not authoritative physical volume identities. Mapped/substituted drives, mount points, filesystem-specific behaviour and changing disk capacity can defeat a simple estimate. The future writing engine must resolve true volume identity, validate the exact on-disk layout, and check both capacities again immediately before any operation. A `review_only_no_blockers` result does not authorise installation.
+**Critical limitation:** Although Windows' GUID APIs understand folder-mounted volumes, this planner still **rejects reparse-point ancestors, including mounted-folder entry points**, for safety. Actual mounted-folder setups are not yet supported; only ordinary local paths and synthetic alias tests are verified. The Win32 volume GUID identifies a *logical volume*, **not** an independent physical disk or a durable write guarantee. Virtual/pooled storage, mounts and free-space changes still matter. The future writer must re-verify the volume and capacity immediately before each relevant write, and must guard against path changes after preflight. A `review_only_no_blockers` result does not authorise installation.
 
 When `-BackupRoot` is omitted, the existing drag-and-drop preview remains supported; it displays only a **provisional single-drive estimate** and warns that a separate backup location will be required for a future write-capable installer.
 
@@ -83,7 +83,7 @@ Each patch entry includes `required`, `selected`, `destination_state`, `source_s
 
 The repository includes `tests/Test-InstallerPlan.ps1` and a Windows PowerShell GitHub Actions workflow. Test fixtures contain tiny generated text files pretending to be patches and a **test-only generated executable** with synthetic build-12340 metadata. No real WoW client or proprietary game assets are needed for the tests.
 
-The test script exercises: mandatory patches current/missing, verified source vs no source, unknown versions, known older versions, individual optional choices, preserving unselected optional files, J/U warning, realmlist changes, incorrect source hashes, source/destination collision, backup folder isolation, simulated shared/separate-volume budgets, low or unreadable backup capacity, and checksums of fixture files before/after each preview.
+The test script exercises: mandatory patches current/missing, verified source vs no source, unknown versions, known older versions, individual optional choices, preserving unselected optional files, J/U warning, realmlist changes, incorrect source hashes, source/destination collision, backup folder isolation, actual local Win32 logical volume identity, simulated shared/distinct GUIDs, unknown volume IDs, low or unreadable backup capacity, and unchanged fixture snapshots.
 
 To run from a Windows PowerShell 5.1 console in the repository directory:
 
@@ -99,4 +99,4 @@ A finished setup GUI, an installation plan approved for execution, private asset
 
 **Verified 10 October 2026:** GitHub's Windows PowerShell 5.1 fixture suite passed on [PR #3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3), including the non-blocking supported-build preview. The existing preflight tests also passed after its test-harness exit-code fix on [PR #2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2). These are **synthetic tests only**, not a demonstration against real game assets or an installer.
 
-**Next action:** confirm the deterministic low-space/failure-path tests pass on Windows. See [Recovery Preview](RECOVERY-PREVIEW.md) and [Journal Durability](JOURNAL-DURABILITY.md) for the read-only recovery checks and the unresolved safety gates for any future write-capable transaction.
+**Next action:** resolve protected journal latest-state authority, Windows installation folder identity and crash ordering; then extend read-only failure tests. The [Recovery Preview](RECOVERY-PREVIEW.md) and [Journal Durability](JOURNAL-DURABILITY.md) still do not enable writing.

@@ -83,17 +83,68 @@ function Matches([object]$Actual,[object]$Expected) {
       ([string]$Actual.sha256).Equals([string]$Expected.sha256,[StringComparison]::OrdinalIgnoreCase) -and
       [int64]$Actual.size_bytes -eq [int64]$Expected.size_bytes
 }
+# Win32 volume calls are read-only. GetVolumePathNameW resolves mounted
+# folders, and GetDiskFreeSpaceExW queries the exact selected directory.
+# This still does NOT detect physical disk extents, prove future filesystem
+# durability, or authorise game-file writes.
+function Initialize-VolumeApi {
+    if (-not ('NaxxClientVolumeProbeV1' -as [type])) {
+        Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+public static class NaxxClientVolumeProbeV1 {
+    [DllImport("kernel32.dll", EntryPoint="GetVolumePathNameW", CharSet=CharSet.Unicode, SetLastError=true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetVolumePathName(string path, StringBuilder mountPoint, uint bufferLength);
+
+    [DllImport("kernel32.dll", EntryPoint="GetVolumeNameForVolumeMountPointW", CharSet=CharSet.Unicode, SetLastError=true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetVolumeNameForVolumeMountPoint(string mountPoint, StringBuilder volumeGuid, uint bufferLength);
+
+    [DllImport("kernel32.dll", EntryPoint="GetDiskFreeSpaceExW", CharSet=CharSet.Unicode, SetLastError=true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetDiskFreeSpaceEx(string directory, out ulong callerAvailable, out ulong totalBytes, out ulong totalFreeBytes);
+}
+'@ -ErrorAction Stop
+    }
+}
 function Get-AvailableSpaceBytes([string]$Directory) {
-    # Kept in a tiny, isolated function so fixture tests can simulate failures
-    # without changing real disk capacity or introducing a production override.
-    $drive = New-Object System.IO.DriveInfo -ArgumentList ([IO.Path]::GetPathRoot($Directory))
-    if (-not $drive.IsReady) { throw 'Destination drive is not ready.' }
-    return [int64]$drive.AvailableFreeSpace
+    # Isolated for disposable fixture probes; NO production bypass argument.
+    Initialize-VolumeApi
+    [uint64]$available = 0
+    [uint64]$total = 0
+    [uint64]$free = 0
+    if (-not [NaxxClientVolumeProbeV1]::GetDiskFreeSpaceEx(
+        $Directory, [ref]$available, [ref]$total, [ref]$free)) {
+        throw 'Could not read available bytes for the selected directory.'
+    }
+    if ($available -gt [int64]::MaxValue) { throw 'Disk capacity exceeds supported signed range.' }
+    return [int64]$available
 }
 function Get-StorageKey([string]$Directory) {
-    # A drive-root comparison is only a conservative preview approximation.
-    # Future write-capable code must determine true volume identity and recheck.
-    return ([IO.Path]::GetPathRoot($Directory)).ToUpperInvariant()
+    Initialize-VolumeApi
+    $mount = New-Object System.Text.StringBuilder 1024
+    if (-not [NaxxClientVolumeProbeV1]::GetVolumePathName(
+        $Directory, $mount, [uint32]$mount.Capacity)) {
+        throw 'Could not resolve the Windows volume mount point.'
+    }
+    $volume = New-Object System.Text.StringBuilder 1024
+    if (-not [NaxxClientVolumeProbeV1]::GetVolumeNameForVolumeMountPoint(
+        $mount.ToString(), $volume, [uint32]$volume.Capacity)) {
+        throw 'Could not resolve a local Windows volume GUID.'
+    }
+    $identity = $volume.ToString().ToUpperInvariant()
+    if (-not $identity.StartsWith('\\?\Volume{',[StringComparison]::OrdinalIgnoreCase) -or
+        -not $identity.EndsWith('}\',[StringComparison]::Ordinal) -or
+        $identity.Length -ne 49) {
+        throw 'Unrecognised Windows volume identity.'
+    }
+    $parsedGuid = [guid]::Empty
+    if (-not [guid]::TryParse($identity.Substring(11,36),[ref]$parsedGuid)) {
+        throw 'Unrecognised Windows volume GUID.'
+    }
+    return $identity
 }
 function Hash-Bytes([byte[]]$Bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
@@ -333,13 +384,20 @@ if ($newBytes -gt 0) {
 }
 $spaceMode = 'backup_not_selected'
 if ($resolvedBackupRoot) {
-    $spaceMode = if ((Get-StorageKey $resolvedBackupRoot) -eq (Get-StorageKey $dest)) {
-        'shared_volume'
-    } else { 'separate_volumes' }
-    $warnings.Add('Volume identity uses drive roots in this preview only; revalidate actual volumes before future writes.')
+    try {
+        $destinationVolumeId = Get-StorageKey $dest
+        $backupVolumeId = Get-StorageKey $resolvedBackupRoot
+        $spaceMode = if ($destinationVolumeId -ceq $backupVolumeId) {
+            'shared_volume'
+        } else { 'separate_volumes' }
+    } catch {
+        $spaceMode = 'unverified'
+        $blockers.Add('Could not verify local Windows volume identity for client and backup; manual review required.')
+    }
+    $warnings.Add('Windows volume GUIDs describe logical volumes, NOT independent physical disks, crash durability or future installation approval.')
 }
 [int64]$needed = $clientNeeded + $backupNeeded
-[int64]$clientCheckBytes = if ($spaceMode -eq 'shared_volume') { $needed } else { $clientNeeded }
+[int64]$clientCheckBytes = if ($spaceMode -in @('shared_volume','unverified')) { $needed } else { $clientNeeded }
 if ($clientNeeded -gt 0) {
     try {
         $availableBytes = Get-AvailableSpaceBytes $dest
@@ -352,7 +410,7 @@ if ($clientNeeded -gt 0) {
         $blockers.Add('Could not verify free space on the destination drive.')
     }
 }
-if ($resolvedBackupRoot -and $spaceMode -eq 'separate_volumes' -and $backupNeeded -gt 0) {
+if ($resolvedBackupRoot -and $spaceMode -in @('separate_volumes','unverified') -and $backupNeeded -gt 0) {
     try {
         $backupAvailableBytes = Get-AvailableSpaceBytes $resolvedBackupRoot
         if ($backupAvailableBytes -lt 0) {
