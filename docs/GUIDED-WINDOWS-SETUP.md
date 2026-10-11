@@ -143,3 +143,14 @@ The read-only five-file details window now uses a **scrollable inner content reg
 Windows PowerShell 5.1 CI constructs the actual details dialog without displaying it, shrinks its viewport to **640 × 480 logical WinForms units**, and checks scroll reachability, non-overlapping regions and controls remaining within the content width. This is a **geometry check, not real Windows DPI or assistive-technology validation**. It does not change the planner's read-only status, the exact five-file review, any patches or the no-backup/no-install/no-consent policy.
 
 Human acceptance still needs real 100%, 125%, 150%, 200% display-scaling and screen-reader/high-contrast checks on a backed-up disposable test setup. Follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md) and record any visible truncation or control focus issue before approving a scripts-only public release.
+
+
+## Windows High Contrast palette and review status (PR #34)
+
+The **read-only** wizard now chooses its palette using Windows' reported High Contrast setting **when the window is constructed**. With High Contrast enabled, the main window, header, text, primary review button and read-only output use native `SystemColors` for window/text/control/highlight rather than overriding them with fixed dark-blue and white colours. File Details uses the same approach for its background, text, warnings reader and five-row table. With High Contrast disabled, the existing visual palette is retained.
+
+Keyboard focus starts at the **existing client folder field** rather than the review action. The review-status line now provides an accessible name and synchronised description when the user changes inputs, runs a preview or receives a blocker; Clear and Close also have explicit accessible names. This does not create an automatic announcement or prove any specific screen reader's behaviour.
+
+Windows CI constructs the real forms **without displaying them**, asserts the active palette follows the current Windows flag and checks the explicit High Contrast palette maps to Windows system colours. CI does **not** enable the OS contrast mode, render visible pixels, announce screen-reader text, or exercise live theme switching. **Close and reopen the wizard after changing Windows High Contrast settings** before manual testing.
+
+The [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md) checklist is still **not manually completed** at 100%, 125%, 150% or 200% desktop scaling. The CI ZIP remains only an internal scripts-only candidate. No game file modifications, patch redistribution or actual backup actions have been introduced.

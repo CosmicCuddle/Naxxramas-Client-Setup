@@ -44,3 +44,8 @@ It does **not** establish rendered pixel-level text clipping, DPI scaling at 100
 ## Compact-window exploratory check
 
 In addition to the scaling matrix above, make the **File Details** window approximately 640 × 480 while the display scale is set in Windows. Verify the five-file grid remains above the warnings; scroll down to find the exact **original backup not created** notice and **Close Review** without the controls obscuring each other. Tab through the grid, warning reader and Close Review, then return to the wizard. Do not mark the scaling matrix as passed based on CI's compact logical-viewport check.
+
+
+## High Contrast and initial focus test (PR #34)
+
+Before opening the wizard, enable **Windows High Contrast / contrast theme** and then start the wizard afresh. Check foreground/background contrast for the main heading, client/source/backup fields, J/U status, Review Only, status message, scrollable review result and File Details table/warnings. Toggle back to ordinary Windows colours and **restart the wizard**; verify ordinary styling remains readable. Test initial Tab focus at the existing client-folder field and keyboard traversal to Clear Review and Close. Use a real screen reader to check whether status changes are **actually announced**; setting `AccessibleDescription` alone is not proof of a spoken notification. Record actual results per desktop configuration. The automated system-colour assertions do not replace this check.
