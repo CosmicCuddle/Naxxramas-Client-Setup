@@ -65,4 +65,6 @@ A real installer will require all of the following, **none of which this milesto
 5. Separate verification of **license/provenance for using and distributing every asset**; SHA-256 does not grant any rights. Current patch records explicitly do not approve public redistribution.
 6. Backup-first, consent-bound, conflict-safe individual file operations with safe Windows file-handle rechecks and tested journal durability; the user must be able to preserve or manually restore exact original data.
 
+**Further synthetic review:** [Single-use Consent Lifecycle](CONSENT-LIFECYCLE-REVIEW.md) models expiry, revocation, single-use and plan nonce binding using caller-written event labels. It is not a genuine one-time receipt or a trusted used-nonce store; a complete old-record replay may appear unused.
+
 **Do not use a v2 fixture checksum to authorise changes to a WoW client or backup folder.** No game file or real backup has been opened or changed by these tests.
