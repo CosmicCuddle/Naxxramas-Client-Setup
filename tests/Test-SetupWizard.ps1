@@ -54,7 +54,10 @@ try{
     Check ($layout.folder_count -eq 3 -and
         $layout.optional_patch_toggle_count -eq 2 -and
         $layout.mandatory_patch_toggle_count -eq 0) 'Three folder pickers and two independent optional toggles'
-    Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation'
+    Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
+    Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 900 -and
+        $layout.optional_controls_do_not_overlap -and $layout.preview_inside_scroll_extent) 'Stacked choices and lower review remain available by vertical scrolling'
+    Check ($layout.form_height -le $layout.working_area_height) 'Initial wizard fits within Windows desktop working-area height'
     Check ($layout.default_keyboard_action -ceq 'ReviewOnly' -and
         $layout.cancel_keyboard_action -ceq 'CloseWizard') 'Enter reviews only; Escape closes safely'
     Check (@($layout.action_labels).Count -eq 7 -and
@@ -144,6 +147,8 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check (@($detail.proposed_actions | Where-Object {$_ -match 'replace ONLY after an exact original backup'}).Count -eq 2) 'Detailed action table explains the exact replacement gate'
     Check ($detail.grid_read_only -and $detail.grid_add_delete_disabled -and
         $detail.warnings_read_only -and $detail.no_approval_or_installation) 'File details cannot edit data or authorise a write'
+    Check ($detail.warnings_scrollable -and $detail.warnings_expand_with_window -and
+        $detail.keyboard_tab_order) 'Details warnings can scroll and grow on resize; table and warnings have predictable keyboard order'
     Check ($detail.review_status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Expanded no-blocker view still denies approval'
     Check ((Tree $client) -ceq $beforeClient -and
         (Tree $source) -ceq $beforeSource -and
