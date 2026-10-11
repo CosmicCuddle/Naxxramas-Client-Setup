@@ -93,6 +93,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-InstallerP
 
 The tests create and then delete their **own** disposable temporary fixtures. They are not intended to be run against any genuine game folder.
 
+## Read-only live plan reinspection
+
+The [Live Plan Recheck](LIVE-PLAN-RECHECK.md) invokes this existing planner and the Windows directory identity inspector to capture a **pseudonymous, unsigned** observation to the console and compare it to another fresh inspection. Unlike the synthetic approval-only fixtures, it does re-hash actual local patch and realmlist bytes that the planner knows how to inspect. This detects changed folder IDs or planned file actions but never writes to the game client or grants permission to install.
+
 ## Developer-only approval scope checks
 
 The [Approval Snapshot Review](APPROVAL-SNAPSHOT-REVIEW.md) models a future frozen user-approved plan. Its Windows fixture tests compare mandatory V/Z operations, independent J/U choices, realmlist, the selected backup/source directories and expected original bytes against a changed proposal. This tool operates on **artificial JSON data only** and does not create consent or enable the planner to write files.
@@ -103,4 +107,4 @@ A finished setup GUI, an installation plan approved for execution, private asset
 
 **Verified 10 October 2026:** GitHub's Windows PowerShell 5.1 fixture suite passed on [PR #3](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/3), including the non-blocking supported-build preview. The existing preflight tests also passed after its test-harness exit-code fix on [PR #2](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/2). These are **synthetic tests only**, not a demonstration against real game assets or an installer.
 
-**Next action:** resolve protected journal latest-state authority, Windows installation folder identity and crash ordering; then extend read-only failure tests. The [Recovery Preview](RECOVERY-PREVIEW.md) and [Journal Durability](JOURNAL-DURABILITY.md) still do not enable writing.
+**Next action:** review protected one-time real user consent and a durable latest-use authority; the [Live Plan Recheck](LIVE-PLAN-RECHECK.md) currently measures real input bytes and folder IDs only as a read-only preview. It cannot authenticate prior snapshots, protect against file races or create exact backups. No file-writing installation or rollback exists.
