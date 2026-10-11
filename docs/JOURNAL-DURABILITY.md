@@ -88,7 +88,7 @@ Treat each as **manual review required**, not an automatic destructive rollback.
 
 - Windows PowerShell 5.1 synthetic tests previously passed for preflight, read-only planner, and recovery inspector.
 - Read-only regression tests now include destination and backup drive capacity failures without a production bypass, plus incomplete checkpoints and duplicate backup references. These do not validate durable write transactions.
-- No current test demonstrates the ability to survive a crash in a **write-capable** transaction. All current tools are read-only with respect to the client. The separate [Journal Authority proposal](JOURNAL-AUTHORITY.md) discusses signed records, copied journals, replay and lost-key recovery.
+- No current test demonstrates the ability to survive a crash in a **write-capable** transaction. All current tools are read-only with respect to the client. The new [registration fixture review](REGISTRATION-FIXTURE-REVIEW.md) classifies incomplete or out-of-order *claims* but cannot prove crash durability or authenticate registration. The separate [Journal Authority proposal](JOURNAL-AUTHORITY.md) discusses signed records, copied journals, replay and lost-key recovery.
 
 ## Decision gates before fixture-only writing is considered
 
