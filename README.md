@@ -61,6 +61,10 @@ This script **does not install, download, copy, repair, replace or remove any ga
 
 The [Recovery Preview](docs/RECOVERY-PREVIEW.md) can inspect **synthetic development session records** and compare saved hashes, original backups and current files to show where a future rollback would encounter conflicts. The script is `tools/Review-Naxxramas-Recovery.ps1`. Windows PowerShell fixture tests passed on 10 October 2026. **It does not restore, delete, replace or change files, and no production installer creates session records yet.**
 
+## Read-only Windows folder identity (developer-only)
+
+The [Windows Directory Identity preview](docs/WINDOWS-DIRECTORY-IDENTITY.md) observes a selected local directory's Windows filesystem ID through a **read-only directory handle**. Synthetic Windows tests confirm that renaming the same folder preserves its identity, while an identical copied folder has a different identity. Unsafe paths are rejected. The result is **not** a secure registration or installer ownership proof. There is no file-writing installer or rollback engine.
+
 ## Synthetic signed journal checks (developer-only)
 
 The [signed journal v2 fixture](docs/JOURNAL-V2-FIXTURE.md) demonstrates **read-only** HMAC/event-chain checks and an optional **independently keyed synthetic witness** on generated records in Windows PowerShell. A newer, separately retained witness detects an older journal and its old anchor, but replaying all inputs together remains possible. It does not create trusted installation records or verify ownership of any real client. No DPAPI-protected key, durable replay-proof anchor, write-capable installer or rollback engine exists. This developer tool is separate from the existing recovery preview and **must not be used to justify file changes**.
@@ -80,7 +84,7 @@ The detailed, continuously updated project records are:
 - [Development Roadmap](docs/ROADMAP.md) — milestones, acceptance criteria, test gates and current next task.
 - [Project Handover](docs/PROJECT-HANDOVER.md) — confirmed decisions, exact patch rules, implemented and untested features, backup policy and session continuation log.
 
-**Current next task:** design a protected latest-session trust anchor and local installation identity, and resolve the remaining [Journal Authority](docs/JOURNAL-AUTHORITY.md) and [Journal Durability](docs/JOURNAL-DURABILITY.md) safety gates. Windows logical volume identification is now checked read-only, but it does not prove physical-disk separation or durability. The signed v2 prototype is fixture-only and **not a production authority**; no file-writing installer or rollback is available. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
+**Current next task:** design authenticated and protected local installation registration and a latest-session trust anchor, and resolve remaining [Journal Authority](docs/JOURNAL-AUTHORITY.md) and [Journal Durability](docs/JOURNAL-DURABILITY.md) safety gates. The new directory identity preview is an observed filesystem object ID, **not a secure owner registration**. Windows logical volume identification is now checked read-only, but it does not prove physical-disk separation or durability. The signed v2 prototype is fixture-only and **not a production authority**; no file-writing installer or rollback is available. The installer planner and recovery inspector remain **read-only**; actual installation, updating and rollback are still unimplemented. Keep both documents updated with every meaningful code or policy change.
 
 ## Other Naxxramas projects
 
