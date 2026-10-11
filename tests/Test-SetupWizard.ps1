@@ -25,8 +25,19 @@ function Tree([string]$Root){
         }) -join '|')
 }
 function Execute([string[]]$Arguments,[string]$Label){
-    $output=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard @Arguments 2>&1 | Out-String)
-    Check ($LASTEXITCODE -eq 0) ($Label+': exit code')
+    # Windows PowerShell 5.1 can split a native child process error across
+    # stderr records. Preserve its full message before failing the fixture.
+    $oldPreference=$ErrorActionPreference
+    try{
+        $ErrorActionPreference='Continue'
+        $output=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard @Arguments 2>&1 | Out-String)
+        $exitCode=$LASTEXITCODE
+    }finally{
+        $ErrorActionPreference=$oldPreference
+    }
+    if($exitCode -ne 0){
+        throw ('TEST FAILED: '+$Label+' (exit '+$exitCode+')'+[Environment]::NewLine+$output)
+    }
     return ($output|ConvertFrom-Json)
 }
 $repo=Split-Path -Parent $PSScriptRoot
