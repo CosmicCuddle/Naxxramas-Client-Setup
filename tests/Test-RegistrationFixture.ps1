@@ -82,6 +82,16 @@ try {
     Require-Status $copied 'manual_review_folder_identity_changed' 'Copy of same game data is NOT original registered folder'
     Check ((Review $copied).folder_fingerprint_matches -eq $false) 'Copied folder fingerprint is explicitly different'
 
+    # Explicit residual risk: if someone can forge the untrusted registration
+    # to match a copied folder, the values will look internally consistent.
+    # NEVER interpret a consistent fixture as trusted installer ownership.
+    $copyObserved = ((& $identityScript -ClientPath $copied -Json | Out-String) | ConvertFrom-Json)
+    Save-Json $registrationPath (Registration ([string]$copyObserved.client_fingerprint_sha256))
+    $forged = Review $copied
+    Check ($forged.status -ceq 'fixture_fields_consistent_NOT_trusted') 'Caller-controlled registration can be forged to match a copied folder'
+    Check (-not $forged.allow_file_writes -and -not $forged.authorises_rollback) 'Forged-but-matching records NEVER authorise writes'
+    Reset-Files
+
     $renamed = Join-Path $root 'renamed-client'
     Rename-Item -LiteralPath $client -NewName 'renamed-client'
     Require-Status $renamed 'fixture_fields_consistent_NOT_trusted' 'Folder rename on same filesystem preserves observed identity'
@@ -93,6 +103,16 @@ try {
     Reset-Files
     Save-Json $sessionPath (Session 4 'completed')
     Require-Status $renamed 'manual_review_uncommitted_sequence' 'Session ahead of registered committed sequence is blocked'
+
+    # Explicit residual risk: rolling BOTH user-controlled records backwards
+    # leaves no independently protected latest-state evidence.
+    Reset-Files
+    Save-Json $registrationPath (Registration $fingerprint 1)
+    Save-Json $sessionPath (Session 1 'completed')
+    $replayed = Review $renamed
+    Check ($replayed.status -ceq 'fixture_fields_consistent_NOT_trusted') 'Coordinated old registration and session replay is NOT detectable with untrusted fixtures'
+    Check (-not $replayed.allow_file_writes -and -not $replayed.authorises_rollback) 'Coordinated replay cannot authorise writes'
+    Reset-Files
 
     foreach ($checkpoint in @('planned','approved','backup_verified','write_started',
         'verified','rollback_requested','failed_recoverable')) {
