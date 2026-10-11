@@ -40,7 +40,7 @@ function Read-Array([string]$Path,[int]$Count,[string]$Label) {
   Add-Type -AssemblyName System.Web.Extensions -ErrorAction Stop
   $serializer=New-Object System.Web.Script.Serialization.JavaScriptSerializer
   $result=$serializer.DeserializeObject($utf8.GetString($bytes))
-  if(-not ($result -is [array]) -or $result.Count -ne $Count)){
+  if(-not ($result -is [array]) -or $result.Count -ne $Count){
    throw 'Unexpected positional schema.'
   }
   return ,$result
