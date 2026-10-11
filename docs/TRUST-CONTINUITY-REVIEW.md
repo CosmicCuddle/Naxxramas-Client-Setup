@@ -82,6 +82,10 @@ Microsoft references:
 - [CryptProtectData](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata)
 - [CryptUnprotectData](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptunprotectdata)
 
+## Offline and credential recovery policy follow-up (PR #26)
+
+The [Owner Recovery Policy](OWNER-RECOVERY-POLICY.md) adds a separate **read-only synthetic policy** for copied/migrated client folders, foreign Windows accounts, lost/rotated/undecryptable local key claims, offline and conflicting authority labels, revoked or expired approval, backup mismatch and attempts to install/resume/restore/re-register. The tool always preserves original client/backup data, forbids silent rekey and declines any operation. It does not call DPAPI, authenticate current Windows identity, contact a server or prove monotonic history; a coordinated replay still looks locally consistent. Review its privacy/offline availability decision table before selecting a real trust architecture.
+
 ## Next engineering gate
 
 Review a concrete future architecture (per-user protected registration, signer identity, key recovery, optional independent latest-state source, stable folder handle checks, backup retention, consent format and offline/migration strategy). Explicitly state which threats it **can** and **cannot** prevent. Then extend **read-only** error classification and checkpoint-state models. Any disposable-fixture writer needs separate approval and real safety tests before use. No working game client should be modified, and no patch is authorised for public redistribution by this document.

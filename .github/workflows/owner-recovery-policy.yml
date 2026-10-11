@@ -1,0 +1,29 @@
+name: Read-only owner recovery policy fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-OwnerRecoveryPolicy.ps1'
+      - 'tests/Test-OwnerRecoveryPolicy.ps1'
+      - 'docs/OWNER-RECOVERY-POLICY.md'
+      - '.github/workflows/owner-recovery-policy.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-OwnerRecoveryPolicy.ps1'
+      - 'tests/Test-OwnerRecoveryPolicy.ps1'
+      - 'docs/OWNER-RECOVERY-POLICY.md'
+      - '.github/workflows/owner-recovery-policy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check offline, migration, revocation and key recovery policy
+        shell: powershell
+        run: .\tests\Test-OwnerRecoveryPolicy.ps1
