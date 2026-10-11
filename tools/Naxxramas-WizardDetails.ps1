@@ -79,6 +79,7 @@ function New-WizardDetailsForm([object]$Report){
     $win.Name='ReadOnlyFileDetails'
     $win.Text='Naxxramas - File Details (Review Only)'
     $win.StartPosition=[Windows.Forms.FormStartPosition]::CenterParent
+    $win.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Font
     $win.ClientSize=New-Object Drawing.Size(900,730)
     $win.MinimumSize=New-Object Drawing.Size(780,665)
     $win.Font=New-Object Drawing.Font('Segoe UI',10)
@@ -89,6 +90,7 @@ function New-WizardDetailsForm([object]$Report){
     $banner.Location=New-Object Drawing.Point(22,17)
     $banner.Size=New-Object Drawing.Size(854,34)
     $banner.Font=New-Object Drawing.Font('Segoe UI',12,[Drawing.FontStyle]::Bold)
+    $banner.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $win.Controls.Add($banner)
     $summary=New-Object Windows.Forms.Label
     $summary.Name='ReadOnlyDetailsSummary'
@@ -96,6 +98,7 @@ function New-WizardDetailsForm([object]$Report){
         '  |  Originals needing future backup: '+$Report.proposed_replace_after_backup_count)
     $summary.Location=New-Object Drawing.Point(22,54)
     $summary.Size=New-Object Drawing.Size(854,28)
+    $summary.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $win.Controls.Add($summary)
     $grid=New-Object Windows.Forms.DataGridView
     $grid.Name='ReadOnlyFileActionGrid'
@@ -116,6 +119,8 @@ function New-WizardDetailsForm([object]$Report){
     $grid.ColumnHeadersHeight=38
     $grid.ColumnHeadersHeightSizeMode=[Windows.Forms.DataGridViewColumnHeadersHeightSizeMode]::DisableResizing
     $grid.AccessibleName='Five read-only game file actions'
+    $grid.TabIndex=0
+    $grid.TabStop=$true
     [void]$grid.Columns.Add('File','Game file')
     [void]$grid.Columns.Add('Proposed','Proposed action - nothing changed')
     [void]$grid.Columns.Add('Backup','Backup original first?')
@@ -144,8 +149,14 @@ function New-WizardDetailsForm([object]$Report){
     $notes.DetectUrls=$false
     $notes.Location=New-Object Drawing.Point(22,390)
     $notes.Size=New-Object Drawing.Size(854,145)
+    # Expand the long-warning reader on taller screens, but keep the fixed
+    # footer and Close Review control visible when the window is reduced.
     $notes.Anchor=[Windows.Forms.AnchorStyles]::Top -bor
-        [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
+        [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right -bor
+        [Windows.Forms.AnchorStyles]::Bottom
+    $notes.ScrollBars=[Windows.Forms.RichTextBoxScrollBars]::Vertical
+    $notes.WordWrap=$true
+    $notes.TabIndex=1
     $notes.AccessibleName='Read-only warnings and issues'
     $lines=New-Object 'System.Collections.Generic.List[string]'
     if($Report.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW'){
@@ -164,6 +175,8 @@ function New-WizardDetailsForm([object]$Report){
        '. No backups created or space reserved.')
     $footer.Location=New-Object Drawing.Point(22,551)
     $footer.Size=New-Object Drawing.Size(850,62)
+    $footer.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor
+        [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $win.Controls.Add($footer)
     $close=New-Object Windows.Forms.Button
     $close.Name='CloseDetails'
@@ -172,6 +185,7 @@ function New-WizardDetailsForm([object]$Report){
     $close.Size=New-Object Drawing.Size(146,41)
     $close.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor [Windows.Forms.AnchorStyles]::Right
     $close.AccessibleName='Close read-only file details'
+    $close.TabIndex=2
     $close.Add_Click({$win.Close()})
     $win.Controls.Add($close)
     $win.AcceptButton=$close
