@@ -59,6 +59,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - [x] Add deterministic low-space and failed-space-query regression tests, using **fixture-only script copies** without introducing a production override; both fail closed in the real preview logic.
 - [x] Verify Windows PowerShell 5.1 CI succeeds for these planner changes (PR #5).
 - [x] Add optional `-BackupRoot` capacity preview, path isolation and distinct/shared drive budget reporting with deterministic low/unknown backup drive tests (PR #6; Windows fixtures passed).
+- [x] Replace drive-letter assumptions with Win32 *logical volume GUID* checks and directory-specific free-space queries; synthetic tests cover alias GUIDs, distinct volumes and failed queries ([PR #9](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/9); see [Volume Preflight](WINDOWS-VOLUME-PREFLIGHT.md)).
 - [x] Document prototype and limits in [INSTALLER-PLAN.md](INSTALLER-PLAN.md).
 
 **Exit gate:** the entire proposed operation can be reviewed and tested without a single mutation to the WoW folder.
@@ -141,6 +142,7 @@ Keep the installer independent of the AzerothCore server, individual-progression
 | Transaction recovery | [RECOVERY-PREVIEW.md](RECOVERY-PREVIEW.md) | Tested read-only session rollback decisions |
 | Journal durability | [JOURNAL-DURABILITY.md](JOURNAL-DURABILITY.md) | Design-only crash safety and ownership gates |
 | Journal authority | [JOURNAL-AUTHORITY.md](JOURNAL-AUTHORITY.md) | Design-only signed ownership and replay-defense proposal |
+| Volume preflight | [WINDOWS-VOLUME-PREFLIGHT.md](WINDOWS-VOLUME-PREFLIGHT.md) | Win32 logical volume identity and free-space checks, with caveats |
 | Synthetic signed journal v2 | [JOURNAL-V2-FIXTURE.md](JOURNAL-V2-FIXTURE.md) | Tested fixture format, limitations and Windows check command |
 
 ## Decision and progress log
@@ -161,4 +163,5 @@ Keep the installer independent of the AzerothCore server, individual-progression
 - Added [Journal Authority](JOURNAL-AUTHORITY.md) specifying proposed tamper-evident ownership and failure cases, without implementing keys or automatic recovery.
 - PR [#7](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/7) adds synthetic signed journal v2 event-chain and anchor checks, a Windows fixture test suite, and [format documentation](JOURNAL-V2-FIXTURE.md). **Only trust properties of the disposable fixture are tested.**
 - PR [#8](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/8) adds a separately keyed, read-only **synthetic witness** comparison; tests show older journal+anchor replay detection only when the newer witness is independently retained, and confirm replay of *all* records remains possible without protected monotonic state.
-- **Next task:** design and critically review a trusted Windows installation identity and independently protected non-rollbackable latest-state anchor; add fixture-only crash/order tests before authorising any writer. Actual writes, backups and real game clients remain off-limits.
+- PR [#9](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/9) upgrades storage classification to Win32 logical volume GUIDs and per-directory capacity, with failure-path tests; physical disk identity, durability and write-time TOCTOU remain unresolved.
+- **Next task:** design and critically review a trusted Windows installation-folder identity and protected latest-state journal mechanism; test failure/replay boundaries before authorising a *fixture-only* writer. Real client writes and patch distribution remain off-limits.
