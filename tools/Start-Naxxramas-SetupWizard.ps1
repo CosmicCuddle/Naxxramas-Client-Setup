@@ -343,6 +343,8 @@ if($DetailDiagnostics){
             $region=@($dialog.Controls.Find('ReadOnlyDetailsContent',$true))[0]
             $footer=@($dialog.Controls.Find('ReadOnlyStorageNotice',$true))[0]
             $closeReview=@($dialog.Controls.Find('CloseDetails',$true))[0]
+            $banner=@($dialog.Controls.Find('ReadOnlyDetailsBanner',$true))[0]
+            $theme=Get-WizardTheme ([Windows.Forms.SystemInformation]::HighContrast)
             # Inspect the actual controls after shrinking to a laptop-sized
             # viewport. This is NOT a simulation of Windows DPI scaling.
             $initialFitsDesktop=($dialog.Height -le [Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height)
@@ -369,6 +371,12 @@ if($DetailDiagnostics){
                 grid_read_only=$grid.ReadOnly
                 grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
                 warnings_read_only=$issues.ReadOnly
+                detail_matches_system_contrast=($dialog.BackColor -eq $theme.Window -and
+                    $banner.ForeColor -eq $theme.Text -and
+                    $issues.BackColor -eq $theme.Input -and
+                    $issues.ForeColor -eq $theme.InputText)
+                details_notes_accessible=(-not [string]::IsNullOrWhiteSpace($issues.AccessibleName) -and
+                    $issues.AccessibleDescription.Contains('Read-only'))
                 compact_viewport_checked=$true
                 compact_details_scrollable=($dialog.AutoScroll -and
                     $dialog.AutoScrollMinSize.Height -ge $region.Height -and
