@@ -356,6 +356,11 @@ if($Diagnostics){
         scrollable_layout=$form.AutoScroll
         minimum_scroll_height=$form.AutoScrollMinSize.Height
         optional_controls_do_not_overlap=($loading.Top -ge $login.Bottom)
+        folder_browse_buttons_inside_viewport=($clientField.Browse.Right -le $form.ClientSize.Width -and
+            $sourceField.Browse.Right -le $form.ClientSize.Width -and
+            $backupField.Browse.Right -le $form.ClientSize.Width)
+        action_buttons_inside_viewport=($close.Right -le $form.ClientSize.Width -and
+            $details.Right -le $form.ClientSize.Width)
         form_height=$form.Height
         working_area_height=$workingArea.Height
         preview_inside_scroll_extent=($preview.Bottom -le $form.AutoScrollMinSize.Height)
