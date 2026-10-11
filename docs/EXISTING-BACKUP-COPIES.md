@@ -69,6 +69,10 @@ The suite creates **small fake MPQ-named text files**, a fake versioned executab
 
 The test setup is disposed after execution. No Blizzard client content or private MPQ is included.
 
+## Transaction-scoped interrupted staging review
+
+The [Transaction Backup Checkpoints](TRANSACTION-BACKUP-CHECKPOINT.md) milestone uses these **actual read-only existing-copy observations** to classify an already-existing transaction-specific `originals` folder plus an untrusted local phase/digest claim. It detects leftover `.part` staging files and source/copy drift. The Windows regression test creates tiny staged files only inside a generated temporary folder and simulates interruption and corruption; **the runtime inspector remains read-only**, and a matching claim still cannot prove durability, original provenance or safe restoration.
+
 ## Still required for a safe installer
 
 The actual production backup writer must create an **immutable, transaction-scoped, original-preserving backup** under a separately selected, adequately sized and trustworthy location. It must verify it byte-for-byte while maintaining safe file/directory handles; explicitly journal a backup-verified stage, handle failure/interruptions without losing originals, re-open/verify the backup before any future restore, and refuse to replace files changed by the player.

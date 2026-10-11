@@ -180,6 +180,10 @@ The [Original Backup Readiness Review](BACKUP-ORIGINALS-READINESS.md) integrates
 
 The [Existing Backup Copies](EXISTING-BACKUP-COPIES.md) reviewer compares an already-present, manually supplied mirrored backup copy against each original identified for `replace_after_backup`. Windows held-file-handle observations detect missing/changed bytes and hardlink aliases to the original. A matching different object does **not** provide transaction backup provenance, durable flushing, later-file conflict protection, consent or recovery permission. This is **not** a backup writer.
 
+## Transaction-scoped backup checkpoint review (read-only)
+
+The [Transaction Backup Checkpoints](TRANSACTION-BACKUP-CHECKPOINT.md) milestone adds a strict read-only inspection of an already-existing transaction `originals` folder and an untrusted claimed copy phase. It cross-checks actual existing mirrored original copies and candidate hashes, and blocks leftover staged `.part` files. A separately contained Windows regression test exercises fake `FileMode.CreateNew` copies and interruption states **only inside its own disposable temp root**. Neither production component creates a backup, authenticates owner consent, durably commits a journal or approves installation/recovery. A test `Flush(true)` is **not** equivalent to power-loss-safe file/metadata persistence.
+
 ## Next implementation recommendation
 
 **Completed first slice:** [Recovery Preview](RECOVERY-PREVIEW.md) now reads synthetic session records and inspects current/backup file hashes without changing them. The Windows PowerShell CI fixture suite passed on 10 October 2026.
