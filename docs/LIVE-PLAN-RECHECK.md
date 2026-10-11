@@ -85,6 +85,10 @@ The GitHub Windows suite builds disposable source/client/backup directories with
 
 The fixture creation/cleanup code writes solely inside its own freshly generated temporary test root. The updated suite also induces a deliberate mid-scan mutation **only in a disposable copied planner**, checks `scan_stable=false` on comparison, and verifies snapshot capture refuses unstable evidence. **The new review tool remains read-only.** No actual game assets are needed or distributed.
 
+## Related read-only file-handle inspection
+
+The separate [Open-file Handle Review](OPEN-FILE-HANDLE-REVIEW.md) now demonstrates holding **multiple known file handles** open with Windows `FileAccess.Read` and `FileShare.Read` while hashing directly from those handles. This strengthens our ability to observe files during a *particular* scan and detect incompatible concurrent writers, but it does not turn this planner recheck into a race-free transaction, authenticate a snapshot, lock an entire directory or protect any file after handles are released.
+
 ## What comes next
 
 A future production approval flow must bind user consent to a freshly verified plan and **stable actual installation identity**, with an independently protected one-time receipt and latest-used/anchored sequence. Changes to either plan or input files must cancel any earlier approval. Original backups, source provenance, scope and owner permissions still require separate verification, and Windows write-time races remain unresolved.
