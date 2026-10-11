@@ -65,4 +65,6 @@ The future writing installer would need an independently reviewed registration f
 
 For related designs see [Journal Authority](JOURNAL-AUTHORITY.md), [Journal Durability](JOURNAL-DURABILITY.md), [Directory Identity](WINDOWS-DIRECTORY-IDENTITY.md), and the [Project Handover](PROJECT-HANDOVER.md).
 
+**Further review (11 October 2026):** [Trust Continuity Review](TRUST-CONTINUITY-REVIEW.md) extends the synthetic model to loss of key, changed Windows account, client migration, multiple independent blockers and patch-source consent. These are untrusted labels, **not** registered installations. Replaying every old record together remains possible and no result permits automatic trust regeneration.
+
 **Never interpret “consistent” as “approved.”** All current code remains strictly read-only.
