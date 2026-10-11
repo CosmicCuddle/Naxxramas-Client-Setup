@@ -73,16 +73,16 @@ public static class HarmlessFixtureExe {
 '@
  Add-Type -TypeDefinition $syntheticExe -OutputAssembly $exe -OutputType ConsoleApplication -ErrorAction Stop
  $argsMap=@{ClientPath=$client;PatchSourcePath=$source;BackupRoot=$backup}
- function Capture([hashtable]$Args){
-  $raw=(& $review @Args -Snapshot | Out-String)
+ function Capture([hashtable]$InputParams){
+  $raw=(& $review @InputParams -Snapshot | Out-String)
   Check (-not $raw.Contains($root)) 'Capture stdout includes no absolute fixture paths'
   $value=$raw|ConvertFrom-Json
   Check (@($value).Count -eq 5) 'Capture includes five positional fields'
   Save $baseline $raw
   return $value
  }
- function Compare([hashtable]$Args){
-  return ((& $review @Args -BaselineSnapshotPath $baseline -Json | Out-String)|ConvertFrom-Json)
+ function Compare([hashtable]$InputParams){
+  return ((& $review @InputParams -BaselineSnapshotPath $baseline -Json | Out-String)|ConvertFrom-Json)
  }
  function Block([object]$Result,[string]$Reason,[string]$Label){
   Check (@($Result.blockers) -ccontains $Reason) $Label
@@ -103,12 +103,12 @@ public static class HarmlessFixtureExe {
   (Snapshot-Files $source) -ceq $beforeSource -and
   (Snapshot-Files $backup) -ceq $beforeBackup) 'Read-only capture/compare does not change fixture files'
 
- $different=@{}+$argsMap
+ $different=$argsMap.Clone()
  $different.VanillaLogin=$true
  $result=Compare $different
  Block $result 'file_plan_or_options_changed' 'Selecting J after baseline changes real planner semantics'
 
- $different=@{}+$argsMap
+ $different=$argsMap.Clone()
  $different.RealmHost='other.example.test'
  $result=Compare $different
  Block $result 'file_plan_or_options_changed' 'Realm address changed after capture'
@@ -126,19 +126,19 @@ public static class HarmlessFixtureExe {
 
  $null=New-Item -ItemType Directory -Path $sourceCopy
  Copy-Item -LiteralPath (Join-Path $source 'Data') -Destination $sourceCopy -Recurse
- $different=@{}+$argsMap
+ $different=$argsMap.Clone()
  $different.PatchSourcePath=$sourceCopy
  $result=Compare $different
  Block $result 'source_folder_identity_changed' 'Copied identical local source is not the same directory identity'
  Check ($result.snapshot_matches_current_observation -eq $false) 'Copied source invalidates captured identity'
 
  $null=New-Item -ItemType Directory -Path $backupCopy
- $different=@{}+$argsMap
+ $different=$argsMap.Clone()
  $different.BackupRoot=$backupCopy
  $result=Compare $different
  Block $result 'backup_folder_identity_changed' 'New backup folder cannot reuse old captured identity'
 
- $different=@{}+$argsMap
+ $different=$argsMap.Clone()
  $different.Remove('BackupRoot')
  $result=Compare $different
  Block $result 'separate_backup_not_selected' 'Missing private backup location remains a blocker'
