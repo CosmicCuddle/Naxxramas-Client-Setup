@@ -66,6 +66,10 @@ The disposable test suite creates **fake V/U files**, one prior original backup 
 
 Test setup/cleanup writes **only inside a freshly created disposable temporary directory**; no real WoW clients or custom MPQs are used.
 
+## Recovery receipt and owner claim checks
+
+The additional [Recovery Ownership and Authority Review](RECOVERY-OWNERSHIP-AUTHORITY.md) connects this existing recovery safeguard to **actual session JSON and folder fingerprints** plus two **caller-written** proposed consent/latest-state receipts. It catches changed session bytes, wrong folder, different nonce/sequence, reported consumed/revoked/expired consent, and an authority labelled stale or missing. The new receipt checker cannot authenticate the source of either record and expressly cannot detect coherent replay of both local claims; no real recovery action is authorised.
+
 ## Critical boundaries
 
 - **Not an atomic snapshot.** Session, file inventory and backup observations occur separately and release handles between steps. Coordinated A–B–A swaps, post-review modification and other time-of-check/time-of-use changes may escape detection.

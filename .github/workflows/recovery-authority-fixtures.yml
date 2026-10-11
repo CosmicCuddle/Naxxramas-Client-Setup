@@ -1,0 +1,29 @@
+name: Read-only recovery owner authority fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-RecoveryAuthority.ps1'
+      - 'tests/Test-RecoveryAuthority.ps1'
+      - 'docs/RECOVERY-OWNERSHIP-AUTHORITY.md'
+      - '.github/workflows/recovery-authority-fixtures.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-RecoveryAuthority.ps1'
+      - 'tests/Test-RecoveryAuthority.ps1'
+      - 'docs/RECOVERY-OWNERSHIP-AUTHORITY.md'
+      - '.github/workflows/recovery-authority-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate read-only owner/receipt/latest-state claim mismatches
+        shell: powershell
+        run: .\tests\Test-RecoveryAuthority.ps1
