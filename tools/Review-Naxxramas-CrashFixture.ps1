@@ -88,7 +88,7 @@ for ($i=0; $i -lt 2; $i++) {
     }
     OneOf $item[1] @('install','replace_after_backup') 'file action'
     OneOf $item[2] @('not_required','missing','verified','corrupt') 'backup observation'
-    OneOf $item[3] @('absent','original','installed','modified','unknown') 'destination observation'
+    OneOf $item[3] @('absent','original','installed','modified','missing','unknown') 'destination observation'
     OneOf $item[4] $fileStates 'file checkpoint'
     if ($item[1] -ceq 'install' -and $item[2] -cne 'not_required') {
         throw 'Newly created files cannot claim an original backup.'
@@ -121,6 +121,12 @@ if (-not $classification -and @($entries | Where-Object {
 }).Count -gt 0) {
     $classification = 'manual_review_destination_conflict'
     $reasons.Add('A destination has unexpected or unrecognised content; preserve it.')
+}
+if (-not $classification -and @($entries | Where-Object {
+    $_.destination -eq 'missing'
+}).Count -gt 0) {
+    $classification = 'manual_review_missing_destination'
+    $reasons.Add('A required core patch is absent; do not infer it was deleted by this installer.')
 }
 if (-not $classification -and @($entries | Where-Object {
     $_.action -eq 'replace_after_backup' -and
