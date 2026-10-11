@@ -41,6 +41,7 @@ $config=Join-Path $root 'config'
 $history=Join-Path $config 'patch-versions'
 try{
     Check (Test-Path -LiteralPath $wizard -PathType Leaf) 'Read-only Windows wizard exists'
+    Check (Test-Path -LiteralPath (Join-Path $repo 'tools/Naxxramas-WizardDetails.ps1') -PathType Leaf) 'Read-only detailed review helper exists'
     Check (Test-Path -LiteralPath $bat -PathType Leaf) 'Double-click Windows launcher exists'
     $launcher=[IO.File]::ReadAllText($bat)
     Check ($launcher.Contains('-STA') -and
@@ -56,9 +57,11 @@ try{
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation'
     Check ($layout.default_keyboard_action -ceq 'ReviewOnly' -and
         $layout.cancel_keyboard_action -ceq 'CloseWizard') 'Enter reviews only; Escape closes safely'
-    Check (@($layout.action_labels).Count -eq 6 -and
+    Check (@($layout.action_labels).Count -eq 7 -and
         @($layout.action_labels) -ccontains 'Review Only' -and
-        @($layout.action_labels) -ccontains 'Clear Review') 'No hidden apply or confirmation control'
+        @($layout.action_labels) -ccontains 'Clear Review' -and
+        @($layout.action_labels) -ccontains 'View File Details...') 'Review details added without Apply or confirmation control'
+    Check ($layout.details_action_initially_disabled -and $layout.detail_view_is_read_only) 'Detailed view disabled until real successful inspection'
     Check (-not $layout.actual_installer_action_present -and
         -not $layout.consent_action_present -and
         -not $layout.rollback_action_present -and
@@ -74,7 +77,7 @@ try{
         (Join-Path $client 'Data/enUS'),(Join-Path $source 'Data'))){
         $null=New-Item -ItemType Directory -Path $p -Force
     }
-    foreach($name in @('Show-Naxxramas-InstallReview.ps1','Plan-Naxxramas-Install.ps1','Start-Naxxramas-SetupWizard.ps1')){
+    foreach($name in @('Show-Naxxramas-InstallReview.ps1','Plan-Naxxramas-Install.ps1','Start-Naxxramas-SetupWizard.ps1','Naxxramas-WizardDetails.ps1')){
         Copy-Item -LiteralPath (Join-Path $repo ('tools/'+$name)) -Destination $tools
     }
     $wizard=Join-Path $tools 'Start-Naxxramas-SetupWizard.ps1'
@@ -131,18 +134,37 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ($summary.review_required -and -not $summary.client_files_modified -and
         -not $summary.file_writes_authorised -and -not $summary.genuine_user_consent_collected -and
         -not $summary.original_backups_created) 'Wizard cannot authenticate or write files'
+    $detailArgs=@('-DetailDiagnostics','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-VanillaLoading')
+    $detail=Execute $detailArgs 'Construct actual read-only file details dialog without displaying'
+    Check ($detail.kind -ceq 'read_only_windows_wizard_file_details_diagnostics' -and
+        $detail.detail_window_created -and -not $detail.detail_window_displayed) 'Actual details dialog constructs with no modal window'
+    Check ($detail.file_count -eq 5 -and @($detail.file_names).Count -eq 5) 'Exactly five file rows displayed in detailed review'
+    Check (@($detail.backup_labels | Where-Object {$_ -ceq 'YES - not created'}).Count -eq 2) 'V and realmlist clearly identify originals not yet backed up'
+    Check (@($detail.proposed_actions | Where-Object {$_ -match 'replace ONLY after an exact original backup'}).Count -eq 2) 'Detailed action table explains the exact replacement gate'
+    Check ($detail.grid_read_only -and $detail.grid_add_delete_disabled -and
+        $detail.warnings_read_only -and $detail.no_approval_or_installation) 'File details cannot edit data or authorise a write'
+    Check ($detail.review_status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Expanded no-blocker view still denies approval'
     Check ((Tree $client) -ceq $beforeClient -and
         (Tree $source) -ceq $beforeSource -and
-        (Tree $backup) -ceq $beforeBackup) 'Actual fake client, source and backup remain byte-identical after wizard bridge'
+        (Tree $backup) -ceq $beforeBackup) 'Dialog and planner bridge leave fake client/source/backup bytes intact'
 
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
     $summary=Execute $reviewParams 'Wizard reports omitted backup folder'
     Check ($summary.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'Missing backup folder blocks hypothetical changes'
+    $detailArgs=@('-DetailDiagnostics','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
+    $detail=Execute $detailArgs 'Expanded details with missing separate backup folder'
+    Check ($detail.review_status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        $detail.concerns_count -gt 0) 'Detailed read-only dialog highlights blocked preflight'
     Save $v 'UNKNOWN_USER_V'
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-VanillaLoading')
     $summary=Execute $reviewParams 'Wizard refuses unknown V'
     Check ($summary.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'Unknown core patch is refused'
+    $detailArgs=@('-DetailDiagnostics','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-VanillaLoading')
+    $detail=Execute $detailArgs 'Expanded details on unfamiliar core patch'
+    Check ($detail.review_status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'Detailed view never disguises an unrecognised V patch'
 
     $raw=(& powershell.exe -NoProfile -STA -File $wizard -Diagnostics | Out-String)
     Check (-not $raw.Contains($root)) 'Layout diagnostic never reveals private client paths'
