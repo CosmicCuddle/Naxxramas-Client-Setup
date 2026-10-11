@@ -1,0 +1,29 @@
+name: Read-only recovery conflict safeguard tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-RecoverySafeguard.ps1'
+      - 'tests/Test-RecoverySafeguard.ps1'
+      - 'docs/RECOVERY-CONFLICT-SAFEGUARD.md'
+      - '.github/workflows/recovery-safeguard-tests.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-RecoverySafeguard.ps1'
+      - 'tests/Test-RecoverySafeguard.ps1'
+      - 'docs/RECOVERY-CONFLICT-SAFEGUARD.md'
+      - '.github/workflows/recovery-safeguard-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test player edits and interrupted recovery against disposable files
+        shell: powershell
+        run: .\tests\Test-RecoverySafeguard.ps1
