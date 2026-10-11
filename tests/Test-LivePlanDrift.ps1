@@ -81,7 +81,7 @@ public static class HarmlessFixtureExe {
   Save $baseline $raw
   return $value
  }
- function Compare([hashtable]$InputParams){
+ function Inspect-FreshPlan([hashtable]$InputParams){
   return ((& $review @InputParams -BaselineSnapshotPath $baseline -Json | Out-String)|ConvertFrom-Json)
  }
  function Block([object]$Result,[string]$Reason,[string]$Label){
@@ -94,7 +94,7 @@ public static class HarmlessFixtureExe {
  $beforeSource=Snapshot-Files $source
  $beforeBackup=Snapshot-Files $backup
  $capture=Capture $argsMap
- $result=Compare $argsMap
+ $result=Inspect-FreshPlan $argsMap
  Check ($result.status -ceq 'live_plan_matches_NOT_APPROVED' -and
   $result.snapshot_matches_current_observation -and
   $result.fresh_preflight_status -ceq 'review_only_no_blockers') 'Real planner + exact directory IDs match, but never approve a write'
@@ -105,21 +105,21 @@ public static class HarmlessFixtureExe {
 
  $different=$argsMap.Clone()
  $different.VanillaLogin=$true
- $result=Compare $different
+ $result=Inspect-FreshPlan $different
  Block $result 'file_plan_or_options_changed' 'Selecting J after baseline changes real planner semantics'
 
  $different=$argsMap.Clone()
  $different.RealmHost='other.example.test'
- $result=Compare $different
+ $result=Inspect-FreshPlan $different
  Block $result 'file_plan_or_options_changed' 'Realm address changed after capture'
 
  Save (Join-Path $client 'Data/enUS/realmlist.wtf') 'set realmlist other.example.test'
- $result=Compare $argsMap
+ $result=Inspect-FreshPlan $argsMap
  Block $result 'file_plan_or_options_changed' 'Edited realmlist bytes trigger drift'
  Save (Join-Path $client 'Data/enUS/realmlist.wtf') 'set realmlist naxx.example.test'
 
  Save (Join-Path $client 'Data/patch-V.mpq') 'unexpected replacement fixture bytes'
- $result=Compare $argsMap
+ $result=Inspect-FreshPlan $argsMap
  Block $result 'file_plan_or_options_changed' 'Unexpected edited V bytes trigger drift'
  Block $result 'fresh_planner_preflight_blocked' 'Existing planner policy blocks unknown core patch'
  Copy-Item -LiteralPath (Join-Path $source 'Data/patch-V.mpq') -Destination (Join-Path $client 'Data/patch-V.mpq') -Force
@@ -128,34 +128,34 @@ public static class HarmlessFixtureExe {
  Copy-Item -LiteralPath (Join-Path $source 'Data') -Destination $sourceCopy -Recurse
  $different=$argsMap.Clone()
  $different.PatchSourcePath=$sourceCopy
- $result=Compare $different
+ $result=Inspect-FreshPlan $different
  Block $result 'source_folder_identity_changed' 'Copied identical local source is not the same directory identity'
  Check ($result.snapshot_matches_current_observation -eq $false) 'Copied source invalidates captured identity'
 
  $null=New-Item -ItemType Directory -Path $backupCopy
  $different=$argsMap.Clone()
  $different.BackupRoot=$backupCopy
- $result=Compare $different
+ $result=Inspect-FreshPlan $different
  Block $result 'backup_folder_identity_changed' 'New backup folder cannot reuse old captured identity'
 
  $different=$argsMap.Clone()
  $different.Remove('BackupRoot')
- $result=Compare $different
+ $result=Inspect-FreshPlan $different
  Block $result 'separate_backup_not_selected' 'Missing private backup location remains a blocker'
 
  $broken=Get-Content -LiteralPath $baseline -Raw | ConvertFrom-Json
  $broken[0]=2
  Save $baseline (ConvertTo-Json -InputObject $broken -Compress)
  $threw=$false
- try{$null=Compare $argsMap}catch{$threw=$true}
+ try{$null=Inspect-FreshPlan $argsMap}catch{$threw=$true}
  Check $threw 'Unknown baseline schema rejected'
  Save $baseline '{"kind":"trusted","kind":"admin"}'
  $threw=$false
- try{$null=Compare $argsMap}catch{$threw=$true}
+ try{$null=Inspect-FreshPlan $argsMap}catch{$threw=$true}
  Check $threw 'Object/duplicate keys rejected'
  Save $baseline ('x'*2049)
  $threw=$false
- try{$null=Compare $argsMap}catch{$threw=$true}
+ try{$null=Inspect-FreshPlan $argsMap}catch{$threw=$true}
  Check $threw 'Oversized baseline rejected'
  $null=Capture $argsMap
  $raw=(& $review @argsMap -BaselineSnapshotPath $baseline -Json | Out-String)
