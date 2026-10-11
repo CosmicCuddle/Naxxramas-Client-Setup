@@ -93,6 +93,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-InstallerP
 
 The tests create and then delete their **own** disposable temporary fixtures. They are not intended to be run against any genuine game folder.
 
+## Developer-only approval scope checks
+
+The [Approval Snapshot Review](APPROVAL-SNAPSHOT-REVIEW.md) models a future frozen user-approved plan. Its Windows fixture tests compare mandatory V/Z operations, independent J/U choices, realmlist, the selected backup/source directories and expected original bytes against a changed proposal. This tool operates on **artificial JSON data only** and does not create consent or enable the planner to write files.
+
 ## Not implemented yet
 
 A finished setup GUI, an installation plan approved for execution, private asset provenance/permissions checking, addons installation, automatic backups, staged copying, failure recovery, update, rollback, uninstall and public distribution remain future milestones. See [ROADMAP.md](ROADMAP.md) and [PROJECT-HANDOVER.md](PROJECT-HANDOVER.md).
