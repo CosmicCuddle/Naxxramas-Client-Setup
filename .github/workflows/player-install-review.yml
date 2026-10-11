@@ -1,0 +1,29 @@
+name: Player-readable read-only installer review tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Show-Naxxramas-InstallReview.ps1'
+      - 'tests/Test-PlayerInstallReview.ps1'
+      - 'docs/PLAYER-INSTALL-REVIEW.md'
+      - '.github/workflows/player-install-review.yml'
+  push:
+    paths:
+      - 'tools/Show-Naxxramas-InstallReview.ps1'
+      - 'tests/Test-PlayerInstallReview.ps1'
+      - 'docs/PLAYER-INSTALL-REVIEW.md'
+      - '.github/workflows/player-install-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Review the real local planner as plain-language preview on fake client files
+        shell: powershell
+        run: .\tests\Test-PlayerInstallReview.ps1
