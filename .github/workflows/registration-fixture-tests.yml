@@ -5,11 +5,17 @@ on:
     paths:
       - 'tools/Review-Naxxramas-RegistrationFixture.ps1'
       - 'tests/Test-RegistrationFixture.ps1'
+      - 'docs/REGISTRATION-FIXTURE-REVIEW.md'
+      - 'docs/ROADMAP.md'
+      - 'docs/PROJECT-HANDOVER.md'
       - '.github/workflows/registration-fixture-tests.yml'
   pull_request:
     paths:
       - 'tools/Review-Naxxramas-RegistrationFixture.ps1'
       - 'tests/Test-RegistrationFixture.ps1'
+      - 'docs/REGISTRATION-FIXTURE-REVIEW.md'
+      - 'docs/ROADMAP.md'
+      - 'docs/PROJECT-HANDOVER.md'
       - '.github/workflows/registration-fixture-tests.yml'
   workflow_dispatch:
 
