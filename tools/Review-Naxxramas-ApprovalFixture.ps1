@@ -143,6 +143,20 @@ function Validate-Plan([object]$Plan) {
         throw 'Unsupported source provenance status.'
     }
 }
+function Get-PlanFixtureDigest([array]$Plan) {
+    # Only already validated positional primitive/array schema reaches this function.
+    # Canonical FOR THE SYNTHETIC POWERSHELL 5.1 FIXTURE ONLY.
+    # Unlike the signed journal format, this digest is UNKEYED and UNTRUSTED.
+    $compact = ConvertTo-Json -InputObject $Plan -Depth 16 -Compress
+    $wire = 'NAXX-PLAN-FIXTURE-1:' + $compact
+    $bytes = [Text.Encoding]::UTF8.GetBytes($wire)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return [BitConverter]::ToString($sha.ComputeHash($bytes)).Replace('-','').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
 function Add-Change([System.Collections.Generic.List[string]]$List,[object]$Previous,
     [object]$Current,[string]$Reason) {
     if ($Previous -cne $Current) { $List.Add($Reason) }
@@ -150,21 +164,46 @@ function Add-Change([System.Collections.Generic.List[string]]$List,[object]$Prev
 
 $current = Read-ArrayFixture $FixturePlanPath 'Current plan' $false
 Validate-Plan $current
+$currentDigest = Get-PlanFixtureDigest $current
 $approval = Read-ArrayFixture $FixtureApprovalPath 'Approval receipt' $true
 $blocks = New-Object 'System.Collections.Generic.List[string]'
 $match = $false
+$approvalVersion = $null
+$approvalDigestMatchesSnapshot = $null
+$currentDigestMatchesReceipt = $null
 if ($null -eq $approval) {
     $blocks.Add('approval_record_missing')
 } else {
-    # [1, receiptId, consentStatus, exactPlanSnapshot]
-    if ($approval.Count -ne 4) { throw 'Approval receipt has unexpected fields.' }
-    Require-Version $approval[0]
+    # v1 [1, receiptId, consent, exactPlanSnapshot]
+    # v2 [2, receiptId, consent, exactPlanSnapshot, declaredPlanDigest]
+    # Both formats remain synthetic and completely caller-controlled.
+    if (-not ($approval[0] -is [int] -or $approval[0] -is [long])) {
+        throw 'Approval receipt has invalid schema version.'
+    }
+    $approvalVersion = [int64]$approval[0]
+    if (($approvalVersion -eq 1 -and $approval.Count -ne 4) -or
+        ($approvalVersion -eq 2 -and $approval.Count -ne 5) -or
+        ($approvalVersion -ne 1 -and $approvalVersion -ne 2)) {
+        throw 'Approval receipt has an unsupported schema or unexpected fields.'
+    }
     Require-Id $approval[1] 'approval receipt ID'
     if (-not ($approval[2] -is [string]) -or $approval[2] -cnotin @(
         'explicit_confirmed','pending','revoked','expired')) {
         throw 'Unknown approval consent claim.'
     }
     Validate-Plan $approval[3]
+    if ($approvalVersion -eq 2) {
+        Require-Digest $approval[4] 'declared frozen plan digest'
+        $snapshotDigest = Get-PlanFixtureDigest $approval[3]
+        $approvalDigestMatchesSnapshot = ($snapshotDigest -ceq [string]$approval[4])
+        $currentDigestMatchesReceipt = ($currentDigest -ceq [string]$approval[4])
+        if (-not $approvalDigestMatchesSnapshot) {
+            $blocks.Add('approval_snapshot_digest_invalid')
+        }
+        if (-not $currentDigestMatchesReceipt) {
+            $blocks.Add('current_plan_digest_differs_from_approval')
+        }
+    }
     if ($approval[2] -cne 'explicit_confirmed') {
         $blocks.Add('approval_not_explicit_or_no_longer_current')
     }
@@ -204,13 +243,16 @@ $report=[pscustomobject][ordered]@{
     blocker_count=$blocks.Count
     blockers=@($blocks.ToArray())
     approval_present=($null -ne $approval)
+    approval_fixture_version=$approvalVersion
+    approval_digest_matches_claimed_snapshot=$approvalDigestMatchesSnapshot
+    current_plan_digest_matches_claimed_receipt=$currentDigestMatchesReceipt
     review_required=$true
     allow_file_writes=$false
     allow_automatic_resume=$false
     authorises_rollback=$false
     records_real_consent=$false
     public_distribution_authorised=$false
-    limitations='All approval claims, folder fingerprints, hashes, sources and permission labels are caller-written fixtures. No live bytes, ownership, authenticated approval, rights or protected latest state were verified. Matching records never authorise installation.'
+    limitations='Both v1 and v2 receipt data and plan digests are user-controlled. An unkeyed canonical JSON SHA-256 is not authenticated consent, unforgeable identity or anti-replay. No live bytes, ownership, patch rights or protected latest state verified. Never authorises installation.'
 }
 if($Json){$report | ConvertTo-Json -Depth 5}
 else{
