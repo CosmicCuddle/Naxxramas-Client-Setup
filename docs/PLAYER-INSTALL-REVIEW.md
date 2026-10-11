@@ -70,6 +70,10 @@ The suite builds **tiny fake text patch files**, a harmless versioned `Wow.exe` 
 
 All writes in the test are confined to a uniquely generated **disposable temporary folder**. The runtime script does not create, copy, replace, remove or restore any game file.
 
+## Guided Windows review window
+
+The [Guided Windows Setup](GUIDED-WINDOWS-SETUP.md) milestone now uses this same real read-only player review behind a **Windows Forms GUI** with existing-folder pickers and independently optional J/U controls. It is only a friendlier way of inspecting the same plan, never an approval click. The form clears older previews when inputs change and never offers installation, rollback or backup operations.
+
 ## Important limits and next engineering gate
 
 This new view **summarises one invocation of the existing read-only planner**. It is not an atomic file snapshot, lacks held handles across later operations, and does not revalidate contents after the review finishes. A different script can modify files after a preview; a match is never proof of owner consent.

@@ -1,0 +1,31 @@
+name: Read-only Windows guided setup wizard tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Start-Naxxramas-SetupWizard.ps1'
+      - 'tools/Start-Naxxramas-SetupWizard.bat'
+      - 'tests/Test-SetupWizard.ps1'
+      - 'docs/GUIDED-WINDOWS-SETUP.md'
+      - '.github/workflows/guided-windows-setup.yml'
+  push:
+    paths:
+      - 'tools/Start-Naxxramas-SetupWizard.ps1'
+      - 'tools/Start-Naxxramas-SetupWizard.bat'
+      - 'tests/Test-SetupWizard.ps1'
+      - 'docs/GUIDED-WINDOWS-SETUP.md'
+      - '.github/workflows/guided-windows-setup.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Smoke-test actual Windows Forms and inspect disposable planner fixtures
+        shell: powershell
+        run: .\tests\Test-SetupWizard.ps1
