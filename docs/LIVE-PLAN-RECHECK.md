@@ -42,6 +42,18 @@ An exact five-field positional JSON array:
 
 A snapshot comparison report names *categories only*: `file_plan_or_options_changed`, `client_folder_identity_changed`, `source_folder_identity_changed`, `backup_folder_identity_changed`, `fresh_planner_preflight_blocked` or `separate_backup_not_selected`. It does not print local folder names, input hashes or the fingerprint itself.
 
+## Two-pass consistency barrier (PR #19)
+
+The reviewer now performs **two fresh read-only passes** each time. Each pass independently runs the existing local Windows planner (patch hashes, realmlist, build, volume/space rules), followed by Win32 directory fingerprints for the client, patch source and backup folders.
+
+- **Snapshot mode:** if the two passes disagree on any of the four fingerprints, the tool refuses to print a snapshot. It does **not** write one to disk.
+- **Comparison mode:** if passes disagree, the report blocks manual review with targeted reasons: `file_plan_changed_during_inspection`, `client_folder_changed_during_inspection`, `source_folder_changed_during_inspection` or `backup_folder_changed_during_inspection`. It exposes `scan_passes=2` and `scan_stable=false`, and still never authorises a write.
+- Existing baseline change/blocker checks remain in force, and `fresh_preflight_status` comes from the second planner pass.
+
+**This is a best-effort read-only stability check, not an atomic transaction.** Two matching observations do *not* rule out changes between scans that were undone (A–B–A), changes after the final scan, malicious concurrent edits, registry/mount changes, device cache behaviour or source/destination handle races. No handles are retained across passes. A future writer still needs separately designed, race-resistant file-handle validation **immediately before and during** any authorised write, with real consent and durable recovery.
+
+The Windows integration suite includes a **test-only mutation hook inserted exclusively into its disposable copy of the planner**. It changes a tiny fake `realmlist.wtf` after the first planner computation; the second scan sees changed file state, and snapshot capture refuses unstable evidence. Neither the committed planner nor the reviewer has any mutation hook or write operation.
+
 ## What it detects
 
 - Changed installed or locally supplied V/Z/J/U bytes that alter the real planner's classification.
@@ -71,7 +83,7 @@ Run:
 
 The GitHub Windows suite builds disposable source/client/backup directories with *fake non-WoW patch bytes*, a versioned harmless fixture executable and a fixture manifest. It invokes the **real planner and real Win32 directory identity tool** and verifies exact-matching snapshots, optional/realm drift, edits to V and the realmlist, same-byte copied source and replaced backup folder, missing backup selection, malformed baselines, no leaked paths and unchanged fixture bytes during inspection.
 
-The fixture creation/cleanup code writes solely inside its own freshly generated temporary test root. **The new review tool remains read-only.** No actual game assets are needed or distributed.
+The fixture creation/cleanup code writes solely inside its own freshly generated temporary test root. The updated suite also induces a deliberate mid-scan mutation **only in a disposable copied planner**, checks `scan_stable=false` on comparison, and verifies snapshot capture refuses unstable evidence. **The new review tool remains read-only.** No actual game assets are needed or distributed.
 
 ## What comes next
 
