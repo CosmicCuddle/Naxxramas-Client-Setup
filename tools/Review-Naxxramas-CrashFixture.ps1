@@ -123,7 +123,8 @@ if (-not $classification -and @($entries | Where-Object {
     $reasons.Add('A destination has unexpected or unrecognised content; preserve it.')
 }
 if (-not $classification -and @($entries | Where-Object {
-    $_.destination -eq 'missing'
+    $_.destination -eq 'missing' -or
+    ($record[3] -ceq 'completed' -and $_.destination -eq 'absent')
 }).Count -gt 0) {
     $classification = 'manual_review_missing_destination'
     $reasons.Add('A required core patch is absent; do not infer it was deleted by this installer.')
