@@ -1,0 +1,27 @@
+name: Read-only Windows folder identity tests
+
+on:
+  push:
+    paths:
+      - 'tools/Inspect-Naxxramas-DirectoryIdentity.ps1'
+      - 'tests/Test-DirectoryIdentity.ps1'
+      - '.github/workflows/directory-identity-tests.yml'
+  pull_request:
+    paths:
+      - 'tools/Inspect-Naxxramas-DirectoryIdentity.ps1'
+      - 'tests/Test-DirectoryIdentity.ps1'
+      - '.github/workflows/directory-identity-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out scripts
+        uses: actions/checkout@v4
+      - name: Test synthetic directory identities
+        shell: powershell
+        run: .\tests\Test-DirectoryIdentity.ps1

@@ -1,7 +1,7 @@
 # Journal authenticity and ownership — proposal
 
 **Status: design-only. Nothing here creates credentials, signs records or restores files.**  
-**Reviewed:** 10 October 2026  
+**Reviewed:** 11 October 2026  
 **Related:** [Journal Durability](JOURNAL-DURABILITY.md), [Transaction Design](TRANSACTION-DESIGN.md), [Recovery Preview](RECOVERY-PREVIEW.md).
 
 ## Problem
@@ -90,4 +90,6 @@ The future engine must do **all** of the following, freshly and under its own co
 
 **Additional read-only fixture validation (10 October 2026):** the [v2 journal fixture](JOURNAL-V2-FIXTURE.md) now accepts a separately keyed witness. Windows tests demonstrate that retaining an independently newer witness blocks replay of an older signed journal **and its matching older anchor**, while a coordinated replay of **all three** remains indistinguishable when every input is caller-controlled. This is a test of the risk and the comparison, **not** implementation of protected Windows monotonic state.
 
-**Next implementation step:** refine secure key/anchor management, strict input limits and Windows installation/volume identity; define a crash-tolerant state protocol and test it without a real WoW client. Do not build a write-capable rollback engine from the fixture format alone.
+**Read-only local folder identity milestone (11 October 2026):** a separate [Windows Directory Identity inspector](WINDOWS-DIRECTORY-IDENTITY.md) now observes a directory's Win32 `FILE_ID_INFO` through a read-only handle, and Windows synthetic tests distinguish renames from copies. This **does not create authenticated installation registration** or solve journal/anchor replay. A filesystem object ID can change or be reused, and path replacement between preflight and write is not yet addressed.
+
+**Next implementation step:** design a protected local registration plus independent latest-state journal authority with a reviewed loss/migration policy; document crash-tolerant journal and anchor update ordering, testing only disposable fixtures. Do not build a write-capable rollback engine from a mere filesystem fingerprint or fixture signature.
