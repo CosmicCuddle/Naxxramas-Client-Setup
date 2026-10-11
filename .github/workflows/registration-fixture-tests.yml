@@ -1,0 +1,27 @@
+name: Read-only registration fixture tests
+
+on:
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-RegistrationFixture.ps1'
+      - 'tests/Test-RegistrationFixture.ps1'
+      - '.github/workflows/registration-fixture-tests.yml'
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-RegistrationFixture.ps1'
+      - 'tests/Test-RegistrationFixture.ps1'
+      - '.github/workflows/registration-fixture-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run registration and interruption fixtures
+        shell: powershell
+        run: .\tests\Test-RegistrationFixture.ps1
