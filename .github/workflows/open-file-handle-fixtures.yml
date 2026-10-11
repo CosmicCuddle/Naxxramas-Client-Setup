@@ -1,0 +1,29 @@
+name: Read-only open file handle fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Inspect-Naxxramas-OpenFileHandles.ps1'
+      - 'tests/Test-OpenFileHandles.ps1'
+      - 'docs/OPEN-FILE-HANDLE-REVIEW.md'
+      - '.github/workflows/open-file-handle-fixtures.yml'
+  push:
+    paths:
+      - 'tools/Inspect-Naxxramas-OpenFileHandles.ps1'
+      - 'tests/Test-OpenFileHandles.ps1'
+      - 'docs/OPEN-FILE-HANDLE-REVIEW.md'
+      - '.github/workflows/open-file-handle-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Inspect synthetic client and source with real read-only Windows file handles
+        shell: powershell
+        run: .\tests\Test-OpenFileHandles.ps1
