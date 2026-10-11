@@ -65,7 +65,7 @@ try {
     Expect (Scenario -FileZ (Z 'replace_after_backup' 'verified' 'unknown')) 'manual_review_destination_conflict' 'Preserve unknown contents'
     Expect (Scenario -FileV (V 'replace_after_backup' 'missing')) 'manual_review_original_backup_unavailable' 'Replaced file with no backup'
     Expect (Scenario -FileV (V 'replace_after_backup' 'corrupt')) 'manual_review_original_backup_unavailable' 'Corrupt original after replacement'
-    Expect (Scenario -FileV (V 'replace_after_backup' 'verified' 'missing')) 'manual_review_original_backup_unavailable' 'Missing destination after replace'
+    Expect (Scenario -FileV (V 'replace_after_backup' 'verified' 'missing')) 'manual_review_missing_destination' 'Missing destination after replace'
 
     Invalid @(2,'fixture-session-123','patchset-0001','completed','matches',(V),(Z)) 'Unknown schema rejected'
     Invalid @(1,'fixture-session-123','patchset-0001','completed','matches',(V)) 'Missing Z record rejected'
