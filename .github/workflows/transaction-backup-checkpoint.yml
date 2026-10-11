@@ -1,0 +1,29 @@
+name: Read-only transaction backup checkpoint fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-BackupCheckpoint.ps1'
+      - 'tests/Test-BackupCheckpoint.ps1'
+      - 'docs/TRANSACTION-BACKUP-CHECKPOINT.md'
+      - '.github/workflows/transaction-backup-checkpoint.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-BackupCheckpoint.ps1'
+      - 'tests/Test-BackupCheckpoint.ps1'
+      - 'docs/TRANSACTION-BACKUP-CHECKPOINT.md'
+      - '.github/workflows/transaction-backup-checkpoint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test staged original copies and read-only checkpoint classification
+        shell: powershell
+        run: .\tests\Test-BackupCheckpoint.ps1
