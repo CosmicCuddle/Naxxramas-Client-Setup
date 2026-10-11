@@ -12,7 +12,8 @@ param(
     [switch]$VanillaLogin,
     [switch]$VanillaLoading,
     [switch]$Diagnostics,
-    [switch]$PreviewJson
+    [switch]$PreviewJson,
+    [switch]$DetailDiagnostics
 )
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
@@ -51,6 +52,7 @@ if([Threading.Thread]::CurrentThread.GetApartmentState() -ne [Threading.Apartmen
 }
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+. (Join-Path $PSScriptRoot 'Naxxramas-WizardDetails.ps1')
 function New-Font([float]$Size,[bool]$Bold=$false){
     $style=if($Bold){[Drawing.FontStyle]::Bold}else{[Drawing.FontStyle]::Regular}
     return New-Object Drawing.Font('Segoe UI',$Size,$style)
@@ -169,7 +171,16 @@ $close.Location=New-Object Drawing.Point(817,583)
 $close.Size=New-Object Drawing.Size(121,40)
 $close.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Right
 $close.TabIndex=11
-$form.Controls.AddRange(@($review,$clear,$close))
+$details=New-Object Windows.Forms.Button
+$details.Name='ViewFileDetails'
+$details.Text='View File Details...'
+$details.Location=New-Object Drawing.Point(357,583)
+$details.Size=New-Object Drawing.Size(207,40)
+$details.AccessibleName='Open larger read-only file action table'
+$details.Enabled=$false
+$details.TabIndex=11
+$close.TabIndex=12
+$form.Controls.AddRange(@($review,$clear,$details,$close))
 $status=New-Label 'Not reviewed - no files have been changed.' 638
 $status.Name='ReviewStatus'
 $form.Controls.Add($status)
@@ -186,11 +197,15 @@ $preview.Location=New-Object Drawing.Point(24,669)
 $preview.Size=New-Object Drawing.Size(914,158)
 $preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right -bor [Windows.Forms.AnchorStyles]::Bottom
 $preview.AccessibleName='Read-only proposed file changes and review messages'
-$preview.TabIndex=12
+$preview.TabIndex=13
 $form.Controls.Add($preview)
 $script:status=$status
 $script:preview=$preview
+$script:details=$details
+$script:currentReview=$null
 function Clear-Preview {
+    $script:currentReview=$null
+    $script:details.Enabled=$false
     $script:preview.Text='No current review. Select folders and press Review Only.'
     $script:status.Text='Selections changed. Run Review Only again.'
 }
@@ -219,29 +234,79 @@ foreach($group in @($clientField,$sourceField,$backupField)){
 }
 $review.Add_Click({
     $review.Enabled=$false
+    Clear-Preview
     $script:status.Text='Inspecting selected files (read-only)...'
     $form.Refresh()
     try{
-        $text=Invoke-ReadOnlyReview $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text $realm.Text $login.Checked $loading.Checked $false
-        $script:preview.Text=$text
+        $hint=Get-WizardInputHint $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text
+        if($hint){throw $hint}
+        $json=Invoke-ReadOnlyReview $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text $realm.Text $login.Checked $loading.Checked $true
+        $data=$json | ConvertFrom-Json
+        Assert-WizardReadOnlyReport $data
+        $script:preview.Text=Format-WizardSummary $data
         $script:preview.SelectionStart=0
         $script:preview.ScrollToCaret()
-        if($text.Contains('read_only_player_review_BLOCKED_MANUAL_REVIEW')){
-            $script:status.Text='Issues found. Preserve current files and read the review below.'
+        $script:currentReview=$data
+        $script:details.Enabled=$true
+        if($data.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW'){
+            $script:status.Text='Needs review - see View File Details. No changes made.'
         }else{
-            $script:status.Text='Preview complete. Nothing installed or approved.'
+            $script:status.Text='No preflight blockers - still preview only. Nothing approved.'
         }
     }catch{
-        $script:preview.Text='The read-only review could not complete. Check the client build and your selected existing, separate folders. No files were changed.'
-        $script:status.Text='Review unavailable. No changes have been made.'
+        $script:currentReview=$null
+        $script:details.Enabled=$false
+        $hint=Get-WizardInputHint $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text
+        if(-not $hint){
+            $hint='Review could not finish. Check the client version, patch source, separate backup folder and realm address.'
+        }
+        $script:preview.Text=$hint+[Environment]::NewLine+
+            'No files were installed, replaced or backed up.'
+        $script:status.Text='Review unavailable - no changes made.'
     }finally{$review.Enabled=$true}
+})
+$details.Add_Click({
+    if($null -eq $script:currentReview){return}
+    $dialog=New-WizardDetailsForm $script:currentReview
+    try{[void]$dialog.ShowDialog($form)}
+    finally{$dialog.Dispose()}
 })
 $clear.Add_Click({Clear-Preview})
 $close.Add_Click({$form.Close()})
 $form.AcceptButton=$review
 $form.CancelButton=$close
+if($DetailDiagnostics){
+    try{
+        $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) $true
+        $data=$json|ConvertFrom-Json
+        Assert-WizardReadOnlyReport $data
+        $dialog=New-WizardDetailsForm $data
+        try{
+            $grid=@($dialog.Controls.Find('ReadOnlyFileActionGrid',$true))[0]
+            $issues=@($dialog.Controls.Find('ReadOnlyIssues',$true))[0]
+            $info=[pscustomobject][ordered]@{
+                kind='read_only_windows_wizard_file_details_diagnostics'
+                schema_version=1
+                detail_window_created=$true
+                detail_window_displayed=$false
+                file_count=$grid.Rows.Count
+                file_names=@($grid.Rows | ForEach-Object {$_.Cells[0].Value})
+                proposed_actions=@($grid.Rows | ForEach-Object {$_.Cells[1].Value})
+                backup_labels=@($grid.Rows | ForEach-Object {$_.Cells[2].Value})
+                review_status=[string]$data.status
+                concerns_count=@($data.concerns).Count
+                grid_read_only=$grid.ReadOnly
+                grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
+                warnings_read_only=$issues.ReadOnly
+                no_approval_or_installation=$true
+            }
+            Write-Output ($info|ConvertTo-Json -Depth 5)
+        }finally{$dialog.Dispose()}
+    }finally{$form.Dispose()}
+    return
+}
 if($Diagnostics){
-    $buttons=@($review,$clear,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
+    $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
     $report=[pscustomobject][ordered]@{
         kind='read_only_windows_setup_wizard_layout'
         schema_version=1
@@ -254,6 +319,8 @@ if($Diagnostics){
         optional_login_selected=$login.Checked
         optional_loading_selected=$loading.Checked
         action_labels=@($buttons | ForEach-Object {$_.Text})
+        details_action_initially_disabled=(-not $details.Enabled)
+        detail_view_is_read_only=$true
         preview_read_only=$preview.ReadOnly
         default_keyboard_action=$form.AcceptButton.Name
         cancel_keyboard_action=$form.CancelButton.Name
