@@ -97,6 +97,10 @@ The tests create and then delete their **own** disposable temporary fixtures. Th
 
 The [Live Plan Recheck](LIVE-PLAN-RECHECK.md) invokes this existing planner and the Windows directory identity inspector **twice** to capture a pseudonymous, unsigned observation to the console and compare it to another fresh inspection. It re-hashes actual local patch and realmlist bytes that the planner knows how to inspect. If two passes disagree, capture fails or comparison reports manual review. It cannot detect every race, and never writes to a game client or grants permission to install.
 
+## Player-readable installation review (read-only)
+
+The [Player Installation Review](PLAYER-INSTALL-REVIEW.md) converts this exact planner's output into a **clear five-file summary** for future guided setup: mandatory V/Z, independent optional J/U, realmlist, unchanged/new/backup-first/blocked actions, estimated original-backup bytes and separate backup-folder choice. It is a text/JSON command, not a full GUI, and **never obtains real user consent or enables copying/restoration**. It does not hold file handles after the planner scan, so its results can become stale.
+
 ## Developer-only approval scope checks
 
 The [Approval Snapshot Review](APPROVAL-SNAPSHOT-REVIEW.md) models a future frozen user-approved plan. Its Windows fixture tests compare mandatory V/Z operations, independent J/U choices, realmlist, the selected backup/source directories and expected original bytes against a changed proposal. This tool operates on **artificial JSON data only** and does not create consent or enable the planner to write files.
