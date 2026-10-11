@@ -172,6 +172,10 @@ Automated **disposable fixture** tests required:
 - Authorised method for sourcing any redistributable custom patches; none approved for public distribution at this baseline.
 - Unit test harness capable of safely simulating write failures without touching a real client.
 
+## New read-only original backup readiness check
+
+The [Original Backup Readiness Review](BACKUP-ORIGINALS-READINESS.md) integrates the actual local planner and held-handle original SHA-256 and Windows file identity observations. It identifies **which existing V/Z/J/U or realmlist bytes would need preserving** for `replace_after_backup`, but creates **no** backup and gives **no** installation authorisation. The difference between `originals_identified_NOT_BACKED_UP_NOT_APPROVED` and a future independently verified durable backup must remain explicit. Backup copying, durable flush order and recovery remain blocked.
+
 ## Next implementation recommendation
 
 **Completed first slice:** [Recovery Preview](RECOVERY-PREVIEW.md) now reads synthetic session records and inspects current/backup file hashes without changing them. The Windows PowerShell CI fixture suite passed on 10 October 2026.
