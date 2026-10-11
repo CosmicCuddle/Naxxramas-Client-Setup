@@ -409,6 +409,7 @@ if($Diagnostics){
     $realm.Text=($originalRealm+'fixture.invalid')
     $realmChangeClearsReview=($null -eq $script:currentReview -and -not $details.Enabled)
     $realm.Text=$originalRealm
+    $contrastTheme=Get-WizardTheme $true
     $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
     $report=[pscustomobject][ordered]@{
         kind='read_only_windows_setup_wizard_layout'
@@ -426,17 +427,16 @@ if($Diagnostics){
         system_contrast_enabled=[bool]$wizardTheme.HighContrast
         contrast_matches_windows=([bool]$wizardTheme.HighContrast -eq
             [bool][Windows.Forms.SystemInformation]::HighContrast)
-        contrast_theme=Get-WizardTheme $true
         theme_preserves_standard_palette=(
             $wizardTheme.HighContrast -or
             ($form.BackColor -eq $wizardTheme.Window -and
              $header.BackColor -eq $wizardTheme.Header -and
              $review.BackColor -eq $wizardTheme.Accent))
         high_contrast_palette_uses_system_colours=(
-            $contrast_theme.Window -eq [Drawing.SystemColors]::Window -and
-            $contrast_theme.Text -eq [Drawing.SystemColors]::WindowText -and
-            $contrast_theme.Accent -eq [Drawing.SystemColors]::Highlight -and
-            $contrast_theme.AccentText -eq [Drawing.SystemColors]::HighlightText)
+            $contrastTheme.Window -eq [Drawing.SystemColors]::Window -and
+            $contrastTheme.Text -eq [Drawing.SystemColors]::WindowText -and
+            $contrastTheme.Accent -eq [Drawing.SystemColors]::Highlight -and
+            $contrastTheme.AccentText -eq [Drawing.SystemColors]::HighlightText)
         contrast_applied_to_actual_controls=(
             $form.BackColor -eq $wizardTheme.Window -and
             $header.BackColor -eq $wizardTheme.Header -and
