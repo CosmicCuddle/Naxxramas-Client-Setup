@@ -73,8 +73,42 @@ function Format-WizardSummary([object]$Report){
     $lines.Add('Use View File Details for a larger table, backup needs and notes.')
     return ($lines -join [Environment]::NewLine)
 }
+# Resolve a testable palette at construction time. In Windows High Contrast,
+# use OS colours instead of fixed light-theme colours. This is not a claim
+# of validated screen-reader behaviour or live DPI adjustment.
+function Get-WizardTheme([bool]$HighContrast){
+    if($HighContrast){
+        return [pscustomobject]@{
+            HighContrast=$true
+            Window=[Drawing.SystemColors]::Window
+            Text=[Drawing.SystemColors]::WindowText
+            Header=[Drawing.SystemColors]::Control
+            HeaderText=[Drawing.SystemColors]::ControlText
+            HeaderSecondary=[Drawing.SystemColors]::ControlText
+            MutedText=[Drawing.SystemColors]::ControlText
+            Input=[Drawing.SystemColors]::Window
+            InputText=[Drawing.SystemColors]::WindowText
+            Accent=[Drawing.SystemColors]::Highlight
+            AccentText=[Drawing.SystemColors]::HighlightText
+        }
+    }
+    return [pscustomobject]@{
+        HighContrast=$false
+        Window=[Drawing.Color]::FromArgb(247,249,252)
+        Text=[Drawing.Color]::FromArgb(40,54,70)
+        Header=[Drawing.Color]::FromArgb(27,44,64)
+        HeaderText=[Drawing.Color]::White
+        HeaderSecondary=[Drawing.Color]::FromArgb(221,231,240)
+        MutedText=[Drawing.Color]::FromArgb(88,99,111)
+        Input=[Drawing.Color]::White
+        InputText=[Drawing.Color]::Black
+        Accent=[Drawing.Color]::FromArgb(33,75,114)
+        AccentText=[Drawing.Color]::White
+    }
+}
 function New-WizardDetailsForm([object]$Report){
     Assert-WizardReadOnlyReport $Report
+    $theme=Get-WizardTheme ([Windows.Forms.SystemInformation]::HighContrast)
     $win=New-Object Windows.Forms.Form
     $win.Name='ReadOnlyFileDetails'
     $win.Text='Naxxramas - File Details (Review Only)'
@@ -85,7 +119,7 @@ function New-WizardDetailsForm([object]$Report){
     $win.MinimumSize=New-Object Drawing.Size(550,410)
     $win.AutoScroll=$true
     $win.AutoScrollMinSize=New-Object Drawing.Size(0,730)
-    $win.BackColor=[Drawing.Color]::FromArgb(247,249,252)
+    $win.BackColor=$theme.Window
     # The contents have a minimum *scroll extent*, not a screen-sized minimum
     # window. Bottom anchors resolve against this region, so shrinking a
     # laptop-size viewport cannot pile warnings and buttons on top of the grid.
@@ -100,6 +134,8 @@ function New-WizardDetailsForm([object]$Report){
     $banner.Location=New-Object Drawing.Point(22,17)
     $banner.Size=New-Object Drawing.Size(854,34)
     $banner.Font=New-Object Drawing.Font('Segoe UI',12,[Drawing.FontStyle]::Bold)
+    $banner.ForeColor=$theme.Text
+    $banner.AccessibleName='Read-only file review, no files changed'
     $banner.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $content.Controls.Add($banner)
     $summary=New-Object Windows.Forms.Label
@@ -107,6 +143,8 @@ function New-WizardDetailsForm([object]$Report){
     $summary.Text=('Proposed additions: '+$Report.proposed_new_file_count+
         '  |  Originals needing future backup: '+$Report.proposed_replace_after_backup_count)
     $summary.Location=New-Object Drawing.Point(22,54)
+    $summary.ForeColor=$theme.Text
+    $summary.AccessibleName='Summary of proposed additions and originals needing future backup'
     $summary.Size=New-Object Drawing.Size(854,28)
     $summary.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $content.Controls.Add($summary)
@@ -126,6 +164,16 @@ function New-WizardDetailsForm([object]$Report){
     $grid.AutoSizeColumnsMode=[Windows.Forms.DataGridViewAutoSizeColumnsMode]::Fill
     $grid.AutoSizeRowsMode=[Windows.Forms.DataGridViewAutoSizeRowsMode]::AllCells
     $grid.DefaultCellStyle.WrapMode=[Windows.Forms.DataGridViewTriState]::True
+    if($theme.HighContrast){
+        $grid.BackgroundColor=$theme.Input
+        $grid.DefaultCellStyle.BackColor=$theme.Input
+        $grid.DefaultCellStyle.ForeColor=$theme.InputText
+        $grid.DefaultCellStyle.SelectionBackColor=$theme.Accent
+        $grid.DefaultCellStyle.SelectionForeColor=$theme.AccentText
+        $grid.EnableHeadersVisualStyles=$false
+        $grid.ColumnHeadersDefaultCellStyle.BackColor=$theme.Header
+        $grid.ColumnHeadersDefaultCellStyle.ForeColor=$theme.HeaderText
+    }
     $grid.ColumnHeadersHeight=38
     $grid.ColumnHeadersHeightSizeMode=[Windows.Forms.DataGridViewColumnHeadersHeightSizeMode]::DisableResizing
     $grid.AccessibleName='Five read-only game file actions'
@@ -152,10 +200,13 @@ function New-WizardDetailsForm([object]$Report){
     $heading.Location=New-Object Drawing.Point(22,353)
     $heading.Size=New-Object Drawing.Size(820,29)
     $heading.Font=New-Object Drawing.Font('Segoe UI',11,[Drawing.FontStyle]::Bold)
+    $heading.ForeColor=$theme.Text
     $content.Controls.Add($heading)
     $notes=New-Object Windows.Forms.RichTextBox
     $notes.Name='ReadOnlyIssues'
     $notes.ReadOnly=$true
+    $notes.BackColor=$theme.Input
+    $notes.ForeColor=$theme.InputText
     $notes.DetectUrls=$false
     $notes.Location=New-Object Drawing.Point(22,390)
     $notes.Size=New-Object Drawing.Size(854,145)
@@ -168,6 +219,7 @@ function New-WizardDetailsForm([object]$Report){
     $notes.WordWrap=$true
     $notes.TabIndex=1
     $notes.AccessibleName='Read-only warnings and issues'
+    $notes.AccessibleDescription='Read-only scrollable warning text; nothing approved or changed'
     $lines=New-Object 'System.Collections.Generic.List[string]'
     if($Report.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW'){
         $lines.Add('Manual review required. Do not replace any files.')
@@ -184,6 +236,8 @@ function New-WizardDetailsForm([object]$Report){
        '. Separate backup folder selected: '+$(if($Report.separate_backup_folder_selected){'Yes'}else{'No'})+
        '. No backups created or space reserved.')
     $footer.Location=New-Object Drawing.Point(22,551)
+    $footer.ForeColor=$theme.Text
+    $footer.AccessibleName='Original backup requirement and storage notice'
     $footer.Size=New-Object Drawing.Size(850,62)
     $footer.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor
         [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
@@ -195,6 +249,7 @@ function New-WizardDetailsForm([object]$Report){
     $close.Size=New-Object Drawing.Size(146,41)
     $close.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor [Windows.Forms.AnchorStyles]::Right
     $close.AccessibleName='Close read-only file details'
+    $close.ForeColor=$theme.Text
     $close.TabIndex=2
     $close.Add_Click({$win.Close()})
     $content.Controls.Add($close)
