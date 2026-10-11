@@ -1,0 +1,29 @@
+name: Read-only checkpoint ordering fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-CheckpointOrder.ps1'
+      - 'tests/Test-CheckpointOrder.ps1'
+      - 'docs/CHECKPOINT-ORDER-REVIEW.md'
+      - '.github/workflows/checkpoint-order-fixtures.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-CheckpointOrder.ps1'
+      - 'tests/Test-CheckpointOrder.ps1'
+      - 'docs/CHECKPOINT-ORDER-REVIEW.md'
+      - '.github/workflows/checkpoint-order-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test synthetic checkpoint timeline
+        shell: powershell
+        run: .\tests\Test-CheckpointOrder.ps1
