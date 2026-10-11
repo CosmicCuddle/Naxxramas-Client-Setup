@@ -1,0 +1,29 @@
+name: Read-only crash boundary fixture tests
+
+on:
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-CrashFixture.ps1'
+      - 'tests/Test-CrashFixture.ps1'
+      - 'docs/CRASH-BOUNDARY-FIXTURES.md'
+      - '.github/workflows/crash-boundary-fixtures.yml'
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-CrashFixture.ps1'
+      - 'tests/Test-CrashFixture.ps1'
+      - 'docs/CRASH-BOUNDARY-FIXTURES.md'
+      - '.github/workflows/crash-boundary-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run synthetic crash classifications
+        shell: powershell
+        run: .\tests\Test-CrashFixture.ps1
