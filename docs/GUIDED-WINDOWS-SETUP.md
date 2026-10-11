@@ -134,3 +134,12 @@ The wizard now shows plain-text **Patch-J ON/OFF** and **Patch-U ON/OFF** direct
 This is a warning about an untested visual overlap, not proof that the files are incompatible. It is readable without relying on colour and uses an accessible description. V and Z are still required with no disable switch. Editing either J/U choice clears any previous review. The scrollable main window includes space for this notice, with no game-file writing functionality.
 
 For actual Windows 100%, 125%, 150%, 200% display-scale, keyboard and screen-reader acceptance, follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). The checklist is also shipped inside the internal scripts-only ZIP candidate. No manual screen-reader or on-screen DPI test has been claimed.
+
+
+## Compact File Details viewport (PR #33)
+
+The read-only five-file details window now uses a **scrollable inner content region** with a minimum 730-pixel logical-height layout. On a smaller desktop, the *viewport* can shrink and the player scrolls vertically to reach all five file rows, long issues, original-backup notice and **Close Review**, rather than allowing the bottom-anchored footer and warnings to collide with the grid. The window's opening size is limited by the desktop work area where possible.
+
+Windows PowerShell 5.1 CI constructs the actual details dialog without displaying it, shrinks its viewport to **640 × 480 logical WinForms units**, and checks scroll reachability, non-overlapping regions and controls remaining within the content width. This is a **geometry check, not real Windows DPI or assistive-technology validation**. It does not change the planner's read-only status, the exact five-file review, any patches or the no-backup/no-install/no-consent policy.
+
+Human acceptance still needs real 100%, 125%, 150%, 200% display-scaling and screen-reader/high-contrast checks on a backed-up disposable test setup. Follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md) and record any visible truncation or control focus issue before approving a scripts-only public release.

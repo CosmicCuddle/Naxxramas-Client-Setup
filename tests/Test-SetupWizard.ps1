@@ -162,6 +162,9 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         $detail.warnings_read_only -and $detail.no_approval_or_installation) 'File details cannot edit data or authorise a write'
     Check ($detail.warnings_scrollable -and $detail.warnings_expand_with_window -and
         $detail.keyboard_tab_order) 'Details warnings can scroll and grow on resize; table and warnings have predictable keyboard order'
+    Check ($detail.compact_viewport_checked -and $detail.compact_details_scrollable -and
+        $detail.compact_details_no_overlap -and $detail.compact_details_right_edges_visible -and
+        $detail.initial_details_fits_desktop) 'Compact 640x480 details viewport scrolls without overlapping file grid, warnings, backup note or Close Review'
     Check ($detail.review_status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Expanded no-blocker view still denies approval'
     Check ((Tree $client) -ceq $beforeClient -and
         (Tree $source) -ceq $beforeSource -and

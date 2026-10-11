@@ -39,3 +39,8 @@ For every setting, record: Windows edition, resolution, actual scaling percentag
 `tests/Test-SetupWizard.ps1` runs actual Windows Forms **headlessly** in Windows PowerShell 5.1 and uses a disposable fake game client. It checks the fixed five-file review, independent J/U choices, immediate textual overlap indicator, keyboard defaults, scrolling metadata, blocked states and non-mutating behaviour.
 
 It does **not** establish rendered pixel-level text clipping, DPI scaling at 100/125/150/200%, real screen-reader announcements, high-contrast usability or suitability for release. The internal scripts-only ZIP remains a **candidate**, not a published release, until manual acceptance is documented and separately reviewed.
+
+
+## Compact-window exploratory check
+
+In addition to the scaling matrix above, make the **File Details** window approximately 640 × 480 while the display scale is set in Windows. Verify the five-file grid remains above the warnings; scroll down to find the exact **original backup not created** notice and **Close Review** without the controls obscuring each other. Tab through the grid, warning reader and Close Review, then return to the wizard. Do not mark the scaling matrix as passed based on CI's compact logical-viewport check.
