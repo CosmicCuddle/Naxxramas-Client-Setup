@@ -90,6 +90,9 @@ function New-FolderControls([string]$Name,[string]$Label,[int]$Y,[string]$Initia
 $form=New-Object Windows.Forms.Form
 $form.Name='NaxxramasReadOnlySetup'
 $form.Text='Naxxramas Client Setup - Review Only'
+# Choose the DPI-aware font before calculating the initial viewport dimensions.
+$form.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Font
+$form.Font=New-Font 10
 $workingArea=[Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 # Fit the initial window inside the desktop working area; scrolling exposes the
 # remaining controls on smaller screens rather than hiding the lower review.
@@ -100,8 +103,6 @@ $form.MinimumSize=New-Object Drawing.Size(740,540)
 $form.AutoScroll=$true
 $form.AutoScrollMinSize=New-Object Drawing.Size(0,915)
 $form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
-$form.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Font
-$form.Font=New-Font 10
 $form.BackColor=[Drawing.Color]::FromArgb(247,249,252)
 
 $header=New-Object Windows.Forms.Panel
