@@ -43,9 +43,9 @@ Paths are case-sensitive, ordered as `Data/patch-V.mpq`, `Data/patch-Z.mpq`, `Da
 - Boolean fields must be actual JSON booleans; unknown fields, paths, types, build/locale and actions fail closed.
 - The source-provenance claim must be one of `claimed_local_use_reviewed`, `unverified` or `redistribution_unapproved`. **All are untrusted labels.** An unreviewed or unapproved source always yields a blocker even when the two snapshots match.
 
-The **approval receipt fixture** is:
+The **approval receipt fixture** supports two purely synthetic versions:
 
-`[1, approval_id, consent_claim, exact_prior_plan_snapshot]`
+`[1, approval_id, consent_claim, exact_prior_plan_snapshot]` (v1, legacy) or `[2, approval_id, consent_claim, exact_prior_plan_snapshot, declared_plan_sha256]` (v2, unkeyed digest). See [Plan Digest v2](APPROVAL-PLAN-DIGEST-V2.md) for the exact type-preserving encoding, mismatch rules, tests and trust limitations.
 
 The allowed consent claims are `explicit_confirmed`, `pending`, `revoked` and `expired`. They are fabricated test labels, **not actual player signatures or consent**. Both files must be regular, nonlinked strict-UTF-8 JSON with a 16 KiB size limit per file.
 
@@ -77,7 +77,7 @@ From the repository checkout on Windows PowerShell 5.1:
 
 `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-ApprovalFixture.ps1"`
 
-The suite creates **synthetic JSON files only** and tests approvals that match, are absent, pending, revoked or expired; swapped folders; new patchset; toggled J/U; modified source and previous-file digests for V, Z and realmlist; unselected optional preservation; inconsistent action/backup claims; schema and path validation; malformed input; output privacy and byte-exact no-write checks.
+The suite creates **synthetic JSON files only** and tests approvals that match, are absent, pending, revoked or expired; swapped folders; new patchset; toggled J/U; modified source and previous-file digests for V, Z and realmlist; unselected optional preservation; inconsistent action/backup claims; schema and path validation; malformed input; output privacy and byte-exact no-write checks. The independent `tests/Test-ApprovalDigestV2.ps1` suite additionally covers v2 hash canonicalization, consent revocation, modified snapshots, drift and forged-but-consistent receipts.
 
 **Not tested:** the actual MPQ files, real Windows owner approval, cryptographic signatures, live directory/file identities, file locking, durability, API correctness of a future writer, authoritative patch provenance, real backup integrity or independent nonrollbackable latest-state storage.
 
