@@ -1,0 +1,29 @@
+name: Read-only consent lifecycle fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-ConsentLifecycle.ps1'
+      - 'tests/Test-ConsentLifecycle.ps1'
+      - 'docs/CONSENT-LIFECYCLE-REVIEW.md'
+      - '.github/workflows/consent-lifecycle-fixtures.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-ConsentLifecycle.ps1'
+      - 'tests/Test-ConsentLifecycle.ps1'
+      - 'docs/CONSENT-LIFECYCLE-REVIEW.md'
+      - '.github/workflows/consent-lifecycle-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Check one-time approval lifecycle simulations
+        shell: powershell
+        run: .\tests\Test-ConsentLifecycle.ps1
