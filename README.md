@@ -65,6 +65,10 @@ The [Recovery Preview](docs/RECOVERY-PREVIEW.md) can inspect **synthetic develop
 
 The [Windows Directory Identity preview](docs/WINDOWS-DIRECTORY-IDENTITY.md) observes a selected local directory's Windows filesystem ID through a **read-only directory handle**. Synthetic Windows tests confirm that renaming the same folder preserves its identity, while an identical copied folder has a different identity. Unsafe paths are rejected. The result is **not** a secure registration or installer ownership proof. There is no file-writing installer or rollback engine.
 
+## Read-only interrupted recovery and player-change preservation (developer-only)
+
+The [Recovery Conflict Safeguard](docs/RECOVERY-CONFLICT-SAFEGUARD.md) combines two synthetic session recovery reviews with actual held-file-handle observations, explicitly preserving files changed by the player, missing or corrupt backups and incomplete journals. It never accepts a previous restore/delete suggestion as approval, and all statuses always deny write/rollback. Windows synthetic tests exercise real fake-file edits and mid-review mutations; the production tool is **read-only**.
+
 ## Read-only transaction backup checkpoints (developer-only)
 
 The [Transaction Backup Checkpoint](docs/TRANSACTION-BACKUP-CHECKPOINT.md) inspector reviews **existing** transaction-specific backup folders and untrusted checkpoint claims against the read-only original/source and existing-copy reviewers. It flags missing/altered originals, inconsistent phase/hash claims and leftover `.part` files. Only the Windows **test harness** writes fake staged copies, confined to fresh disposable directories; the production tool writes nothing. A matching checkpoint is **NOT durable backup proof or authenticated consent**, and cannot authorise installation or rollback.
