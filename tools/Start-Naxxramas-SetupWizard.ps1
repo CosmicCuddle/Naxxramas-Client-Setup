@@ -320,6 +320,21 @@ if($DetailDiagnostics){
         try{
             $grid=@($dialog.Controls.Find('ReadOnlyFileActionGrid',$true))[0]
             $issues=@($dialog.Controls.Find('ReadOnlyIssues',$true))[0]
+            $region=@($dialog.Controls.Find('ReadOnlyDetailsContent',$true))[0]
+            $footer=@($dialog.Controls.Find('ReadOnlyStorageNotice',$true))[0]
+            $closeReview=@($dialog.Controls.Find('CloseDetails',$true))[0]
+            # Inspect the actual controls after shrinking to a laptop-sized
+            # viewport. This is NOT a simulation of Windows DPI scaling.
+            $initialFitsDesktop=($dialog.Height -le [Windows.Forms.Screen]::PrimaryScreen.WorkingArea.Height)
+            $dialog.ClientSize=New-Object Drawing.Size(640,480)
+            $dialog.PerformLayout()
+            $compactNoOverlap=($grid.Bottom -lt $issues.Top -and
+                $issues.Bottom -lt $footer.Top -and
+                $footer.Bottom -lt $closeReview.Top)
+            $compactRightEdges=($grid.Right -le $region.Width -and
+                $issues.Right -le $region.Width -and
+                $footer.Right -le $region.Width -and
+                $closeReview.Right -le $region.Width)
             $info=[pscustomobject][ordered]@{
                 kind='read_only_windows_wizard_file_details_diagnostics'
                 schema_version=1
@@ -334,6 +349,13 @@ if($DetailDiagnostics){
                 grid_read_only=$grid.ReadOnly
                 grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
                 warnings_read_only=$issues.ReadOnly
+                compact_viewport_checked=$true
+                compact_details_scrollable=($dialog.AutoScroll -and
+                    $dialog.AutoScrollMinSize.Height -ge $region.Height -and
+                    $region.Height -gt $dialog.ClientSize.Height)
+                compact_details_no_overlap=$compactNoOverlap
+                compact_details_right_edges_visible=$compactRightEdges
+                initial_details_fits_desktop=$initialFitsDesktop
                 warnings_scrollable=($issues.ScrollBars -eq [Windows.Forms.RichTextBoxScrollBars]::Vertical)
                 warnings_expand_with_window=(($issues.Anchor -band [Windows.Forms.AnchorStyles]::Bottom) -ne 0)
                 keyboard_tab_order=($grid.TabIndex -eq 0 -and $issues.TabIndex -eq 1)
