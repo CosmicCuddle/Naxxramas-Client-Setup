@@ -1,6 +1,6 @@
 # Naxxramas Client Setup — Development Roadmap
 
-**Last reviewed:** 10 October 2026  
+**Last reviewed:** 11 October 2026  
 **Current baseline:** `main`, `patchset-0001`  
 **Overall status:** read-only preflight and installer-plan prototypes. **No installer, updater, uninstaller or redistributable game package is ready.**
 
