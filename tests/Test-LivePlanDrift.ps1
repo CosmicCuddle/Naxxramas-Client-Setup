@@ -95,6 +95,7 @@ public static class HarmlessFixtureExe {
  $beforeBackup=Snapshot-Files $backup
  $capture=Capture $argsMap
  $result=Inspect-FreshPlan $argsMap
+ Check ($result.scan_passes -eq 2 -and $result.scan_stable) 'Stable normal inspection reports two matching read-only passes'
  Check ($result.status -ceq 'live_plan_matches_NOT_APPROVED' -and
   $result.snapshot_matches_current_observation -and
   $result.fresh_preflight_status -ceq 'review_only_no_blockers') 'Real planner + exact directory IDs match, but never approve a write'
@@ -161,6 +162,50 @@ public static class HarmlessFixtureExe {
  $raw=(& $review @argsMap -BaselineSnapshotPath $baseline -Json | Out-String)
  Check (-not $raw.Contains($root)) 'Comparison report does not expose local paths'
  Check (-not $raw.Contains($capture[2])) 'Comparison report does not expose observed folder fingerprints'
+
+ # Controlled race injection exists ONLY in the disposable copied planner
+ # stored under this freshly created temporary test folder. The committed
+ # production planner and reviewer have no mutation or injection hook.
+ $localPlanner=Join-Path $tools 'Plan-Naxxramas-Install.ps1'
+ $plannerSource=[IO.File]::ReadAllText($localPlanner)
+ $tailStart=$plannerSource.LastIndexOf('if ($Json) {')
+ Check ($tailStart -gt 0) 'Fixture-only race hook can locate final planner output'
+ $fixtureRaceFlag=Join-Path $root 'race-flag.txt'
+ $fixtureRealm=Join-Path $client 'Data/enUS/realmlist.wtf'
+ $hook=@'
+if (Test-Path -LiteralPath 'RACE_FLAG_PLACEHOLDER') {
+ Remove-Item -LiteralPath 'RACE_FLAG_PLACEHOLDER' -Force
+ [IO.File]::WriteAllText('REALM_PATH_PLACEHOLDER','set realmlist changed.example.test')
+}
+'@
+ $hook=$hook.Replace('RACE_FLAG_PLACEHOLDER',$fixtureRaceFlag).
+  Replace('REALM_PATH_PLACEHOLDER',$fixtureRealm)
+ [IO.File]::WriteAllText($localPlanner,
+  $plannerSource.Insert($tailStart,($hook+[Environment]::NewLine)),
+  (New-Object Text.UTF8Encoding($false)))
+ try {
+  $null=Capture $argsMap
+  Save $fixtureRaceFlag 'synthetic-test-race'
+  $result=Inspect-FreshPlan $argsMap
+  Block $result 'file_plan_changed_during_inspection' 'Mid-scan realmlist change is detected between read-only passes'
+  Check (-not $result.scan_stable -and $result.scan_passes -eq 2) 'Comparison explicitly reports unstable two-pass inspection'
+  Check (-not (Test-Path -LiteralPath $fixtureRaceFlag)) 'Disposable fixture hook was exercised on first planner pass'
+
+  Save $fixtureRealm 'set realmlist naxx.example.test'
+  Save $fixtureRaceFlag 'synthetic-test-race'
+  $captureRefused=$false
+  try{$null=Capture $argsMap}catch{$captureRefused=$true}
+  Check $captureRefused 'Snapshot capture refuses an unstable read-only double scan'
+  Check (-not (Test-Path -LiteralPath $fixtureRaceFlag)) 'Fixture race performed during capture attempt'
+ } finally {
+  [IO.File]::WriteAllText($localPlanner,$plannerSource,(New-Object Text.UTF8Encoding($false)))
+  Save $fixtureRealm 'set realmlist naxx.example.test'
+  if(Test-Path -LiteralPath $fixtureRaceFlag){Remove-Item -LiteralPath $fixtureRaceFlag -Force}
+ }
+ $null=Capture $argsMap
+ $result=Inspect-FreshPlan $argsMap
+ Check ($result.scan_stable -and $result.status -ceq 'live_plan_matches_NOT_APPROVED') 'Normal read-only inspection recovers after disposable test hook removed'
+
  Write-Host 'All live read-only Windows planner drift tests passed.' -ForegroundColor Green
 }finally{
  if(Test-Path -LiteralPath $root){Remove-Item -LiteralPath $root -Recurse -Force}

@@ -63,46 +63,79 @@ if($VanillaLogin){$params.VanillaLogin=$true}
 if($VanillaLoading){$params.VanillaLoading=$true}
 if($RealmHost){$params.RealmHost=$RealmHost}
 $planner=Join-Path $PSScriptRoot 'Plan-Naxxramas-Install.ps1'
-$plan=(& $planner @params | Out-String) | ConvertFrom-Json
-$paths=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq',
- 'Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
-if([int]$plan.schema_version -ne 1 -or
- $plan.kind -cne 'read_only_preview_not_install_authorisation' -or
- $plan.client_target -cne 'WoW 3.3.5a build 12340 enUS' -or
- @($plan.files).Count -ne 5){throw 'Unrecognized planner schema.'}
-$files=@()
-for($i=0;$i -lt 5;$i++){
- $p=$plan.files[$i]
- if($p.path -cne $paths[$i]){throw 'Unexpected file path in planner output.'}
- $files+=,@(
-  [string]$p.path,[string]$p.kind,[bool]$p.required,[bool]$p.selected,
-  [string]$p.destination_state,[string]$p.source_state,[string]$p.action,
-  [bool]$p.backup_required,[string]$p.existing_sha256,
-  [string]$p.existing_size_bytes,[string]$p.expected_sha256,
-  [string]$p.expected_size_bytes
+function Observe-LivePlan {
+ # A pass consists of a fresh read-only planner scan followed by three
+ # independent Win32 folder identity observations. No identities are held
+ # open, so a second pass is useful for detecting *some* concurrent changes.
+ $plan=(& $planner @params | Out-String) | ConvertFrom-Json
+ $paths=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq',
+  'Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+ if([int]$plan.schema_version -ne 1 -or
+  $plan.kind -cne 'read_only_preview_not_install_authorisation' -or
+  $plan.client_target -cne 'WoW 3.3.5a build 12340 enUS' -or
+  @($plan.files).Count -ne 5){throw 'Unrecognized planner schema.'}
+ $files=@()
+ for($i=0;$i -lt 5;$i++){
+  $p=$plan.files[$i]
+  if($p.path -cne $paths[$i]){throw 'Unexpected file path in planner output.'}
+  $files+=,@(
+   [string]$p.path,[string]$p.kind,[bool]$p.required,[bool]$p.selected,
+   [string]$p.destination_state,[string]$p.source_state,[string]$p.action,
+   [bool]$p.backup_required,[string]$p.existing_sha256,
+   [string]$p.existing_size_bytes,[string]$p.expected_sha256,
+   [string]$p.expected_size_bytes
+  )
+ }
+ $semantic=@(
+  1,[string]$plan.patch_set_version,[string]$plan.client_target,
+  [bool]$plan.optional_selections.vanilla_login,
+  [bool]$plan.optional_selections.vanilla_loading,
+  [string]$plan.realm_host,[string]$plan.status,
+  [string]$plan.space_budget.mode,
+  [bool]$plan.space_budget.backup_location_selected,
+  [string]$plan.space_budget.client_volume_required_bytes,
+  [string]$plan.space_budget.backup_volume_required_bytes,$files
  )
+ $digest=ShaText ('NAXX-OBSERVED-PLAN-V1:'+(ConvertTo-Json -InputObject $semantic -Compress -Depth 16))
+ $observed=@(1,$digest,(FolderId $ClientPath),(FolderId $PatchSourcePath),(FolderId $BackupRoot))
+ return [pscustomobject]@{
+  snapshot=$observed
+  preflight_status=[string]$plan.status
+ }
 }
-$semantic=@(
- 1,[string]$plan.patch_set_version,[string]$plan.client_target,
- [bool]$plan.optional_selections.vanilla_login,
- [bool]$plan.optional_selections.vanilla_loading,
- [string]$plan.realm_host,[string]$plan.status,
- [string]$plan.space_budget.mode,
- [bool]$plan.space_budget.backup_location_selected,
- [string]$plan.space_budget.client_volume_required_bytes,
- [string]$plan.space_budget.backup_volume_required_bytes,$files
-)
-$digest=ShaText ('NAXX-OBSERVED-PLAN-V1:'+(ConvertTo-Json -InputObject $semantic -Compress -Depth 16))
-$current=@(1,$digest,(FolderId $ClientPath),(FolderId $PatchSourcePath),(FolderId $BackupRoot))
-if($Snapshot){ ConvertTo-Json -InputObject $current -Compress -Depth 3;return }
+$first=Observe-LivePlan
+$second=Observe-LivePlan
+$current=$second.snapshot
+$unstable=New-Object 'System.Collections.Generic.List[string]'
+$driftNames=@('file_plan_changed_during_inspection',
+ 'client_folder_changed_during_inspection',
+ 'source_folder_changed_during_inspection',
+ 'backup_folder_changed_during_inspection')
+for($i=1;$i -le 4;$i++){
+ if($first.snapshot[$i] -cne $second.snapshot[$i]){
+  $unstable.Add($driftNames[$i-1])
+ }
+}
+if($first.preflight_status -cne $second.preflight_status){
+ if(-not $unstable.Contains('preflight_status_changed_during_inspection')){
+  $unstable.Add('preflight_status_changed_during_inspection')
+ }
+}
+$scanStable=($unstable.Count -eq 0)
+if($Snapshot){
+ if(-not $scanStable){throw 'Read-only inspection changed between passes; no snapshot can be issued.'}
+ ConvertTo-Json -InputObject $current -Compress -Depth 3
+ return
+}
 $prior=Read-Snapshot $BaselineSnapshotPath
 $blocks=New-Object 'System.Collections.Generic.List[string]'
+foreach($reason in $unstable){$blocks.Add($reason)}
 if($prior[1] -cne $current[1]){$blocks.Add('file_plan_or_options_changed')}
 if($prior[2] -cne $current[2]){$blocks.Add('client_folder_identity_changed')}
 if($prior[3] -cne $current[3]){$blocks.Add('source_folder_identity_changed')}
 if($prior[4] -cne $current[4]){$blocks.Add('backup_folder_identity_changed')}
 $identical=($blocks.Count -eq 0)
-if($plan.status -cne 'review_only_no_blockers'){$blocks.Add('fresh_planner_preflight_blocked')}
+if($second.preflight_status -cne 'review_only_no_blockers'){$blocks.Add('fresh_planner_preflight_blocked')}
 if(-not $BackupRoot){$blocks.Add('separate_backup_not_selected')}
 $status=if($blocks.Count -eq 0){'live_plan_matches_NOT_APPROVED'}else{'manual_review_live_plan_or_preflight'}
 $report=[pscustomobject][ordered]@{
@@ -110,7 +143,9 @@ $report=[pscustomobject][ordered]@{
  schema_version=1
  status=$status
  snapshot_matches_current_observation=$identical
- fresh_preflight_status=[string]$plan.status
+ fresh_preflight_status=[string]$second.preflight_status
+ scan_passes=2
+ scan_stable=$scanStable
  blockers=@($blocks.ToArray())
  review_required=$true
  allow_file_writes=$false
@@ -118,7 +153,7 @@ $report=[pscustomobject][ordered]@{
  authorises_rollback=$false
  records_real_consent=$false
  public_distribution_authorised=$false
- limitations='Snapshot is editable and unsigned; matching bytes and Win32 folder IDs do not prove ownership, consent, source rights, physical disk safety, durable latest state or absence of path races.'
+ limitations='Two read-only passes only detect some changes during inspection. Matching scans are not atomic or race-free: A-B-A changes and post-scan mutations remain possible. Unsigned snapshots and folder IDs are not consent, ownership, source rights, durable authority or approval for writes.'
 }
 if($Json){$report|ConvertTo-Json -Depth 4}
 else{

@@ -95,7 +95,7 @@ The tests create and then delete their **own** disposable temporary fixtures. Th
 
 ## Read-only live plan reinspection
 
-The [Live Plan Recheck](LIVE-PLAN-RECHECK.md) invokes this existing planner and the Windows directory identity inspector to capture a **pseudonymous, unsigned** observation to the console and compare it to another fresh inspection. Unlike the synthetic approval-only fixtures, it does re-hash actual local patch and realmlist bytes that the planner knows how to inspect. This detects changed folder IDs or planned file actions but never writes to the game client or grants permission to install.
+The [Live Plan Recheck](LIVE-PLAN-RECHECK.md) invokes this existing planner and the Windows directory identity inspector **twice** to capture a pseudonymous, unsigned observation to the console and compare it to another fresh inspection. It re-hashes actual local patch and realmlist bytes that the planner knows how to inspect. If two passes disagree, capture fails or comparison reports manual review. It cannot detect every race, and never writes to a game client or grants permission to install.
 
 ## Developer-only approval scope checks
 
