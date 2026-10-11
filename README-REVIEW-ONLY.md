@@ -17,4 +17,4 @@ The ZIP itself includes a `BUNDLE-MANIFEST.json` with byte lengths and SHA-256 f
 
 **Safety reminders:** never use this as a reason to overwrite an existing client or personal customizations; work from a separate backed-up test copy for development. No official write-capable installer or uninstaller exists. A "no blockers" result is not permission to modify files. The project has **not** approved patch redistribution.
 
-For further details, open `docs/GUIDED-WINDOWS-SETUP.md`. For current project status visit https://github.com/CosmicCuddle/Naxxramas-Client-Setup .
+For further details, open `docs/GUIDED-WINDOWS-SETUP.md`. For the **still-unverified** 100%, 125%, 150% and 200% Windows display and screen-reader acceptance checklist, open `docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md`. For current project status visit https://github.com/CosmicCuddle/Naxxramas-Client-Setup .
