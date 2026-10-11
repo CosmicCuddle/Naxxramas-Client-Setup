@@ -5,12 +5,14 @@ on:
     paths:
       - 'tools/Review-Naxxramas-ApprovalFixture.ps1'
       - 'tests/Test-ApprovalFixture.ps1'
+      - 'tests/Test-ApprovalDigestV2.ps1'
       - 'docs/APPROVAL-SNAPSHOT-REVIEW.md'
       - '.github/workflows/approval-snapshot-fixtures.yml'
   push:
     paths:
       - 'tools/Review-Naxxramas-ApprovalFixture.ps1'
       - 'tests/Test-ApprovalFixture.ps1'
+      - 'tests/Test-ApprovalDigestV2.ps1'
       - 'docs/APPROVAL-SNAPSHOT-REVIEW.md'
       - '.github/workflows/approval-snapshot-fixtures.yml'
   workflow_dispatch:
@@ -26,4 +28,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Check untrusted approval snapshot comparisons
         shell: powershell
-        run: .\tests\Test-ApprovalFixture.ps1
+        run: |
+          .\tests\Test-ApprovalFixture.ps1
+          .\tests\Test-ApprovalDigestV2.ps1
