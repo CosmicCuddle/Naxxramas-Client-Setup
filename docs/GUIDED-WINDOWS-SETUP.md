@@ -110,3 +110,17 @@ The five-file details window keeps the grid in view while its **Issues and impor
 Windows CI now asserts scroll layout properties, initial desktop-height fit, separated J/U choices, stale-review clearing for both realm edits and optional changes, and detail-dialog keyboard/scroll configuration. These are **headless structural tests only**; actual Windows 100%, 125%, 150% and 200% scaling, screen-reader announcements, text clipping and appearance still require human exploration on a disposable backed-up client.
 
 **Manual check:** on a small laptop display, use Tab to reach Review Only, scroll down to read the results, open View File Details, resize it vertically, and navigate through the table, long warnings and Close Review. Confirm nothing is installed or backed up. In particular, check that the core V/Z reminder, separate J/U selection and backup-not-created language remain visible and understandable.
+
+## Scripts-only ZIP candidate (PR #31)
+
+Development packaging now has a **separate builder**, `tools/Build-Naxxramas-ReviewBundle.ps1`. It is **not run by the setup wizard**. On Windows PowerShell 5.1 it copies an **explicitly allowlisted set of scripts, policy JSON and documentation** from the repository into an initially empty, independent output folder, records a SHA-256/size manifest and creates `Naxxramas-Review-Only-Scripts.zip`. The archive never includes any MPQ, executable, client tree, addons or private game files.
+
+The packaging workflow `.github/workflows/scripts-only-review-bundle.yml` uses disposable fake source data to test the positive allowlist, file integrity and fail-closed rejection of nested/nonempty output and changed mandatory-core policy. Only after the test passes does CI upload a **short-lived internal workflow artifact**, **not a published Release**. No signature, provenance attestation or suitability for general public distribution is claimed.
+
+If authorized for local developer inspection, use an **existing empty folder outside the repository and outside any game client**:
+
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\Build-Naxxramas-ReviewBundle.ps1" -OutputDirectory "C:\Temp\Empty-Review-Output"`
+
+The output folder has to exist and be empty. The builder is a developer-only packaging operation; the included player-facing GUI remains **strictly read-only**. Any real client or display test should use a separately backed-up disposable copy.
+
+**Release gate still open:** visually inspect the wizard and details view on Windows at 100%, 125%, 150% and 200% scaling, with keyboard-only input, Windows high contrast and a screen reader. Check file-action and backup-needed language, long warnings, button clipping and initial focus. Keep the downloadable scripts ZIP marked as a CI *candidate* until a separate release review approves it. Never include MPQs or game binaries.
