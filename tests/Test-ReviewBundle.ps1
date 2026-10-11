@@ -37,7 +37,8 @@ $paths=@(
     'config/realm.json',
     'config/patch-versions/patchset-0001.json',
     'docs/GUIDED-WINDOWS-SETUP.md',
-    'docs/PLAYER-INSTALL-REVIEW.md'
+    'docs/PLAYER-INSTALL-REVIEW.md',
+    'docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md'
 )
 try{
     [void][IO.Directory]::CreateDirectory($root)

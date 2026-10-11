@@ -13,6 +13,7 @@ on:
       - 'README-REVIEW-ONLY.md'
       - 'docs/GUIDED-WINDOWS-SETUP.md'
       - 'docs/PLAYER-INSTALL-REVIEW.md'
+      - 'docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md'
       - 'tests/Test-ReviewBundle.ps1'
       - '.github/workflows/scripts-only-review-bundle.yml'
   push:

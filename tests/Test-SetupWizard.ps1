@@ -55,8 +55,14 @@ try{
         $layout.optional_patch_toggle_count -eq 2 -and
         $layout.mandatory_patch_toggle_count -eq 0) 'Three folder pickers and two independent optional toggles'
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
-    Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 900 -and
-        $layout.optional_controls_do_not_overlap -and $layout.preview_inside_scroll_extent) 'Stacked choices and lower review remain available by vertical scrolling'
+    Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 950 -and
+        $layout.optional_controls_do_not_overlap -and $layout.optional_status_inside_scroll_extent -and
+        $layout.preview_inside_scroll_extent) 'Stacked choices, visible option summary and review remain available by scrolling'
+    Check ($layout.optional_status_accessible -and
+        $layout.optional_status_text.Contains('Patch-J OFF') -and
+        $layout.optional_status_text.Contains('Patch-U OFF') -and
+        -not $layout.combined_overlap_warning_shown -and
+        $layout.mandatory_core_reminder.Contains('Core patches V and Z are always required')) 'Initial J/U status is descriptive, accessible and does not offer a core patch toggle'
     Check ($layout.form_height -le $layout.working_area_height) 'Initial wizard fits within Windows desktop working-area height'
     Check ($layout.folder_browse_buttons_inside_viewport -and $layout.action_buttons_inside_viewport) 'Right-anchored browse and review controls fit inside initial viewport'
     Check ($layout.default_keyboard_action -ceq 'ReviewOnly' -and
@@ -72,8 +78,14 @@ try{
         -not $layout.client_files_changed -and -not $layout.backups_created) 'No real installation or consent surfaced'
     $choices=Execute @('-Diagnostics','-VanillaLogin','-VanillaLoading') 'Independent selections in WinForms'
     Check ($choices.optional_login_selected -and $choices.optional_loading_selected) 'Both optional checkboxes can be independently selected'
+    Check ($choices.combined_overlap_warning_shown -and $choices.optional_status_accessible -and
+        $choices.optional_status_text.Contains('Patch-J ON') -and
+        $choices.optional_status_text.Contains('Patch-U ON') -and
+        $choices.optional_status_text.Contains('Combined appearance is untested')) 'Both J and U selected display plain-text overlap warning immediately'
     $choices=Execute @('-Diagnostics','-VanillaLoading') 'Loading-only WinForms choice'
     Check (-not $choices.optional_login_selected -and $choices.optional_loading_selected) 'U can be selected without selecting J'
+    Check (-not $choices.combined_overlap_warning_shown -and
+        $choices.optional_status_text.Contains('Patch-J OFF') -and $choices.optional_status_text.Contains('Patch-U ON')) 'U alone does not incorrectly claim J/U overlap'
 
     # Test the actual GUI->read-only-viewer bridge using the same strict
     # synthetic setup as the existing player-review integration suite.

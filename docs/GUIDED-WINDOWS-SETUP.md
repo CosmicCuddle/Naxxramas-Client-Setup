@@ -124,3 +124,13 @@ If authorized for local developer inspection, use an **existing empty folder out
 The output folder has to exist and be empty. The builder is a developer-only packaging operation; the included player-facing GUI remains **strictly read-only**. Any real client or display test should use a separately backed-up disposable copy.
 
 **Release gate still open:** visually inspect the wizard and details view on Windows at 100%, 125%, 150% and 200% scaling, with keyboard-only input, Windows high contrast and a screen reader. Check file-action and backup-needed language, long warnings, button clipping and initial focus. Keep the downloadable scripts ZIP marked as a CI *candidate* until a separate release review approves it. Never include MPQs or game binaries.
+
+## Visible J/U status and overlap warning (Milestone 4)
+
+The wizard now shows plain-text **Patch-J ON/OFF** and **Patch-U ON/OFF** directly underneath the two independent checkboxes, before any scan. When both are checked it immediately displays:
+
+> WARNING: J and U overlap on two loading screens. Combined appearance is untested.
+
+This is a warning about an untested visual overlap, not proof that the files are incompatible. It is readable without relying on colour and uses an accessible description. V and Z are still required with no disable switch. Editing either J/U choice clears any previous review. The scrollable main window includes space for this notice, with no game-file writing functionality.
+
+For actual Windows 100%, 125%, 150%, 200% display-scale, keyboard and screen-reader acceptance, follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). The checklist is also shipped inside the internal scripts-only ZIP candidate. No manual screen-reader or on-screen DPI test has been claimed.

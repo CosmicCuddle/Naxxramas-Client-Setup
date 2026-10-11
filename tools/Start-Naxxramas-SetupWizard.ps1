@@ -102,7 +102,7 @@ $initialHeight=[Math]::Min(910,[Math]::Max(520,$workingArea.Height-100))
 $form.ClientSize=New-Object Drawing.Size(962,910)
 $form.MinimumSize=New-Object Drawing.Size(740,540)
 $form.AutoScroll=$true
-$form.AutoScrollMinSize=New-Object Drawing.Size(0,915)
+$form.AutoScrollMinSize=New-Object Drawing.Size(0,1000)
 $form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
 $form.BackColor=[Drawing.Color]::FromArgb(247,249,252)
 
@@ -145,22 +145,29 @@ $form.Controls.AddRange(@($login,$loading))
 $core=New-Label 'Core patches V and Z are always required for this setup.' 480
 $core.ForeColor=[Drawing.Color]::FromArgb(88,99,111)
 $form.Controls.Add($core)
-$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 512 $true))
+# Always expose independent J/U status. When both are selected, show the
+# known loading-screen overlap BEFORE reviewing, not only in planner notes.
+$optionInfo=New-Label '' 520
+$optionInfo.Name='OptionalPatchStatus'
+$optionInfo.Size=New-Object Drawing.Size(914,58)
+$optionInfo.AccessibleName='Optional patches J and U status and overlap warning'
+$form.Controls.Add($optionInfo)
+$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 581 $true))
 $realm=New-Object Windows.Forms.TextBox
 $realm.Name='RealmAddress'
 $realm.Text=$RealmHost
-$realm.Location=New-Object Drawing.Point(24,544)
+$realm.Location=New-Object Drawing.Point(24,613)
 $realm.Size=New-Object Drawing.Size(914,30)
 $realm.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $realm.AccessibleName='Optional realm address'
 $realm.TabIndex=8
 $form.Controls.Add($realm)
 
-$form.Controls.Add((New-Label '3. Review proposed changes' 584 $true))
+$form.Controls.Add((New-Label '3. Review proposed changes' 653 $true))
 $review=New-Object Windows.Forms.Button
 $review.Name='ReviewOnly'
 $review.Text='Review Only'
-$review.Location=New-Object Drawing.Point(24,624)
+$review.Location=New-Object Drawing.Point(24,693)
 $review.Size=New-Object Drawing.Size(165,40)
 $review.BackColor=[Drawing.Color]::FromArgb(33,75,114)
 $review.ForeColor=[Drawing.Color]::White
@@ -170,27 +177,27 @@ $review.TabIndex=9
 $clear=New-Object Windows.Forms.Button
 $clear.Name='ClearReview'
 $clear.Text='Clear Review'
-$clear.Location=New-Object Drawing.Point(203,624)
+$clear.Location=New-Object Drawing.Point(203,693)
 $clear.Size=New-Object Drawing.Size(140,40)
 $clear.TabIndex=10
 $close=New-Object Windows.Forms.Button
 $close.Name='CloseWizard'
 $close.Text='Close'
-$close.Location=New-Object Drawing.Point(817,624)
+$close.Location=New-Object Drawing.Point(817,693)
 $close.Size=New-Object Drawing.Size(121,40)
 $close.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Right
 $close.TabIndex=11
 $details=New-Object Windows.Forms.Button
 $details.Name='ViewFileDetails'
 $details.Text='View File Details...'
-$details.Location=New-Object Drawing.Point(357,624)
+$details.Location=New-Object Drawing.Point(357,693)
 $details.Size=New-Object Drawing.Size(207,40)
 $details.AccessibleName='Open larger read-only file action table'
 $details.Enabled=$false
 $details.TabIndex=11
 $close.TabIndex=12
 $form.Controls.AddRange(@($review,$clear,$details,$close))
-$status=New-Label 'Not reviewed - no files have been changed.' 677
+$status=New-Label 'Not reviewed - no files have been changed.' 746
 $status.Name='ReviewStatus'
 $form.Controls.Add($status)
 $preview=New-Object Windows.Forms.RichTextBox
@@ -202,7 +209,7 @@ $preview.WordWrap=$true
 $preview.ScrollBars=[Windows.Forms.RichTextBoxScrollBars]::Vertical
 $preview.BackColor=[Drawing.Color]::White
 $preview.Font=New-Font 10
-$preview.Location=New-Object Drawing.Point(24,709)
+$preview.Location=New-Object Drawing.Point(24,778)
 $preview.Size=New-Object Drawing.Size(914,171)
 $preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $preview.AccessibleName='Read-only proposed file changes and review messages'
@@ -221,8 +228,23 @@ function Clear-Preview {
 foreach($f in @($clientField.Field,$sourceField.Field,$backupField.Field,$realm)){
     $f.Add_TextChanged({Clear-Preview})
 }
-$login.Add_CheckedChanged({Clear-Preview})
-$loading.Add_CheckedChanged({Clear-Preview})
+function Update-OptionalStatus {
+    $j=if($login.Checked){'ON'}else{'OFF'}
+    $u=if($loading.Checked){'ON'}else{'OFF'}
+    $info='Optional selection: Patch-J '+$j+' | Patch-U '+$u+'.'
+    if($login.Checked -and $loading.Checked){
+        $info+=[Environment]::NewLine+
+            'WARNING: J and U overlap on two loading screens. Combined appearance is untested.'
+    }else{
+        $info+=[Environment]::NewLine+
+            'J and U are separate choices. Review Only never changes files.'
+    }
+    $optionInfo.Text=$info
+    $optionInfo.AccessibleDescription=$info
+}
+$login.Add_CheckedChanged({Clear-Preview; Update-OptionalStatus})
+$loading.Add_CheckedChanged({Clear-Preview; Update-OptionalStatus})
+Update-OptionalStatus
 foreach($group in @($clientField,$sourceField,$backupField)){
     $group.Browse.Tag=$group.Field
     $group.Browse.Add_Click({
@@ -349,12 +371,17 @@ if($Diagnostics){
         mandatory_patch_toggle_count=0
         optional_login_selected=$login.Checked
         optional_loading_selected=$loading.Checked
+        optional_status_text=$optionInfo.Text
+        optional_status_accessible=($optionInfo.AccessibleDescription -ceq $optionInfo.Text)
+        combined_overlap_warning_shown=($optionInfo.Parent -eq $form -and $optionInfo.Text.Contains('WARNING: J and U overlap'))
+        mandatory_core_reminder=$core.Text
         action_labels=@($buttons | ForEach-Object {$_.Text})
         details_action_initially_disabled=(-not $details.Enabled)
         detail_view_is_read_only=$true
         preview_read_only=$preview.ReadOnly
         scrollable_layout=$form.AutoScroll
         minimum_scroll_height=$form.AutoScrollMinSize.Height
+        optional_status_inside_scroll_extent=($optionInfo.Bottom -le $form.AutoScrollMinSize.Height)
         optional_controls_do_not_overlap=($loading.Top -ge $login.Bottom)
         folder_browse_buttons_inside_viewport=($clientField.Browse.Right -le $form.ClientSize.Width -and
             $sourceField.Browse.Right -le $form.ClientSize.Width -and
