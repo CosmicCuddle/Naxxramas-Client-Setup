@@ -117,9 +117,9 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     $beforeClient=Tree $client
     $beforeSource=Tree $source
     $beforeBackup=Tree $backup
-    $args=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+    $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-VanillaLoading')
-    $summary=Execute $args 'GUI viewer bridge to actual current planner'
+    $summary=Execute $reviewParams 'GUI viewer bridge to actual current planner'
     Check ($summary.kind -ceq 'read_only_player_facing_installation_review') 'Wizard consumes genuine read-only planner report'
     Check ($summary.status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Even no-blocker preview is not consent'
     Check ($summary.proposed_replace_after_backup_count -eq 2 -and
@@ -135,13 +135,13 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         (Tree $source) -ceq $beforeSource -and
         (Tree $backup) -ceq $beforeBackup) 'Actual fake client, source and backup remain byte-identical after wizard bridge'
 
-    $args=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
-    $summary=Execute $args 'Wizard reports omitted backup folder'
+    $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
+    $summary=Execute $reviewParams 'Wizard reports omitted backup folder'
     Check ($summary.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'Missing backup folder blocks hypothetical changes'
     Save $v 'UNKNOWN_USER_V'
-    $args=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+    $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-VanillaLoading')
-    $summary=Execute $args 'Wizard refuses unknown V'
+    $summary=Execute $reviewParams 'Wizard refuses unknown V'
     Check ($summary.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'Unknown core patch is refused'
 
     $raw=(& powershell.exe -NoProfile -STA -File $wizard -Diagnostics | Out-String)
