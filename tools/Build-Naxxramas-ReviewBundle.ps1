@@ -52,7 +52,8 @@ $paths=@(
     'config/realm.json',
     'config/patch-versions/patchset-0001.json',
     'docs/GUIDED-WINDOWS-SETUP.md',
-    'docs/PLAYER-INSTALL-REVIEW.md'
+    'docs/PLAYER-INSTALL-REVIEW.md',
+    'docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md'
 )
 if(@($paths | Select-Object -Unique).Count -ne $paths.Count){
     throw 'Duplicate path in review bundle allowlist.'
@@ -86,7 +87,7 @@ try{
     [void][IO.Directory]::CreateDirectory($stage)
     $entries=New-Object 'System.Collections.Generic.List[object]'
     foreach($rel in $paths){
-        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|realm)\.json)|(?:config/patch-versions/patchset-0001\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW)\.md))$'){
+        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|realm)\.json)|(?:config/patch-versions/patchset-0001\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW|WINDOWS-ACCESSIBILITY-ACCEPTANCE)\.md))$'){
             throw 'Unexpected bundle path in fixed allowlist.'
         }
         $source=Join-Path $repo ($rel.Replace('/',[IO.Path]::DirectorySeparatorChar))
