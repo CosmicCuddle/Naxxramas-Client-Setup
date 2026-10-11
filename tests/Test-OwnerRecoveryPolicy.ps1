@@ -137,7 +137,7 @@ try{
     $v=Baseline;$v[5]='verified_online';Must-Throw $v 'Unsupported cryptographic claim rejected'
     $v=Baseline;$v[10]='delete_client';Must-Throw $v 'Unallowlisted operation rejected'
     $v=Baseline;$v[12]='licensed_public';Must-Throw $v 'Unproven public distribution claim rejected'
-    $v=Baseline;$v[13]='extra';Must-Throw $v 'Extra schema field rejected'
+    $v=@((Baseline)) + @('extra');Must-Throw $v 'Extra schema field rejected'
     $v=Baseline;$v[12]=$null;Must-Throw $v 'Null field rejected'
     [IO.File]::WriteAllText($fixture,'{"consent":"good","consent":"bad"}')
     $failed=$false;try{$null=Inspect}catch{$failed=$true}
