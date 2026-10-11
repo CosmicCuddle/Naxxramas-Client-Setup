@@ -100,3 +100,13 @@ The GitHub Windows tests build the controls headlessly but do **not** prove the 
 **Not yet proven:** hands-on appearance at every screen resolution and accessibility configuration. Headless CI verifies actual Windows Forms construction, five-file table contents, disabled editing/approval and synthetic no-write behavior; it is not a substitute for visual exploratory QA.
 
 **The only actions implemented are inspect, clear the display, inspect details and close the window.**
+
+## Smaller desktops and longer reviews — Milestone 4 follow-up
+
+The main wizard now limits its **initial window height** to the available Windows desktop working area, with a vertical scrollbar for lower controls. The optional J and U checkboxes are on **separate rows**, so they do not collide when space is narrow. The main results area remains read-only and can be reached by scrolling the window; the review text has its own scrollbar.
+
+The five-file details window keeps the grid in view while its **Issues and important notes** text expands on taller windows and remains vertically scrollable. Its footer and Close Review button remain attached to the bottom as the window is resized. Keyboard navigation enters the read-only file table, then warning text, then Close Review; Escape still closes.
+
+Windows CI now asserts scroll layout properties, initial desktop-height fit, separated J/U choices, stale-review clearing for both realm edits and optional changes, and detail-dialog keyboard/scroll configuration. These are **headless structural tests only**; actual Windows 100%, 125%, 150% and 200% scaling, screen-reader announcements, text clipping and appearance still require human exploration on a disposable backed-up client.
+
+**Manual check:** on a small laptop display, use Tab to reach Review Only, scroll down to read the results, open View File Details, resize it vertically, and navigate through the table, long warnings and Close Review. Confirm nothing is installed or backed up. In particular, check that the core V/Z reminder, separate J/U selection and backup-not-created language remain visible and understandable.
