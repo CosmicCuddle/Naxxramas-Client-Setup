@@ -80,18 +80,28 @@ function New-WizardDetailsForm([object]$Report){
     $win.Text='Naxxramas - File Details (Review Only)'
     $win.StartPosition=[Windows.Forms.FormStartPosition]::CenterParent
     $win.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Font
-    $win.ClientSize=New-Object Drawing.Size(900,730)
-    $win.MinimumSize=New-Object Drawing.Size(780,665)
     $win.Font=New-Object Drawing.Font('Segoe UI',10)
+    $win.ClientSize=New-Object Drawing.Size(900,730)
+    $win.MinimumSize=New-Object Drawing.Size(550,410)
+    $win.AutoScroll=$true
+    $win.AutoScrollMinSize=New-Object Drawing.Size(0,730)
     $win.BackColor=[Drawing.Color]::FromArgb(247,249,252)
+    # The contents have a minimum *scroll extent*, not a screen-sized minimum
+    # window. Bottom anchors resolve against this region, so shrinking a
+    # laptop-size viewport cannot pile warnings and buttons on top of the grid.
+    $content=New-Object Windows.Forms.Panel
+    $content.Name='ReadOnlyDetailsContent'
+    $content.Location=New-Object Drawing.Point(0,0)
+    $content.Size=New-Object Drawing.Size(900,730)
+    $win.Controls.Add($content)
     $banner=New-Object Windows.Forms.Label
     $banner.Name='ReadOnlyDetailsBanner'
-    $banner.Text='FILE REVIEW ONLY - No installation, backups, approval or rollback.'
+    $banner.Text='FILE REVIEW ONLY - No files will be changed.'
     $banner.Location=New-Object Drawing.Point(22,17)
     $banner.Size=New-Object Drawing.Size(854,34)
     $banner.Font=New-Object Drawing.Font('Segoe UI',12,[Drawing.FontStyle]::Bold)
     $banner.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
-    $win.Controls.Add($banner)
+    $content.Controls.Add($banner)
     $summary=New-Object Windows.Forms.Label
     $summary.Name='ReadOnlyDetailsSummary'
     $summary.Text=('Proposed additions: '+$Report.proposed_new_file_count+
@@ -99,7 +109,7 @@ function New-WizardDetailsForm([object]$Report){
     $summary.Location=New-Object Drawing.Point(22,54)
     $summary.Size=New-Object Drawing.Size(854,28)
     $summary.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
-    $win.Controls.Add($summary)
+    $content.Controls.Add($summary)
     $grid=New-Object Windows.Forms.DataGridView
     $grid.Name='ReadOnlyFileActionGrid'
     $grid.Location=New-Object Drawing.Point(22,94)
@@ -136,13 +146,13 @@ function New-WizardDetailsForm([object]$Report){
             [string]$entry.player_explanation,$backup)
     }
     $grid.ClearSelection()
-    $win.Controls.Add($grid)
+    $content.Controls.Add($grid)
     $heading=New-Object Windows.Forms.Label
     $heading.Text='Issues and important notes'
     $heading.Location=New-Object Drawing.Point(22,353)
     $heading.Size=New-Object Drawing.Size(820,29)
     $heading.Font=New-Object Drawing.Font('Segoe UI',11,[Drawing.FontStyle]::Bold)
-    $win.Controls.Add($heading)
+    $content.Controls.Add($heading)
     $notes=New-Object Windows.Forms.RichTextBox
     $notes.Name='ReadOnlyIssues'
     $notes.ReadOnly=$true
@@ -167,7 +177,7 @@ function New-WizardDetailsForm([object]$Report){
     foreach($c in @($Report.concerns)){$lines.Add(('- '+$c))}
     foreach($n in @($Report.notes)){$lines.Add(('- '+$n))}
     $notes.Text=$lines -join [Environment]::NewLine
-    $win.Controls.Add($notes)
+    $content.Controls.Add($notes)
     $footer=New-Object Windows.Forms.Label
     $footer.Name='ReadOnlyStorageNotice'
     $footer.Text=('Original bytes needing future backup: '+$Report.original_bytes_that_would_need_backup+
@@ -177,7 +187,7 @@ function New-WizardDetailsForm([object]$Report){
     $footer.Size=New-Object Drawing.Size(850,62)
     $footer.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor
         [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
-    $win.Controls.Add($footer)
+    $content.Controls.Add($footer)
     $close=New-Object Windows.Forms.Button
     $close.Name='CloseDetails'
     $close.Text='Close Review'
@@ -187,8 +197,23 @@ function New-WizardDetailsForm([object]$Report){
     $close.AccessibleName='Close read-only file details'
     $close.TabIndex=2
     $close.Add_Click({$win.Close()})
-    $win.Controls.Add($close)
+    $content.Controls.Add($close)
     $win.AcceptButton=$close
     $win.CancelButton=$close
+    # Leave enough width for the Windows scrollbar while keeping the
+    # horizontal controls inside the viewport. This does not change DPI.
+    $win.Add_ClientSizeChanged({
+        param($sender,$eventArgs)
+        $region=[Windows.Forms.Panel]$sender.Controls['ReadOnlyDetailsContent']
+        $reserved=[Windows.Forms.SystemInformation]::VerticalScrollBarWidth+4
+        $region.Size=New-Object Drawing.Size(
+            ([Math]::Max(500,$sender.ClientSize.Width-$reserved)),
+            ([Math]::Max(730,$sender.ClientSize.Height)))
+    })
+    $area=[Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $initialWidth=[Math]::Min(900,[Math]::Max(560,$area.Width-72))
+    $initialHeight=[Math]::Min(730,[Math]::Max(390,$area.Height-100))
+    $win.ClientSize=New-Object Drawing.Size($initialWidth,$initialHeight)
+    $win.PerformLayout()
     return $win
 }
