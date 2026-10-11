@@ -45,7 +45,7 @@ function Read-PolicyFixture([string]$Path) {
         throw 'Malformed or unsupported synthetic policy JSON.'
     }
 }
-function Enum([object]$Value,[string[]]$Options,[string]$Name){
+function Assert-Enum([object]$Value,[string[]]$Options,[string]$Name){
     if(-not ($Value -is [string]) -or $Options -cnotcontains $Value){
         throw "Unsupported $Name label."
     }
@@ -64,17 +64,17 @@ if(-not ($f[0] -is [int] -or $f[0] -is [long]) -or [int64]$f[0] -ne 1){
 if(-not ($f[1] -is [string]) -or $f[1] -cnotmatch '^[A-Za-z0-9_-]{8,80}$'){
     throw 'Invalid installation fixture identifier.'
 }
-Enum $f[2] @('same_folder','copied','migrated','unknown') 'folder relation'
-Enum $f[3] @('same_user_claim','different_user','unknown_user') 'Windows user'
-Enum $f[4] @('available_claim','missing','undecryptable','foreign_user','rotated') 'credential state'
-Enum $f[5] @('current_claim','offline','timeout','missing','conflict') 'authority status'
-Enum $f[6] @('matches_claim','stale','ahead','missing','divergent') 'sequence comparison'
-Enum $f[7] @('explicit_claim','pending','revoked','expired','missing') 'consent'
-Enum $f[8] @('same_claim','changed','unknown') 'plan state'
-Enum $f[9] @('same_bytes_claim','missing','mismatched','unverified') 'backup state'
-Enum $f[10] @('inspect','install','resume','restore','reregister','migrate','recover_key') 'requested action'
-Enum $f[11] @('online_claim','offline') 'network status'
-Enum $f[12] @('rights_claimed','rights_unverified') 'source rights'
+Assert-Enum $f[2] @('same_folder','copied','migrated','unknown') 'folder relation'
+Assert-Enum $f[3] @('same_user_claim','different_user','unknown_user') 'Windows user'
+Assert-Enum $f[4] @('available_claim','missing','undecryptable','foreign_user','rotated') 'credential state'
+Assert-Enum $f[5] @('current_claim','offline','timeout','missing','conflict') 'authority status'
+Assert-Enum $f[6] @('matches_claim','stale','ahead','missing','divergent') 'sequence comparison'
+Assert-Enum $f[7] @('explicit_claim','pending','revoked','expired','missing') 'consent'
+Assert-Enum $f[8] @('same_claim','changed','unknown') 'plan state'
+Assert-Enum $f[9] @('same_bytes_claim','missing','mismatched','unverified') 'backup state'
+Assert-Enum $f[10] @('inspect','install','resume','restore','reregister','migrate','recover_key') 'requested action'
+Assert-Enum $f[11] @('online_claim','offline') 'network status'
+Assert-Enum $f[12] @('rights_claimed','rights_unverified') 'source rights'
 
 $reasons=New-Object 'System.Collections.Generic.List[string]'
 if($f[2] -cne 'same_folder'){Block $reasons 'installation_folder_requires_independent_identity_review'}
