@@ -135,7 +135,12 @@ function Get-StorageKey([string]$Directory) {
         throw 'Could not resolve a local Windows volume GUID.'
     }
     $identity = $volume.ToString().ToUpperInvariant()
-    if ($identity -notmatch '^\\\\\\\\\\?\\\\VOLUME\\\\{[0-9A-F-]{36}}\\\\
+    if (-not ($identity.StartsWith('\\\\?\\Volume{',[StringComparison]::OrdinalIgnoreCase)) -or
+        -not $identity.EndsWith('}\\',[StringComparison]::Ordinal)) {
+        throw 'Unrecognised Windows volume identity.'
+    }
+    return $identity
+}
 function Hash-Bytes([byte[]]$Bytes) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() }
