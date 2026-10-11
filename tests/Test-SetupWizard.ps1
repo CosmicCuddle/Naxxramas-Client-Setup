@@ -55,6 +55,11 @@ try{
         $layout.optional_patch_toggle_count -eq 2 -and
         $layout.mandatory_patch_toggle_count -eq 0) 'Three folder pickers and two independent optional toggles'
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
+    Check ($layout.contrast_matches_windows -and $layout.theme_preserves_standard_palette -and
+        $layout.high_contrast_palette_uses_system_colours -and
+        $layout.contrast_applied_to_actual_controls) 'Wizard uses the active Windows palette and the High Contrast palette resolves OS system colours'
+    Check ($layout.review_status_accessible -and $layout.clear_and_close_accessible -and
+        $layout.initial_keyboard_focus_target -ceq 'ClientFolder') 'Review status descriptions, safe buttons and initial keyboard focus remain available'
     Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 950 -and
         $layout.optional_controls_do_not_overlap -and $layout.optional_status_inside_scroll_extent -and
         $layout.preview_inside_scroll_extent) 'Stacked choices, visible option summary and review remain available by scrolling'
@@ -160,6 +165,7 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check (@($detail.proposed_actions | Where-Object {$_ -match 'replace ONLY after an exact original backup'}).Count -eq 2) 'Detailed action table explains the exact replacement gate'
     Check ($detail.grid_read_only -and $detail.grid_add_delete_disabled -and
         $detail.warnings_read_only -and $detail.no_approval_or_installation) 'File details cannot edit data or authorise a write'
+    Check ($detail.detail_matches_system_contrast -and $detail.details_notes_accessible) 'File Details colour palette matches Windows mode and warning reader has accessible context'
     Check ($detail.warnings_scrollable -and $detail.warnings_expand_with_window -and
         $detail.keyboard_tab_order) 'Details warnings can scroll and grow on resize; table and warnings have predictable keyboard order'
     Check ($detail.compact_viewport_checked -and $detail.compact_details_scrollable -and
