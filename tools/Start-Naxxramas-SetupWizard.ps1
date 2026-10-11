@@ -62,6 +62,7 @@ function New-Label([string]$Text,[int]$Y,[bool]$Bold=$false){
     $l.Text=$Text
     $l.Location=New-Object Drawing.Point(24,$Y)
     $l.Size=New-Object Drawing.Size(910,27)
+    $l.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $l.Font=New-Font $(if($Bold){11}else{10}) $Bold
     $l.ForeColor=[Drawing.Color]::FromArgb(40,54,70)
     return $l
@@ -90,11 +91,19 @@ function New-FolderControls([string]$Name,[string]$Label,[int]$Y,[string]$Initia
 $form=New-Object Windows.Forms.Form
 $form.Name='NaxxramasReadOnlySetup'
 $form.Text='Naxxramas Client Setup - Review Only'
-$form.ClientSize=New-Object Drawing.Size(962,853)
-$form.MinimumSize=New-Object Drawing.Size(860,800)
-$form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
+# Choose the DPI-aware font before calculating the initial viewport dimensions.
 $form.AutoScaleMode=[Windows.Forms.AutoScaleMode]::Font
 $form.Font=New-Font 10
+$workingArea=[Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+# Fit the initial window inside the desktop working area; scrolling exposes the
+# remaining controls on smaller screens rather than hiding the lower review.
+$initialWidth=[Math]::Min(962,[Math]::Max(720,$workingArea.Width-80))
+$initialHeight=[Math]::Min(910,[Math]::Max(520,$workingArea.Height-100))
+$form.ClientSize=New-Object Drawing.Size(962,910)
+$form.MinimumSize=New-Object Drawing.Size(740,540)
+$form.AutoScroll=$true
+$form.AutoScrollMinSize=New-Object Drawing.Size(0,915)
+$form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
 $form.BackColor=[Drawing.Color]::FromArgb(247,249,252)
 
 $header=New-Object Windows.Forms.Panel
@@ -121,37 +130,37 @@ $login.Name='VanillaLogin'
 $login.Text='Vanilla login screen (Patch-J)'
 $login.Checked=[bool]$VanillaLogin
 $login.Location=New-Object Drawing.Point(27,407)
-$login.Size=New-Object Drawing.Size(424,32)
+$login.Size=New-Object Drawing.Size(600,32)
 $login.TabIndex=6
 $login.AccessibleName='Optional Vanilla login screen patch J'
 $loading=New-Object Windows.Forms.CheckBox
 $loading.Name='VanillaLoading'
 $loading.Text='Vanilla loading screens (Patch-U)'
 $loading.Checked=[bool]$VanillaLoading
-$loading.Location=New-Object Drawing.Point(482,407)
-$loading.Size=New-Object Drawing.Size(450,32)
+$loading.Location=New-Object Drawing.Point(27,442)
+$loading.Size=New-Object Drawing.Size(600,32)
 $loading.TabIndex=7
 $loading.AccessibleName='Optional Vanilla loading screens patch U'
 $form.Controls.AddRange(@($login,$loading))
-$core=New-Label 'Core patches V and Z are always required for this setup.' 443
+$core=New-Label 'Core patches V and Z are always required for this setup.' 480
 $core.ForeColor=[Drawing.Color]::FromArgb(88,99,111)
 $form.Controls.Add($core)
-$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 475 $true))
+$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 512 $true))
 $realm=New-Object Windows.Forms.TextBox
 $realm.Name='RealmAddress'
 $realm.Text=$RealmHost
-$realm.Location=New-Object Drawing.Point(24,507)
+$realm.Location=New-Object Drawing.Point(24,544)
 $realm.Size=New-Object Drawing.Size(914,30)
 $realm.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $realm.AccessibleName='Optional realm address'
 $realm.TabIndex=8
 $form.Controls.Add($realm)
 
-$form.Controls.Add((New-Label '3. Review proposed changes' 547 $true))
+$form.Controls.Add((New-Label '3. Review proposed changes' 584 $true))
 $review=New-Object Windows.Forms.Button
 $review.Name='ReviewOnly'
 $review.Text='Review Only'
-$review.Location=New-Object Drawing.Point(24,583)
+$review.Location=New-Object Drawing.Point(24,624)
 $review.Size=New-Object Drawing.Size(165,40)
 $review.BackColor=[Drawing.Color]::FromArgb(33,75,114)
 $review.ForeColor=[Drawing.Color]::White
@@ -161,27 +170,27 @@ $review.TabIndex=9
 $clear=New-Object Windows.Forms.Button
 $clear.Name='ClearReview'
 $clear.Text='Clear Review'
-$clear.Location=New-Object Drawing.Point(203,583)
+$clear.Location=New-Object Drawing.Point(203,624)
 $clear.Size=New-Object Drawing.Size(140,40)
 $clear.TabIndex=10
 $close=New-Object Windows.Forms.Button
 $close.Name='CloseWizard'
 $close.Text='Close'
-$close.Location=New-Object Drawing.Point(817,583)
+$close.Location=New-Object Drawing.Point(817,624)
 $close.Size=New-Object Drawing.Size(121,40)
 $close.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Right
 $close.TabIndex=11
 $details=New-Object Windows.Forms.Button
 $details.Name='ViewFileDetails'
 $details.Text='View File Details...'
-$details.Location=New-Object Drawing.Point(357,583)
+$details.Location=New-Object Drawing.Point(357,624)
 $details.Size=New-Object Drawing.Size(207,40)
 $details.AccessibleName='Open larger read-only file action table'
 $details.Enabled=$false
 $details.TabIndex=11
 $close.TabIndex=12
 $form.Controls.AddRange(@($review,$clear,$details,$close))
-$status=New-Label 'Not reviewed - no files have been changed.' 638
+$status=New-Label 'Not reviewed - no files have been changed.' 677
 $status.Name='ReviewStatus'
 $form.Controls.Add($status)
 $preview=New-Object Windows.Forms.RichTextBox
@@ -193,9 +202,9 @@ $preview.WordWrap=$true
 $preview.ScrollBars=[Windows.Forms.RichTextBoxScrollBars]::Vertical
 $preview.BackColor=[Drawing.Color]::White
 $preview.Font=New-Font 10
-$preview.Location=New-Object Drawing.Point(24,669)
-$preview.Size=New-Object Drawing.Size(914,158)
-$preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right -bor [Windows.Forms.AnchorStyles]::Bottom
+$preview.Location=New-Object Drawing.Point(24,709)
+$preview.Size=New-Object Drawing.Size(914,171)
+$preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $preview.AccessibleName='Read-only proposed file changes and review messages'
 $preview.TabIndex=13
 $form.Controls.Add($preview)
@@ -275,6 +284,11 @@ $clear.Add_Click({Clear-Preview})
 $close.Add_Click({$form.Close()})
 $form.AcceptButton=$review
 $form.CancelButton=$close
+# Lay out all controls at their full-width design size first. Only then shrink
+# to the available desktop viewport so right-anchored folder fields and buttons
+# move into view, rather than starting beyond the right edge on small screens.
+$form.ClientSize=New-Object Drawing.Size($initialWidth,$initialHeight)
+$form.PerformLayout()
 if($DetailDiagnostics){
     try{
         $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) $true
@@ -298,6 +312,9 @@ if($DetailDiagnostics){
                 grid_read_only=$grid.ReadOnly
                 grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
                 warnings_read_only=$issues.ReadOnly
+                warnings_scrollable=($issues.ScrollBars -eq [Windows.Forms.RichTextBoxScrollBars]::Vertical)
+                warnings_expand_with_window=(($issues.Anchor -band [Windows.Forms.AnchorStyles]::Bottom) -ne 0)
+                keyboard_tab_order=($grid.TabIndex -eq 0 -and $issues.TabIndex -eq 1)
                 no_approval_or_installation=$true
             }
             Write-Output ($info|ConvertTo-Json -Depth 5)
@@ -314,6 +331,12 @@ if($Diagnostics){
     $login.Checked=(-not $initialLogin)
     $eventClearsStaleReview=($null -eq $script:currentReview -and -not $details.Enabled)
     $login.Checked=$initialLogin
+    $originalRealm=$realm.Text
+    $script:currentReview=[pscustomobject]@{fixture_only=$true}
+    $script:details.Enabled=$true
+    $realm.Text=($originalRealm+'fixture.invalid')
+    $realmChangeClearsReview=($null -eq $script:currentReview -and -not $details.Enabled)
+    $realm.Text=$originalRealm
     $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
     $report=[pscustomobject][ordered]@{
         kind='read_only_windows_setup_wizard_layout'
@@ -330,9 +353,20 @@ if($Diagnostics){
         details_action_initially_disabled=(-not $details.Enabled)
         detail_view_is_read_only=$true
         preview_read_only=$preview.ReadOnly
+        scrollable_layout=$form.AutoScroll
+        minimum_scroll_height=$form.AutoScrollMinSize.Height
+        optional_controls_do_not_overlap=($loading.Top -ge $login.Bottom)
+        folder_browse_buttons_inside_viewport=($clientField.Browse.Right -le $form.ClientSize.Width -and
+            $sourceField.Browse.Right -le $form.ClientSize.Width -and
+            $backupField.Browse.Right -le $form.ClientSize.Width)
+        action_buttons_inside_viewport=($close.Right -le $form.ClientSize.Width -and
+            $details.Right -le $form.ClientSize.Width)
+        form_height=$form.Height
+        working_area_height=$workingArea.Height
+        preview_inside_scroll_extent=($preview.Bottom -le $form.AutoScrollMinSize.Height)
         default_keyboard_action=$form.AcceptButton.Name
         cancel_keyboard_action=$form.CancelButton.Name
-        selection_changes_clear_stale_review=$eventClearsStaleReview
+        selection_changes_clear_stale_review=($eventClearsStaleReview -and $realmChangeClearsReview)
         actual_installer_action_present=$false
         consent_action_present=$false
         rollback_action_present=$false
