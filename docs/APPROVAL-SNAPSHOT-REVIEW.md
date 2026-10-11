@@ -87,4 +87,6 @@ A separately reviewed approval mechanism must bind an **authentic and fresh** co
 
 Even an authenticated per-user receipt does not by itself solve coordinated rollback of all local states. See [Trust Continuity](TRUST-CONTINUITY-REVIEW.md), [Journal Authority](JOURNAL-AUTHORITY.md), [Journal Durability](JOURNAL-DURABILITY.md), [Transaction Design](TRANSACTION-DESIGN.md) and [Project Handover](PROJECT-HANDOVER.md).
 
+**Further synthetic tests:** the [Single-use Consent Lifecycle](CONSENT-LIFECYCLE-REVIEW.md) adds a separate read-only model for expiry, cancellation/revocation, repeated approval/use and plan-hash/nonce mismatch. There is no real consent collection or monotonic token-consumption store.
+
 **This fixture never creates real consent or installs anything.**
