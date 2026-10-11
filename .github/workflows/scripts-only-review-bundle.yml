@@ -1,0 +1,52 @@
+name: Build and verify read-only scripts-only ZIP candidate
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Build-Naxxramas-ReviewBundle.ps1'
+      - 'tools/Start-Naxxramas-SetupWizard.bat'
+      - 'tools/Start-Naxxramas-SetupWizard.ps1'
+      - 'tools/Naxxramas-WizardDetails.ps1'
+      - 'tools/Show-Naxxramas-InstallReview.ps1'
+      - 'tools/Plan-Naxxramas-Install.ps1'
+      - 'config/**'
+      - 'README-REVIEW-ONLY.md'
+      - 'docs/GUIDED-WINDOWS-SETUP.md'
+      - 'docs/PLAYER-INSTALL-REVIEW.md'
+      - 'tests/Test-ReviewBundle.ps1'
+      - '.github/workflows/scripts-only-review-bundle.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/Build-Naxxramas-ReviewBundle.ps1'
+      - 'config/**'
+      - 'README-REVIEW-ONLY.md'
+      - 'tests/Test-ReviewBundle.ps1'
+      - '.github/workflows/scripts-only-review-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts-only-windows-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Test strictly allowlisted archive against disposable fake repository
+        shell: powershell
+        run: .\tests\Test-ReviewBundle.ps1
+      - name: Build scripts-only review candidate in an empty temporary folder
+        shell: powershell
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'Naxxramas-Review-Bundle'
+          New-Item -ItemType Directory -Path $out -ErrorAction Stop | Out-Null
+          .\tools\Build-Naxxramas-ReviewBundle.ps1 -OutputDirectory $out
+      - name: Upload internal CI candidate only (NOT a public release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: naxxramas-read-only-scripts-candidate
+          path: ${{ runner.temp }}/Naxxramas-Review-Bundle/Naxxramas-Review-Only-Scripts.zip
+          if-no-files-found: error
+          retention-days: 7
