@@ -373,7 +373,7 @@ if($Diagnostics){
         optional_loading_selected=$loading.Checked
         optional_status_text=$optionInfo.Text
         optional_status_accessible=($optionInfo.AccessibleDescription -ceq $optionInfo.Text)
-        combined_overlap_warning_visible=($optionInfo.Visible -and $optionInfo.Text.Contains('WARNING: J and U overlap'))
+        combined_overlap_warning_shown=($optionInfo.Parent -eq $form -and $optionInfo.Text.Contains('WARNING: J and U overlap'))
         mandatory_core_reminder=$core.Text
         action_labels=@($buttons | ForEach-Object {$_.Text})
         details_action_initially_disabled=(-not $details.Enabled)
