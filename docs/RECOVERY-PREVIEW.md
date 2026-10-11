@@ -62,6 +62,10 @@ The tests create a throwaway *fake* client, session and backups. They check norm
 
 GitHub Actions runs these fixtures on Windows through `.github/workflows/recovery-preview-tests.yml`. The new test cases cover incomplete journal states, unverified checkpoints and reused backup filenames. Check the associated PR workflow for current results; a committed test alone does not prove it passed.
 
+## Additional read-only recovery conflict safety
+
+The [Recovery Conflict Safeguard](RECOVERY-CONFLICT-SAFEGUARD.md) now supplements this older synthetic recovery preview with **direct Win32 read-only held-file observations** and a second preview pass. It explicitly preserves player-edited files, missing or corrupt backups, incomplete journals and any inconsistent scan. Even this preview's `restore_after_approval` / `remove_after_approval` suggestions are reclassified as potential future manual reviews **without** any actual consent or write permission. The current transaction backup checkpoint remains untrusted and no automated restore exists.
+
 ## What comes next
 
 1. Confirm and fix Windows PowerShell CI results for this preview.
