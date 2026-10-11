@@ -306,6 +306,14 @@ if($DetailDiagnostics){
     return
 }
 if($Diagnostics){
+    # Verify the actual CheckedChanged handler clears stale details.
+    # This is an in-memory UI-only event; no planner or client is accessed.
+    $initialLogin=$login.Checked
+    $script:currentReview=[pscustomobject]@{fixture_only=$true}
+    $script:details.Enabled=$true
+    $login.Checked=(-not $initialLogin)
+    $eventClearsStaleReview=($null -eq $script:currentReview -and -not $details.Enabled)
+    $login.Checked=$initialLogin
     $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
     $report=[pscustomobject][ordered]@{
         kind='read_only_windows_setup_wizard_layout'
@@ -324,7 +332,7 @@ if($Diagnostics){
         preview_read_only=$preview.ReadOnly
         default_keyboard_action=$form.AcceptButton.Name
         cancel_keyboard_action=$form.CancelButton.Name
-        selection_changes_clear_stale_review=$true
+        selection_changes_clear_stale_review=$eventClearsStaleReview
         actual_installer_action_present=$false
         consent_action_present=$false
         rollback_action_present=$false
