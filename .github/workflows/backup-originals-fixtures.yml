@@ -1,0 +1,29 @@
+name: Read-only original backup readiness fixtures
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Review-Naxxramas-BackupOriginals.ps1'
+      - 'tests/Test-BackupOriginals.ps1'
+      - 'docs/BACKUP-ORIGINALS-READINESS.md'
+      - '.github/workflows/backup-originals-fixtures.yml'
+  push:
+    paths:
+      - 'tools/Review-Naxxramas-BackupOriginals.ps1'
+      - 'tests/Test-BackupOriginals.ps1'
+      - 'docs/BACKUP-ORIGINALS-READINESS.md'
+      - '.github/workflows/backup-originals-fixtures.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Inspect original backup candidates on disposable Windows client fixtures
+        shell: powershell
+        run: .\tests\Test-BackupOriginals.ps1
