@@ -305,6 +305,9 @@ if($DetailDiagnostics){
                 grid_read_only=$grid.ReadOnly
                 grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
                 warnings_read_only=$issues.ReadOnly
+                warnings_scrollable=($issues.ScrollBars -eq [Windows.Forms.RichTextBoxScrollBars]::Vertical)
+                warnings_expand_with_window=(($issues.Anchor -band [Windows.Forms.AnchorStyles]::Bottom) -ne 0)
+                keyboard_tab_order=($grid.TabIndex -eq 0 -and $issues.TabIndex -eq 1)
                 no_approval_or_installation=$true
             }
             Write-Output ($info|ConvertTo-Json -Depth 5)
