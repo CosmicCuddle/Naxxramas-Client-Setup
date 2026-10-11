@@ -94,9 +94,9 @@ public static class NaxxBackupReadinessFixture {
  $beforeClient=Snapshot $client
  $beforeSource=Snapshot $source
  $beforeBackup=Snapshot $backup
- $args=$default.Clone()
- $args.VanillaLoading=$true
- $report=Inspect $args
+ $selectedParams=$default.Clone()
+ $selectedParams.VanillaLoading=$true
+ $report=Inspect $selectedParams
  Check ($report.kind -ceq 'read_only_original_backup_candidate_review') 'Live original review classification'
  Check ($report.status -ceq 'originals_identified_NOT_BACKED_UP_NOT_APPROVED') 'Known older V and changed realmlist yield candidate review, never actual backup'
  Check ($report.current_preflight_status -ceq 'review_only_no_blockers') 'Existing planner reports valid synthetic test policy'
