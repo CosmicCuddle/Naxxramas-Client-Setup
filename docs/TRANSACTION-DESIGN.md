@@ -176,6 +176,10 @@ Automated **disposable fixture** tests required:
 
 The [Original Backup Readiness Review](BACKUP-ORIGINALS-READINESS.md) integrates the actual local planner and held-handle original SHA-256 and Windows file identity observations. It identifies **which existing V/Z/J/U or realmlist bytes would need preserving** for `replace_after_backup`, but creates **no** backup and gives **no** installation authorisation. The difference between `originals_identified_NOT_BACKED_UP_NOT_APPROVED` and a future independently verified durable backup must remain explicit. Backup copying, durable flush order and recovery remain blocked.
 
+## Existing backup copy read-only verification
+
+The [Existing Backup Copies](EXISTING-BACKUP-COPIES.md) reviewer compares an already-present, manually supplied mirrored backup copy against each original identified for `replace_after_backup`. Windows held-file-handle observations detect missing/changed bytes and hardlink aliases to the original. A matching different object does **not** provide transaction backup provenance, durable flushing, later-file conflict protection, consent or recovery permission. This is **not** a backup writer.
+
 ## Next implementation recommendation
 
 **Completed first slice:** [Recovery Preview](RECOVERY-PREVIEW.md) now reads synthetic session records and inspects current/backup file hashes without changing them. The Windows PowerShell CI fixture suite passed on 10 October 2026.

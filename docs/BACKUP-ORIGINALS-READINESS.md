@@ -67,6 +67,10 @@ It verifies: exact V and realmlist original candidates, candidate SHA-256 and le
 
 These synthetic fixtures only exist in an automatically cleaned temporary test folder; no original game archives or private patches are used.
 
+## Existing copy inspection (next read-only stage)
+
+The [Existing Backup Copies](EXISTING-BACKUP-COPIES.md) reviewer can now inspect **already-present** mirrored original files under a separately selected backup root. It compares the actual file SHA-256, byte length and **Win32 file object identity** against each candidate. Matching bytes from a **hardlink to the original** are rejected as the same underlying file, not a separate preserved original. A distinct matching file is merely observed; it does not prove authentic pre-install provenance, storage/durability, genuine consent or safe restore.
+
 ## What remains necessary before any writer
 
 1. A real Windows approval UI and cryptographically protected, **one-use** owner consent bound to the *specific* current verified plan.
