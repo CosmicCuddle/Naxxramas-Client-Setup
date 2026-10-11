@@ -77,4 +77,26 @@ Until those issues are resolved and reviewed, this GUI will remain a **Review On
 
 Related: [Roadmap](ROADMAP.md), [Project Handover](PROJECT-HANDOVER.md), [Player Installation Review](PLAYER-INSTALL-REVIEW.md), [Owner Recovery Policy](OWNER-RECOVERY-POLICY.md).
 
-**The only actions implemented are inspect, clear the display and close the window.**
+## Larger file details and clearer errors (PR #29)
+
+The **View File Details...** control starts disabled. After a successful read-only review (even if the planner reports blockers), it opens a **larger, separate read-only window** showing exactly five rows in the mandatory V/Z, optional J/U and realmlist order. The table has an explicit proposed-action column and an **Original backup first?** column that says **YES - not created** where an existing original would need preservation. A separate scrollable area shows warnings, blockers and the existing planner's notes. Only **Close Review** is available inside this window.
+
+The wizard calls the existing real player-reviewer **once per Review Only click** in JSON mode, checks its fixed allowlist and no-write/no-consent flags, and formats both the small summary and expanded table from **that same inspection**. This avoids two presentations accidentally referring to two different file scans. Editing a folder, cosmetic checkbox or realm address **clears the result and disables View File Details**, so a previous review cannot be reopened against changed selections.
+
+When a required client path is empty or a selected folder does not exist, the wizard now explains which folder needs attention instead of merely showing a generic scan failure. Failures from version/hash/storage/safety checks remain fail-closed: the UI recommends checking the supported client, local sources and separate backup location, without exposing an internal error path or offering a bypass.
+
+### Manual Windows accessibility and layout check (not automated)
+
+The GitHub Windows tests build the controls headlessly but do **not** prove the appearance, screen-reader behavior or layout at every display scale. When reviewing on a backed-up **test** client:
+
+1. Open the `Start-Naxxramas-SetupWizard.bat` launcher. Confirm the initial **View File Details** button is disabled and no Install/Apply/Approve option exists.
+2. Use **Tab**, **Shift+Tab**, **Enter** and **Escape**; confirm the result text can be read and scrolled with the keyboard.
+3. Run **Review Only**, then open **View File Details**. Confirm five readable rows, clear backup labels and a usable scrollable warning panel.
+4. Change a folder field, the realm override and each optional J/U checkbox. Verify the old result clears and the details button disables each time.
+5. Try an absent folder and a deliberately invalid **fake** patch in a disposable fixture; confirm a helpful message or blocked review and no modification.
+6. Resize both windows and check 100%, 125%, 150% and 200% Windows display scaling where available. Check high contrast, keyboard focus and any screen-reader labels; record clipping issues for subsequent fixes.
+7. Close the review and wizard without changing your client. Verify the original test-client and backup files were preserved.
+
+**Not yet proven:** hands-on appearance at every screen resolution and accessibility configuration. Headless CI verifies actual Windows Forms construction, five-file table contents, disabled editing/approval and synthetic no-write behavior; it is not a substitute for visual exploratory QA.
+
+**The only actions implemented are inspect, clear the display, inspect details and close the window.**
