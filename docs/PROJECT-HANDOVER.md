@@ -1,6 +1,6 @@
 # Naxxramas Client Setup — Project Handover
 
-**Updated:** 10 October 2026  
+**Updated:** 11 October 2026  
 **Repository:** [CosmicCuddle/Naxxramas-Client-Setup](https://github.com/CosmicCuddle/Naxxramas-Client-Setup)  
 **Starting reference for this handover:** `main` commit `869c9c6` on 9 October 2026, before these continuity documents were added.  
 **Active patch reference:** `patchset-0001`
