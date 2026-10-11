@@ -44,6 +44,10 @@ The synthetic planner suite verifies:
 
 Mocks are inserted into **temporary copies of the planner**, not exposed as a command-line bypass in production.
 
+## Important: mounted-folder paths are currently blocked
+
+The Win32 APIs are capable of describing volumes mounted inside folders. **However, this preview deliberately rejects reparse-point paths, including NTFS mounted-folder entry points, before it calls the volume APIs.** Therefore actual mounted-folder selection is **not yet supported**. The CI tests confirm local volume GUID lookup and simulate volume aliases; they do not test a real mounted-folder installation. Supporting mounted folders would need a separate, reviewed distinction between safe volume mount points and unsafe junctions/symlinks (including handle-based verification). Do **not** relax this guard merely to pass a mounted-folder path.
+
 ## Limitations that still block production writing
 
 - A Windows volume GUID identifies a **logical** volume, **not** a physical drive. Two different logical volumes can share one physical disk, storage pool, thin-provisioned allocation or quota.
