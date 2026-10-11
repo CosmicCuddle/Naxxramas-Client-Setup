@@ -62,6 +62,7 @@ function New-Label([string]$Text,[int]$Y,[bool]$Bold=$false){
     $l.Text=$Text
     $l.Location=New-Object Drawing.Point(24,$Y)
     $l.Size=New-Object Drawing.Size(910,27)
+    $l.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $l.Font=New-Font $(if($Bold){11}else{10}) $Bold
     $l.ForeColor=[Drawing.Color]::FromArgb(40,54,70)
     return $l
@@ -98,7 +99,7 @@ $workingArea=[Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 # remaining controls on smaller screens rather than hiding the lower review.
 $initialWidth=[Math]::Min(962,[Math]::Max(720,$workingArea.Width-80))
 $initialHeight=[Math]::Min(910,[Math]::Max(520,$workingArea.Height-100))
-$form.ClientSize=New-Object Drawing.Size($initialWidth,$initialHeight)
+$form.ClientSize=New-Object Drawing.Size(962,910)
 $form.MinimumSize=New-Object Drawing.Size(740,540)
 $form.AutoScroll=$true
 $form.AutoScrollMinSize=New-Object Drawing.Size(0,915)
@@ -283,6 +284,11 @@ $clear.Add_Click({Clear-Preview})
 $close.Add_Click({$form.Close()})
 $form.AcceptButton=$review
 $form.CancelButton=$close
+# Lay out all controls at their full-width design size first. Only then shrink
+# to the available desktop viewport so right-anchored folder fields and buttons
+# move into view, rather than starting beyond the right edge on small screens.
+$form.ClientSize=New-Object Drawing.Size($initialWidth,$initialHeight)
+$form.PerformLayout()
 if($DetailDiagnostics){
     try{
         $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) $true
