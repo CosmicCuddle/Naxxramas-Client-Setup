@@ -133,4 +133,4 @@ The wizard now shows plain-text **Patch-J ON/OFF** and **Patch-U ON/OFF** direct
 
 This is a warning about an untested visual overlap, not proof that the files are incompatible. It is readable without relying on colour and uses an accessible description. V and Z are still required with no disable switch. Editing either J/U choice clears any previous review. The scrollable main window includes space for this notice, with no game-file writing functionality.
 
-For actual Windows 100%, 125%, 150%, 200% display-scale, keyboard and screen-reader acceptance, follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). No manual screen-reader or on-screen DPI test has been claimed.
+For actual Windows 100%, 125%, 150%, 200% display-scale, keyboard and screen-reader acceptance, follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). The checklist is also shipped inside the internal scripts-only ZIP candidate. No manual screen-reader or on-screen DPI test has been claimed.
