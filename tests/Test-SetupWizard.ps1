@@ -248,6 +248,10 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     $optionalArgs=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-TbcLogin','-VanillaLoading','-AddonSuite')
     $optionalReport=Execute $optionalArgs 'Selected unverified C and N Addon Suite plan'
+    Check ($optionalReport.patch_c_reference_sha256 -ceq '16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8' -and
+        [long]$optionalReport.patch_c_reference_size_bytes -eq 26753640 -and
+        $optionalReport.patch_c_release_tag -ceq 'optional-v1.0' -and
+        @($optionalReport.file_reviews|Where-Object {$_.relative_path -ceq 'Data/Patch-C.mpq'}).Count -eq 0) 'GitHub owner-release C SHA/size is pinned, but C remains outside old five-file review'
     Check ($optionalReport.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         $optionalReport.file_count -eq 5 -and $optionalReport.tbc_login_selected -and
         $optionalReport.addon_suite_selected -and
