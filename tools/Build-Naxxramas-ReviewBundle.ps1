@@ -46,9 +46,11 @@ $paths=@(
     'tools/Start-Naxxramas-SetupWizard.bat',
     'tools/Start-Naxxramas-SetupWizard.ps1',
     'tools/Naxxramas-WizardDetails.ps1',
+    'tools/Naxxramas-OptionalContent.ps1',
     'tools/Show-Naxxramas-InstallReview.ps1',
     'tools/Plan-Naxxramas-Install.ps1',
     'config/client-patches.json',
+    'config/optional-content.json',
     'config/realm.json',
     'config/patch-versions/patchset-0001.json',
     'docs/GUIDED-WINDOWS-SETUP.md',
@@ -87,7 +89,7 @@ try{
     [void][IO.Directory]::CreateDirectory($stage)
     $entries=New-Object 'System.Collections.Generic.List[object]'
     foreach($rel in $paths){
-        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|realm)\.json)|(?:config/patch-versions/patchset-0001\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW|WINDOWS-ACCESSIBILITY-ACCEPTANCE)\.md))$'){
+        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|optional-content|realm)\.json)|(?:config/patch-versions/patchset-0001\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW|WINDOWS-ACCESSIBILITY-ACCEPTANCE)\.md))$'){
             throw 'Unexpected bundle path in fixed allowlist.'
         }
         $source=Join-Path $repo ($rel.Replace('/',[IO.Path]::DirectorySeparatorChar))
