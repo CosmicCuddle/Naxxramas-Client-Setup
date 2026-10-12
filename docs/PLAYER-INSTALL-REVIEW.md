@@ -85,3 +85,11 @@ A genuine future setup wizard must separately implement accessible exact-plan re
 Related: [Installer Plan](INSTALLER-PLAN.md), [Owner Recovery Policy](OWNER-RECOVERY-POLICY.md), [Original Backup Readiness](BACKUP-ORIGINALS-READINESS.md), [Roadmap](ROADMAP.md), [Project Handover](PROJECT-HANDOVER.md).
 
 **A clear preview is not permission to install.**
+
+## Six-file reference in patchset-0002 (PR #41)
+
+The current read-only planner now reports exactly **six file actions**: V and Z required; J (Vanilla login), C (TBC login), U (Vanilla loading) optional; and the required realm settings file. `patchset-0001` remains immutable as previous reference history. `patchset-0002` registers the owner GitHub optional-v1.0 published Patch-C SHA-256 and size.
+
+Selecting C and J simultaneously is rejected. Selecting C with **an existing J file**, or selecting J with **an existing C file**, must produce an explicit conflict blocker even if the other option is unchecked. Both installed also block. There is no automatic MPQ cleanup. Existing unknown optional files are never replaced or deleted in this read-only review. C can be independently selected with U; J+U still requires a caution about shared loading textures.
+
+Every proposed action remains *only a description*. No file is copied, installed, downloaded, modified, backed up or removed; no user consent or distribution permission is collected. Human Windows desktop and game tests must be recorded before separate release decisions.

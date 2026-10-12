@@ -13,11 +13,11 @@
     "size_bytes": 26753640,
     "reference_approved": true,
     "redistribution_approved": false,
-    "note": "Owner's GitHub optional-v1.0 release publishes Patch-C.mpq size and SHA-256; Patch-C is optional TBC Dark Portal login visuals and mutually exclusive with Vanilla Patch-J. C remains outside pinned patchset-0001 and five-file review pending versioned planner integration, license/provenance assessment and real game tests. No distribution or installation authorization.",
+    "note": "Owner release optional-v1.0 publishes exact C size and SHA-256. Included in current read-only patchset-0002 six-file inspection with mandatory V/Z; C and J are mutually exclusive and U remains independent. Game compatibility, distribution, installation and recovery are NOT approved.",
     "release_tag": "optional-v1.0",
     "release_url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/optional-v1.0",
     "asset_download_url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/optional-v1.0/Patch-C.mpq",
-    "fingerprint_source": "GitHub release asset digest/size published 2026-09-02; metadata only, asset bytes not independently downloaded"
+    "fingerprint_source": "GitHub release asset metadata published 2026-09-02, not independent downloaded-byte verification. Read-only planner accepts a matching user-provided local source for preview classification only."
   },
   "addon_suite": {
     "label": "N Addon Suite",

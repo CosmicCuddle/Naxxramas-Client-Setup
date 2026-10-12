@@ -31,7 +31,7 @@ if(-not (Test-Path -LiteralPath $reviewTool -PathType Leaf)){
 }
 function Invoke-ReadOnlyReview(
     [string]$Client,[string]$Source,[string]$Backup,[string]$Realm,
-    [bool]$UseLogin,[bool]$UseLoading,[bool]$AsJson
+    [bool]$UseLogin,[bool]$UseLoading,[bool]$UseTbc,[bool]$AsJson
 ){
     if([string]::IsNullOrWhiteSpace($Client)){
         throw 'Choose an existing client folder first.'
@@ -42,13 +42,14 @@ function Invoke-ReadOnlyReview(
     if(-not [string]::IsNullOrWhiteSpace($Realm)){$p.RealmHost=$Realm.Trim()}
     if($UseLogin){$p.VanillaLogin=$true}
     if($UseLoading){$p.VanillaLoading=$true}
+    if($UseTbc){$p.TbcLogin=$true}
     if($AsJson){$p.Json=$true}
     $result=(& $reviewTool @p | Out-String).TrimEnd()
     if([string]::IsNullOrWhiteSpace($result)){throw 'The read-only planner returned no review.'}
     return $result
 }
 if($PreviewJson){
-    $report=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) $true
+    $report=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) ([bool]$TbcLogin) $true
     $data=$report | ConvertFrom-Json
     $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite)
     Write-Output ($data | ConvertTo-Json -Depth 7)
@@ -152,7 +153,7 @@ $loading.TabIndex=7
 $loading.AccessibleName='Optional Vanilla loading screens patch U'
 $tbc=New-Object Windows.Forms.CheckBox
 $tbc.Name='TbcLogin'
-$tbc.Text='TBC login screen (Patch-C) - release fingerprint recorded'
+$tbc.Text='TBC login screen (Patch-C) - optional, included in review'
 $tbc.Checked=[bool]$TbcLogin
 $tbc.Location=New-Object Drawing.Point(27,477)
 $tbc.Size=New-Object Drawing.Size(820,32)
@@ -294,7 +295,7 @@ function Update-OptionalStatus {
             'Patch-C (TBC login) and Patch-J (Vanilla login) cannot be used together.'
     }
     if($tbc.Checked){
-        $info+=[Environment]::NewLine+'Patch-C release reference recorded; versioned install review pending. Selection remains blocked.'
+        $info+=[Environment]::NewLine+'Patch-C fingerprint registered. Existing Patch-J MPQs still block incompatible login choices.'
     }
     $optionInfo.Text=$info
     $optionInfo.AccessibleDescription=$info
@@ -338,7 +339,7 @@ $review.Add_Click({
     try{
         $hint=Get-WizardInputHint $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text
         if($hint){throw $hint}
-        $json=Invoke-ReadOnlyReview $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text $realm.Text $login.Checked $loading.Checked $true
+        $json=Invoke-ReadOnlyReview $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text $realm.Text $login.Checked $loading.Checked $tbc.Checked $true
         $data=$json | ConvertFrom-Json
         Assert-WizardReadOnlyReport $data
         $data=Add-NaxxOptionalReview $data $optionalCatalog $tbc.Checked $suite.Checked
@@ -383,7 +384,7 @@ $form.ClientSize=New-Object Drawing.Size($initialWidth,$initialHeight)
 $form.PerformLayout()
 if($DetailDiagnostics){
     try{
-        $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) $true
+        $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) ([bool]$TbcLogin) $true
         $data=$json|ConvertFrom-Json
         Assert-WizardReadOnlyReport $data
         $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite)
@@ -420,7 +421,7 @@ if($DetailDiagnostics){
                 review_status=[string]$data.status
                 tbc_login_selected=[bool]$data.tbc_login_selected
                 addon_suite_selected=[bool]$data.addon_suite_selected
-                optional_content_blocked=([bool]$data.tbc_login_selected -or [bool]$data.addon_suite_selected) -and
+                optional_content_blocked=([bool]$data.addon_suite_selected) -and
                     $data.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW'
                 concerns_count=@($data.concerns).Count
                 grid_read_only=$grid.ReadOnly

@@ -77,6 +77,7 @@ $paths=@(
     'config/optional-content.json',
     'config/realm.json',
     'config/patch-versions/patchset-0001.json',
+    'config/patch-versions/patchset-0002.json',
     'docs/GUIDED-WINDOWS-SETUP.md',
     'docs/PLAYER-INSTALL-REVIEW.md',
     'docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md'
@@ -170,26 +171,38 @@ public static class NaxxStandaloneZipFixture {public static int Main(){return 0;
     Check ($runtime.code -eq 0) ('Unpacked planner executes using ZIP-local policy: '+$runtime.stderr)
     $preview=$runtime.stdout|ConvertFrom-Json
     $expectedFiles=@('Data/patch-V.mpq','Data/patch-Z.mpq',
-        'Data/Patch-J.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+        'Data/Patch-J.mpq','Data/Patch-C.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
     Check ($preview.kind -ceq 'read_only_player_facing_installation_review' -and
         $preview.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
-        $preview.file_count -eq 5 -and $preview.patch_set_version -ceq 'patchset-0001') 'Missing real V/Z sources are blocked rather than silently accepted'
+        $preview.file_count -eq 6 -and $preview.patch_set_version -ceq 'patchset-0002') 'Missing real V/Z sources are blocked rather than silently accepted'
     Check ((@($preview.file_reviews | ForEach-Object {$_.relative_path}) -join '|') -ceq
-        ($expectedFiles -join '|')) 'Unpacked planner uses exact expected five-file order'
+        ($expectedFiles -join '|')) 'Unpacked planner uses exact expected six-file order'
     Check ($preview.file_reviews[0].mandatory -and $preview.file_reviews[0].selected -and
         $preview.file_reviews[1].mandatory -and $preview.file_reviews[1].selected -and
         -not $preview.file_reviews[2].mandatory -and -not $preview.file_reviews[2].selected -and
-        -not $preview.file_reviews[3].mandatory -and $preview.file_reviews[3].selected) 'Core V/Z stay mandatory while U-only does not select J'
+        -not $preview.file_reviews[3].mandatory -and -not $preview.file_reviews[3].selected -and
+        -not $preview.file_reviews[4].mandatory -and $preview.file_reviews[4].selected) 'Core V/Z stay mandatory while U-only does not select J'
     Check ($preview.file_reviews[2].proposed_action -ceq 'leave_existing' -and
+        $preview.file_reviews[3].relative_path -ceq 'Data/Patch-C.mpq' -and
+        $preview.file_reviews[3].proposed_action -ceq 'not_selected' -and
         $preview.review_required -and $preview.read_only -and
         -not $preview.client_files_modified -and -not $preview.file_writes_authorised -and
         -not $preview.genuine_user_consent_collected -and -not $preview.original_backups_created -and
         -not $preview.public_patch_distribution_authorised) 'Personal J is preserved and no consent, writes, backups or distribution are authorised'
 
+    $runtime=RunBundledWizard @('-PreviewJson','-ClientPath',$client,'-TbcLogin','-VanillaLoading')
+    Check ($runtime.code -eq 0) ('Unpacked planner inspects selected C without downloading MPQs: '+$runtime.stderr)
+    $tbc=$runtime.stdout|ConvertFrom-Json
+    Check ($tbc.file_count -eq 6 -and $tbc.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        $tbc.tbc_login_selected -and
+        @($tbc.file_reviews|Where-Object {$_.relative_path -ceq 'Data/Patch-C.mpq' -and
+            $_.proposed_action -ceq 'blocked'}).Count -eq 1 -and
+        @($tbc.concerns|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0) 'Packaged selected TBC C is blocked if player has a conflicting existing J file'
+
     $runtime=RunBundledWizard @('-DetailDiagnostics','-ClientPath',$client,'-VanillaLoading')
-    Check ($runtime.code -eq 0) ('Unpacked five-file details window builds: '+$runtime.stderr)
+    Check ($runtime.code -eq 0) ('Unpacked six-file details window builds: '+$runtime.stderr)
     $details=$runtime.stdout|ConvertFrom-Json
-    Check ($details.file_count -eq 5 -and $details.grid_read_only -and
+    Check ($details.file_count -eq 6 -and $details.grid_read_only -and
         $details.warnings_read_only -and $details.compact_details_scrollable -and
         $details.no_approval_or_installation -and -not $details.detail_window_displayed) 'Bundled File Details stays read-only and headlessly scrollable'
 

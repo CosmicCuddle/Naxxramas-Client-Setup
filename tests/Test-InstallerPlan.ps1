@@ -53,7 +53,7 @@ try {
     $planner = Join-Path $tools 'Plan-Naxxramas-Install.ps1'
     Copy-Item -LiteralPath (Join-Path $rootRepo 'tools/Plan-Naxxramas-Install.ps1') -Destination $planner
     Save (Join-Path $client 'Wow.exe') 'fake exe for fixture only'
-    $patchNames = @('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-U.mpq')
+    $patchNames = @('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-C.mpq','Patch-U.mpq')
     $patchRows = @()
     $i = 0
     foreach ($name in $patchNames) {
@@ -73,8 +73,8 @@ try {
     $manifest = [ordered]@{
         schema_version = 1
         target_client = @{ build = 12340; locale = 'enUS' }
-        patch_set_revision = 1
-        patch_set_version = 'patchset-0001'
+        patch_set_revision = 2
+        patch_set_version = 'patchset-0002'
         patches = $patchRows
     }
     $manifest | ConvertTo-Json -Depth 8 |
@@ -90,11 +90,12 @@ try {
     Copy-Item -LiteralPath (Join-Path $source 'Data/patch-Z.mpq') -Destination (Join-Path $client 'Data/patch-Z.mpq')
     Save (Join-Path $client 'Data/enUS/realmlist.wtf') 'set realmlist naxx.example.test'
 
-    function Plan([bool]$UseSource=$false,[bool]$Login=$false,[bool]$Loading=$false) {
+    function Plan([bool]$UseSource=$false,[bool]$Login=$false,[bool]$Loading=$false,[bool]$Tbc=$false) {
         $parameters = @{ ClientPath = $client; Json = $true }
         if ($UseSource) { $parameters.PatchSourcePath = $source }
         if ($Login) { $parameters.VanillaLogin = $true }
         if ($Loading) { $parameters.VanillaLoading = $true }
+        if ($Tbc) { $parameters.TbcLogin = $true }
         $before = Snapshot $client
         $sourceBefore = Snapshot $source
         $json = & $planner @parameters | Out-String
@@ -111,12 +112,13 @@ try {
     Check ((Item $plan 'Data/patch-V.mpq').action -eq 'no_change') 'Current mandatory V is never replaced'
     Check ((Item $plan 'Data/patch-Z.mpq').action -eq 'no_change') 'Current mandatory Z is never replaced'
     Check ((Item $plan 'Data/Patch-J.mpq').action -eq 'not_selected') 'Unselected J remains optional'
+    Check ((Item $plan 'Data/Patch-C.mpq').action -eq 'not_selected') 'Unselected C remains optional'
     Check ((Item $plan 'Data/Patch-U.mpq').action -eq 'not_selected') 'Unselected U remains optional'
     Check ((Item $plan 'Data/enUS/realmlist.wtf').action -eq 'no_change') 'Matching realmlist preserved'
     Check ($plan.status -eq 'blocked') 'Unknown executable version is reported as blocking'
     Check (@($plan.blockers | Where-Object { $_ -like '*12340*' }).Count -eq 1) 'Unsupported executable metadata is not silently accepted'
-    Check ($plan.patch_set_version -eq 'patchset-0001') 'Plan records the pinned patchset'
-    Check (@($plan.files).Count -eq 5) 'Plan includes only four patches and the realmlist'
+    Check ($plan.patch_set_version -eq 'patchset-0002') 'Plan records the pinned patchset'
+    Check (@($plan.files).Count -eq 6) 'Plan includes five patches and the realmlist'
 
     Remove-Item -LiteralPath (Join-Path $client 'Data/patch-Z.mpq')
     $plan = Plan
@@ -160,6 +162,34 @@ try {
     Remove-Item -LiteralPath (Join-Path $client 'Data/Patch-U.mpq')
     $plan = Plan $true $false $true
     Check ((Item $plan 'Data/Patch-U.mpq').action -eq 'install') 'Selected U can be installed independently'
+
+    # Patch-C must be actually fingerprinted in both source and client, and
+    # any existing incompatible login MPQ must prevent a misleading preview.
+    $c=Join-Path $client 'Data/Patch-C.mpq'
+    $plan=Plan $true $false $false $true
+    Check ((Item $plan 'Data/Patch-C.mpq').action -eq 'install') 'Selected C uses verified local source when no conflicting J exists'
+    Save $c 'PLAYER_UNKNOWN_TBC_LOGIN'
+    $plan=Plan $true $false $false $true
+    Check ((Item $plan 'Data/Patch-C.mpq').action -eq 'blocked') 'Unrecognised existing C cannot be replaced'
+    Remove-Item -LiteralPath $c
+    Copy-Item -LiteralPath (Join-Path $source 'Data/Patch-C.mpq') -Destination $c
+    $plan=Plan $true $false $false $true
+    Check ((Item $plan 'Data/Patch-C.mpq').action -eq 'no_change') 'Matching existing C remains untouched'
+    $plan=Plan $true $true
+    Check ($plan.status -eq 'blocked' -and
+        @($plan.blockers|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0) 'Existing C blocks selected J even when C is unselected'
+    Remove-Item -LiteralPath $c
+    Save (Join-Path $client 'Data/Patch-J.mpq') 'PLAYER_UNSELECTED_VANILLA_LOGIN'
+    $plan=Plan $true $false $false $true
+    Check ($plan.status -eq 'blocked' -and
+        @($plan.blockers|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0) 'Existing J blocks selected C even when J is unchecked'
+    Remove-Item -LiteralPath (Join-Path $client 'Data/Patch-J.mpq')
+    $plan=Plan $true $false $true $true
+    Check ((Item $plan 'Data/Patch-C.mpq').action -eq 'install' -and
+        (Item $plan 'Data/Patch-U.mpq').action -eq 'install') 'C plus U remains independent and can be reviewed with matching sources'
+    $collision=$false
+    try{$null=& $planner -ClientPath $client -VanillaLogin -TbcLogin -Json 2>&1|Out-String}catch{$collision=$true}
+    Check $collision 'Direct J/C contradictory choices fail without review'
 
     $realmFile = Join-Path $client 'Data/enUS/realmlist.wtf'
     Save $realmFile 'set realmlist other.example.test'

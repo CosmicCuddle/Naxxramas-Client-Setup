@@ -197,3 +197,20 @@ These two options are captured in an explicitly unapproved `config/optional-cont
 The owner supplied the published [Naxxramas Server Patches `optional-v1.0` release](https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/optional-v1.0). Its asset metadata gives filename `Patch-C.mpq`, size `26,753,640` bytes and SHA-256 `16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8`. The same release's J and U assets agree with the current registered J/U fingerprints. Its description confirms Patch-C and Patch-J are exclusive, while either can be combined with U.
 
 The **release metadata is pinned** in `config/optional-content.json` and enforced by `tools/Naxxramas-OptionalContent.ps1`; the wizard no longer calls the release hash unknown. But the MPQ has **not** been downloaded and independently rehashed/inspected, its copyright and redistribution permissions are not approved, and C is still outside the immutable `patchset-0001` five-file planner. Selecting C remains **BLOCKED** until an independently reviewed successor patchset and full read-only review exist. No MPQ is shipped, fetched, installed or deleted.
+
+## Patch-C six-file inspection — patchset-0002 (PR #41)
+
+The read-only Windows wizard now displays a **six-row file review**:
+
+1. Required core patch V.
+2. Required core patch Z.
+3. Optional Vanilla login screen J.
+4. Optional TBC login screen C.
+5. Optional Vanilla loading screens U.
+6. Realm address settings (`realmlist.wtf`).
+
+The pinned immutable current reference is now `patchset-0002` with five MPQs (V/Z/J/C/U); prior `patchset-0001` stays in the version archive. When C is selected, the planner hashes the existing `Data/Patch-C.mpq` and, if available, a matching file supplied in the **separate existing local patch-source directory**. No network or file-write call is used. A matching original remains untouched; an absent C without a valid source is **BLOCKED**; an unrecognised existing C is **BLOCKED** rather than overwritten; an absent C with an exact matching source is shown as a *future proposed addition*, not approved to execute.
+
+**Important extra safety:** even when Patch-J is unchecked, an already-installed Patch-J file makes selecting C **BLOCKED**. The opposite is true when J is selected and C is already installed; both installed also block. The wizard will not remove/rename either MPQ automatically. For testing, use a **disposable backed-up test client**, and don't alter your actual game's files based on a preview.
+
+N Addon Suite still has its own separate noninstallable planning option. All six file rows are read-only and no backups have been created; the scripts-only CI ZIP remains an internal candidate with neither real MPQs nor addons. Real Windows scaling 100/125/150/200%, screen reader and game compatibility QA and any public-release decision remain separate gates.

@@ -53,6 +53,7 @@ $paths=@(
     'config/optional-content.json',
     'config/realm.json',
     'config/patch-versions/patchset-0001.json',
+    'config/patch-versions/patchset-0002.json',
     'docs/GUIDED-WINDOWS-SETUP.md',
     'docs/PLAYER-INSTALL-REVIEW.md',
     'docs/WINDOWS-ACCESSIBILITY-ACCEPTANCE.md'
@@ -62,16 +63,19 @@ if(@($paths | Select-Object -Unique).Count -ne $paths.Count){
 }
 # Do not package if the version policy and required/optional roles have drifted.
 $policy=Get-Content -LiteralPath (Join-Path $repo 'config/client-patches.json') -Raw | ConvertFrom-Json
-$history=Get-Content -LiteralPath (Join-Path $repo 'config/patch-versions/patchset-0001.json') -Raw | ConvertFrom-Json
-$expected=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-U.mpq')
-if($policy.schema_version -ne 1 -or $policy.patch_set_version -cne 'patchset-0001' -or
+$history=Get-Content -LiteralPath (Join-Path $repo 'config/patch-versions/patchset-0002.json') -Raw | ConvertFrom-Json
+$prior=Get-Content -LiteralPath (Join-Path $repo 'config/patch-versions/patchset-0001.json') -Raw | ConvertFrom-Json
+$expected=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-C.mpq','Data/Patch-U.mpq')
+if($policy.schema_version -ne 1 -or $policy.patch_set_version -cne 'patchset-0002' -or
+   $prior.version -cne 'patchset-0001' -or [int]$prior.revision -ne 1 -or
+   @($prior.patches).Count -ne 4 -or
    $history.version -cne $policy.patch_set_version -or
    [int]$history.revision -ne [int]$policy.patch_set_revision -or
-   @($policy.patches).Count -ne 4 -or @($history.patches).Count -ne 4 -or
+   @($policy.patches).Count -ne 5 -or @($history.patches).Count -ne 5 -or
    [int]$policy.target_client.build -ne 12340 -or $policy.target_client.locale -cne 'enUS'){
     throw 'Unreviewed patch reference; update the bundle allowlist only after reviewing the new policy.'
 }
-for($i=0;$i -lt 4;$i++){
+for($i=0;$i -lt 5;$i++){
     $entry=$policy.patches[$i]
     $old=$history.patches[$i]
     if($entry.path -cne $expected[$i] -or $old.path -cne $entry.path -or
@@ -89,7 +93,7 @@ try{
     [void][IO.Directory]::CreateDirectory($stage)
     $entries=New-Object 'System.Collections.Generic.List[object]'
     foreach($rel in $paths){
-        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|optional-content|realm)\.json)|(?:config/patch-versions/patchset-0001\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW|WINDOWS-ACCESSIBILITY-ACCEPTANCE)\.md))$'){
+        if($rel -cnotmatch '^(README-REVIEW-ONLY\.md|(?:tools/[A-Za-z0-9-]+\.(?:ps1|bat))|(?:config/(?:client-patches|optional-content|realm)\.json)|(?:config/patch-versions/patchset-000[12]\.json)|(?:docs/(?:GUIDED-WINDOWS-SETUP|PLAYER-INSTALL-REVIEW|WINDOWS-ACCESSIBILITY-ACCEPTANCE)\.md))$'){
             throw 'Unexpected bundle path in fixed allowlist.'
         }
         $source=Join-Path $repo ($rel.Replace('/',[IO.Path]::DirectorySeparatorChar))
@@ -109,7 +113,7 @@ try{
     $manifest=[pscustomobject][ordered]@{
         kind='naxxramas_review_only_scripts_bundle'
         schema_version=1
-        patch_set_version='patchset-0001'
+        patch_set_version='patchset-0002'
         release_approved=$false
         contains_game_files=$false
         installs_or_modifies_client=$false
@@ -125,7 +129,7 @@ try{
         kind='read_only_scripts_bundle_build'
         zip_file_name=[IO.Path]::GetFileName($zip)
         file_count=$entries.Count
-        patch_set_version='patchset-0001'
+        patch_set_version='patchset-0002'
         release_approved=$false
         contains_game_files=$false
     } | ConvertTo-Json -Depth 3)

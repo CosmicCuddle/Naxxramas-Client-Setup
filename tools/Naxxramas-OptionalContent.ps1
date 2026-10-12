@@ -2,7 +2,7 @@
 <#
 READ-ONLY optional-content catalogue and preview layer.
 Pins C release metadata but does not download or distribute Patch-C/addon ZIP or authorize
-file writes. The original four-patch/five-file planner remains unchanged.
+file writes. Patch-C is now part of patchset-0002's strictly read-only six-file review.
 #>
 Set-StrictMode -Version Latest
 function Read-NaxxOptionalCatalog {
@@ -53,16 +53,16 @@ function Add-NaxxOptionalReview([object]$Report,[object]$Catalog,[bool]$UseTbc,[
     $extra=New-Object 'System.Collections.Generic.List[string]'
     $notes=New-Object 'System.Collections.Generic.List[string]'
     if($UseTbc){
-        $extra.Add('Patch-C (TBC login) matches a published owner-release reference fingerprint, but is NOT integrated into the five-file versioned planner and is NOT approved for installation or redistribution. No Patch-C operation is available.')
+        $notes.Add('Patch-C (TBC login) is checked against the pinned patchset-0002 reference by the read-only file planner. This does not authorise installation or redistribution.')
     }else{
-        $notes.Add('Patch-C (TBC login) is optional and not selected; its owner-release reference SHA-256 is recorded but not yet integrated into the versioned file planner.')
+        $notes.Add('Patch-C (TBC login) is optional and included in the six-file inspection; an unselected existing MPQ is never automatically removed.')
     }
     if($UseSuite){
         $extra.Add('N Addon Suite v2.0.0 is selected for FUTURE planning only. Its package checksum and installation/rollback approval are outstanding; no addon operation is available.')
     }else{
         $notes.Add('N Addon Suite v2.0.0 is optional, not selected and never downloaded by this preview.')
     }
-    if($UseTbc -or $UseSuite){
+    if($UseSuite){
         $Report.status='read_only_player_review_BLOCKED_MANUAL_REVIEW'
     }
     $Report.concerns=@($Report.concerns)+@($extra.ToArray())
@@ -72,7 +72,7 @@ function Add-NaxxOptionalReview([object]$Report,[object]$Catalog,[bool]$UseTbc,[
     $Report | Add-Member -NotePropertyName patch_c_release_tag -NotePropertyValue ([string]$Catalog.patch_c.release_tag) -Force
     $Report | Add-Member -NotePropertyName tbc_login_selected -NotePropertyValue $UseTbc -Force
     $Report | Add-Member -NotePropertyName addon_suite_selected -NotePropertyValue $UseSuite -Force
-    $Report | Add-Member -NotePropertyName optional_content_approval -NotePropertyValue 'planning_only_unverified_no_file_actions' -Force
+    $Report | Add-Member -NotePropertyName optional_content_approval -NotePropertyValue 'six_file_read_only_no_install_authorisation' -Force
     $Report | Add-Member -NotePropertyName optional_content_downloads_authorised -NotePropertyValue $false -Force
     $Report | Add-Member -NotePropertyName optional_content_file_writes_authorised -NotePropertyValue $false -Force
     $Report | Add-Member -NotePropertyName addon_suite_version -NotePropertyValue ([string]$Catalog.addon_suite.version) -Force
@@ -82,8 +82,8 @@ function Add-NaxxOptionalReview([object]$Report,[object]$Catalog,[bool]$UseTbc,[
 function Get-NaxxOptionalSummary([object]$Report){
     return @(
         'OPTIONAL CONTENT - PLANNING ONLY; NO DOWNLOADS OR INSTALLS',
-        ('Patch-C (TBC login): '+$(if($Report.tbc_login_selected){'SELECTED - BLOCKED UNTIL VERIFIED'}else{'OFF - not reviewed as a file'})),
-        'Patch-C and Patch-J cannot be selected together. C release hash is pinned; install review remains pending.',
+        ('Patch-C (TBC login): '+$(if($Report.tbc_login_selected){'SELECTED - six-file read-only check'}else{'OFF - preserve existing file'})),
+        'Patch-C and Patch-J cannot be selected together. C fingerprint is pinned; no installation is authorised.',
         ('N Addon Suite '+$Report.addon_suite_version+': '+$(if($Report.addon_suite_selected){'SELECTED - BLOCKED UNTIL VERIFIED'}else{'OFF'})),
         'Suite folders: NCore (required); IndividualProgressionAddon, DungeonJournal, MultiBot, NaxxLootLottery (optional).',
         'N Talent Calculator is not included in v2.0.0. Existing addons and SavedVariables will not be changed.'
