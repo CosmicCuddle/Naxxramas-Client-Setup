@@ -47,7 +47,7 @@ function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash
             $item=Get-Item -LiteralPath $Path
             $hash=(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
             $size=[long]$item.Length
-            if($null -ne $OverrideHash){$hash=$OverrideHash}
+            if(-not [string]::IsNullOrWhiteSpace($OverrideHash)){$hash=$OverrideHash}
             if($OverrideSize -gt 0){$size=$OverrideSize}
             $output=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $auditor -ArchivePath $Path -Fixture -ExpectedSha256 $hash -ExpectedSizeBytes $size 2>&1 | Out-String)
         }else{
