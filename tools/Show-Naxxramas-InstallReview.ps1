@@ -12,6 +12,7 @@ param(
     [string]$BackupRoot,
     [switch]$VanillaLogin,
     [switch]$VanillaLoading,
+    [switch]$TbcLogin,
     [string]$RealmHost,
     [switch]$Json
 )
@@ -19,10 +20,10 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
 $paths=@('Data/patch-V.mpq','Data/patch-Z.mpq',
-    'Data/Patch-J.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+    'Data/Patch-J.mpq','Data/Patch-C.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
 $names=@('Required core patch V','Required core patch Z',
-    'Optional Vanilla login screen (J)','Optional Vanilla loading screens (U)',
-    'Realm address settings')
+    'Optional Vanilla login screen (J)','Optional TBC login screen (C)',
+    'Optional Vanilla loading screens (U)','Realm address settings')
 $actions=@{
     no_change='Keep existing file unchanged'
     leave_existing='Preserve existing file (not replacing it)'
@@ -37,6 +38,7 @@ if($PatchSourcePath){$params.PatchSourcePath=$PatchSourcePath}
 if($BackupRoot){$params.BackupRoot=$BackupRoot}
 if($VanillaLogin){$params.VanillaLogin=$true}
 if($VanillaLoading){$params.VanillaLoading=$true}
+if($TbcLogin){$params.TbcLogin=$true}
 if($RealmHost){$params.RealmHost=$RealmHost}
 
 $plan=(& $planner @params | Out-String) | ConvertFrom-Json
@@ -46,7 +48,7 @@ if($null -eq $plan -or
    $plan.client_target -cne 'WoW 3.3.5a build 12340 enUS' -or
    [string]$plan.patch_set_version -cnotmatch '^patchset-[A-Za-z0-9_-]{4,40}$' -or
    $plan.status -cnotin @('review_only_no_blockers','blocked') -or
-   @($plan.files).Count -ne 5){
+   @($plan.files).Count -ne 6){
     throw 'The local planner returned an unsupported preview; no review can be shown.'
 }
 if($null -eq $plan.space_budget -or
@@ -59,13 +61,13 @@ $rows=New-Object 'System.Collections.Generic.List[object]'
 [int]$replaceCount=0
 [int]$keepCount=0
 [int]$blockedCount=0
-for($i=0;$i -lt 5;$i++){
+for($i=0;$i -lt 6;$i++){
     $item=$plan.files[$i]
     $action=[string]$item.action
     if([string]$item.path -cne $paths[$i] -or
         -not $actions.ContainsKey($action) -or
         [bool]$item.backup_required -ne ($action -ceq 'replace_after_backup') -or
-        [bool]$item.required -ne ($i -lt 2 -or $i -eq 4)){
+        [bool]$item.required -ne ($i -lt 2 -or $i -eq 5)){
         throw 'The planner file list or backup requirements have changed unexpectedly.'
     }
     if($i -lt 2 -and -not [bool]$item.selected){
@@ -74,10 +76,13 @@ for($i=0;$i -lt 5;$i++){
     if($i -eq 2 -and [bool]$item.selected -ne [bool]$VanillaLogin){
         throw 'Vanilla login choice does not match the local preview.'
     }
-    if($i -eq 3 -and [bool]$item.selected -ne [bool]$VanillaLoading){
+    if($i -eq 3 -and [bool]$item.selected -ne [bool]$TbcLogin){
+        throw 'TBC login choice does not match the local preview.'
+    }
+    if($i -eq 4 -and [bool]$item.selected -ne [bool]$VanillaLoading){
         throw 'Vanilla loading choice does not match the local preview.'
     }
-    if($i -eq 4 -and -not [bool]$item.selected){
+    if($i -eq 5 -and -not [bool]$item.selected){
         throw 'Realmlist choice unexpectedly absent.'
     }
     switch($action){
@@ -157,6 +162,7 @@ $report=[pscustomobject][ordered]@{
     patch_set_version=[string]$plan.patch_set_version
     realm_address=[string]$plan.realm_host
     vanilla_login_selected=[bool]$plan.optional_selections.vanilla_login
+    tbc_login_selected=[bool]$plan.optional_selections.tbc_login
     vanilla_loading_selected=[bool]$plan.optional_selections.vanilla_loading
     file_reviews=@($rows.ToArray())
     file_count=$rows.Count
@@ -194,6 +200,7 @@ if($Json){
     $lines.Add(('Realm address: '+$report.realm_address))
     $lines.Add(('Optional login screen J: '+$(if($report.vanilla_login_selected){'selected'}else{'not selected'})))
     $lines.Add(('Optional loading screens U: '+$(if($report.vanilla_loading_selected){'selected'}else{'not selected'})))
+    $lines.Add(('Optional TBC login screen C: '+$(if($report.tbc_login_selected){'selected'}else{'not selected'})))
     $lines.Add('')
     $lines.Add('PROPOSED FILE ACTIONS')
     foreach($row in $rows){
