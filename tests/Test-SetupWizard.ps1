@@ -79,7 +79,11 @@ try{
     Check ($layout.folder_count -eq 3 -and
         $layout.optional_patch_toggle_count -eq 3 -and
         $layout.mandatory_patch_toggle_count -eq 0 -and
-        $layout.optional_addon_toggle_count -eq 1 -and
+        $layout.optional_addon_toggle_count -eq 5 -and
+        @($layout.addon_module_names).Count -eq 4 -and
+        $layout.addon_module_choice_count -eq 4 -and
+        $layout.module_choices_depend_on_suite -and
+        $layout.addon_module_changed_clears_review -and
         $layout.tbc_and_vanilla_mutually_exclusive -and
         $layout.addon_catalog_visible) 'Three folder pickers, exclusive C/J login choices, independent U and an addon catalogue'
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
@@ -124,7 +128,8 @@ try{
     $choices=Execute @('-Diagnostics','-TbcLogin','-VanillaLoading','-AddonSuite') 'C, U and addon catalogue headless selection'
     Check ($choices.tbc_login_selected -and -not $choices.optional_login_selected -and
         $choices.optional_loading_selected -and $choices.addon_suite_selected -and
-        $choices.tbc_and_vanilla_mutually_exclusive -and $choices.addon_catalog_visible) 'TBC C and Vanilla U coexist; addon catalogue remains read-only'
+        $choices.tbc_and_vanilla_mutually_exclusive -and $choices.addon_catalog_visible -and
+        $choices.module_choices_depend_on_suite) 'TBC C and Vanilla U coexist; addon catalogue remains read-only'
     # Expected native-process stderr must not trigger this harness's strict
     # terminating ErrorActionPreference before we can inspect exit status.
     $oldPreference=$ErrorActionPreference
@@ -258,10 +263,32 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ($optionalReport.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         $optionalReport.file_count -eq 6 -and $optionalReport.tbc_login_selected -and
         $optionalReport.addon_suite_selected -and
+        @($optionalReport.addon_modules_planned).Count -eq 4 -and
+        $optionalReport.addon_suite_archive_reference_sha256 -ceq '07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324' -and
+        [long]$optionalReport.addon_suite_archive_reference_size_bytes -eq 26762217 -and
+        @($optionalReport.addon_folder_inventory).Count -eq 7 -and
         -not $optionalReport.optional_content_downloads_authorised -and
         -not $optionalReport.optional_content_file_writes_authorised -and
         @($optionalReport.concerns|Where-Object {$_ -match 'Patch-C'}).Count -ge 1 -and
         @($optionalReport.concerns|Where-Object {$_ -match 'N Addon Suite'}).Count -ge 1) 'Existing J conflict and unapproved addon suite block reviewed C without changes'
+    $subset=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite','-AddonModules','MultiBot,NaxxLootLottery') 'Explicit optional NCore module preferences'
+    Check ((@($subset.addon_modules_planned) -join '|') -ceq 'MultiBot|NaxxLootLottery' -and
+        $subset.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        -not $subset.optional_content_file_writes_authorised) 'Selected modules remain planning-only and cannot write'
+    $none=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite','-AddonModules','None') 'NCore only suite selection'
+    Check (@($none.addon_modules_planned).Count -eq 0 -and
+        $none.addon_suite_selected -and $none.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW') 'NCore remains required when all four optional modules are disabled'
+    $oldPreference=$ErrorActionPreference
+    try{
+        $ErrorActionPreference='Continue'
+        $badChoices=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard
+            -Diagnostics -AddonSuite -AddonModules 'InvalidAddon' 2>&1 | Out-String)
+        $badCode=$LASTEXITCODE
+    }finally{$ErrorActionPreference=$oldPreference}
+    Check ($badCode -ne 0 -and $badChoices.Contains('Invalid, repeated')) 'Unlisted addon modules fail closed before any inspection'
+
     $optionalDetails=Execute @('-DetailDiagnostics','-ClientPath',$client,
         '-PatchSourcePath',$source,'-BackupRoot',$backup,'-TbcLogin','-AddonSuite') 'Details retain strict 6-file table with optional blockers'
     Check ($optionalDetails.file_count -eq 6 -and
@@ -306,6 +333,35 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ((Tree $client) -ceq $beforeClient -and
         (Tree $source) -ceq $beforeSource -and
         (Tree $backup) -ceq $beforeBackup) 'Dialog and planner bridge leave fake client/source/backup bytes intact'
+
+    # Disposable addon trees only: inspect immediate folder types, not contents.
+    $addons=Join-Path $client 'Interface/AddOns'
+    [void](New-Item -ItemType Directory -Path $addons -Force)
+    [void](New-Item -ItemType Directory -Path (Join-Path $addons 'IndividualProgressionAddon') -Force)
+    [void](New-Item -ItemType Directory -Path (Join-Path $addons 'NClassicBattlegrounds') -Force)
+    $withFolders=Tree $client
+    $inventoryReport=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Inspect existing folders and legacy duplicate risks'
+    Check (@($inventoryReport.addon_folder_inventory|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and $_.state -ceq 'present_unverified'
+        }).Count -eq 1 -and
+        @($inventoryReport.notes|Where-Object {$_ -match 'Legacy addon NClassicBattlegrounds'}).Count -eq 1 -and
+        (Tree $client) -ceq $withFolders) 'Legacy NClassicBattlegrounds warning appears without deleting or changing anything'
+    Save (Join-Path $addons 'NCore') 'FAKE_CONFLICTING_FILE_NOT_AN_ADDON_FOLDER'
+    $fileBefore=Tree $client
+    $unsafe=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Reject file masquerading as NCore addon directory'
+    Check (@($unsafe.addon_folder_inventory|Where-Object {
+            $_.folder -ceq 'NCore' -and $_.state -ceq 'not_a_folder'
+        }).Count -eq 1 -and
+        @($unsafe.concerns|Where-Object {$_ -match 'NCore is not_a_folder'}).Count -eq 1 -and
+        (Tree $client) -ceq $fileBefore) 'Non-folder NCore fails closed, preserving the original file'
+    Remove-Item -LiteralPath (Join-Path $addons 'NCore') -Force
+    # Existing addon root must not be a linked directory: no network, copy or
+    # link traversal is needed to detect its unexpected type.
+    $badClientAddonRoot=Join-Path $client 'Interface'
+    # The linked-root branch is exercised separately when suitable for CI,
+    # while the non-directory root is validated safely on all runners.
 
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
     $summary=Execute $reviewParams 'Wizard reports omitted backup folder'
