@@ -195,7 +195,8 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
             $detail=Execute (@('-DetailDiagnostics')+$manualArgs) 'Disposable manual fixture file details'
             Check ($detail.review_status -ceq $expectedStatus -and
                 $detail.file_count -eq 5 -and $detail.grid_read_only -and
-                $detail.warnings_read_only -and $detail.no_approval_or_installation) ('Manual '+$ManualScenario+' fixture details behave safely')
+                $detail.warnings_read_only -and $detail.no_approval_or_installation -and
+                $detail.close_review_click_closes_dialog) ('Manual '+$ManualScenario+' fixture details behave safely and Close Review click closes without errors')
         }else{
             Write-Host ''
             Write-Host ('MANUAL ACCESSIBILITY CHECK - '+$ManualScenario) -ForegroundColor Cyan
@@ -240,6 +241,7 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check (@($detail.proposed_actions | Where-Object {$_ -match 'replace ONLY after an exact original backup'}).Count -eq 2) 'Detailed action table explains the exact replacement gate'
     Check ($detail.grid_read_only -and $detail.grid_add_delete_disabled -and
         $detail.warnings_read_only -and $detail.no_approval_or_installation) 'File details cannot edit data or authorise a write'
+    Check ($detail.close_review_click_closes_dialog) 'Close Review click actually closes the hidden details form without a PowerShell scope error'
     Check ($detail.detail_matches_system_contrast -and $detail.details_notes_accessible) 'File Details colour palette matches Windows mode and warning reader has accessible context'
     Check ($detail.warnings_scrollable -and $detail.warnings_expand_with_window -and
         $detail.keyboard_tab_order) 'Details warnings can scroll and grow on resize; table and warnings have predictable keyboard order'
