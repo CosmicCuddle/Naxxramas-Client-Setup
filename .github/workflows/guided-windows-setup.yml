@@ -31,3 +31,9 @@ jobs:
       - name: Smoke-test actual Windows Forms and inspect disposable planner fixtures
         shell: powershell
         run: .\tests\Test-SetupWizard.ps1
+      - name: Validate disposable manual-ready visual fixture without opening a window
+        shell: powershell
+        run: .\tests\Test-SetupWizard.ps1 -ManualReview -ManualScenario Ready -ManualHeadless
+      - name: Validate disposable blocked visual fixture without opening a window
+        shell: powershell
+        run: .\tests\Test-SetupWizard.ps1 -ManualReview -ManualScenario Blocked -ManualHeadless
