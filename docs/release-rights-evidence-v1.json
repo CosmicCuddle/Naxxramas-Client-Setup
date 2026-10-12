@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "kind": "public_source_rights_evidence_not_distribution_authority",
+  "evidence_date": "2026-10-12",
+  "classification": "reference_only_not_legal_clearance",
+  "repository": "CosmicCuddle/Naxxramas-Client-Setup",
+  "source_repositories": [
+    {
+      "name": "Addon collection release/tag",
+      "url": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
+      "source_tag": "v2.0.0"
+    },
+    {
+      "name": "Optional patch release",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/optional-v1.0",
+      "source_tag": "optional-v1.0"
+    },
+    {
+      "name": "Main Patch V release",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/v1.0.6.8.4",
+      "source_tag": "v1.0.6.8.4"
+    },
+    {
+      "name": "Main Patch Z release",
+      "url": "https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/v1.0.6.7",
+      "source_tag": "v1.0.6.7"
+    }
+  ],
+  "items": [
+    {
+      "id": "patch-v",
+      "kind": "required_patch",
+      "release": "v1.0.6.8.4",
+      "file": "patch-V.mpq",
+      "sha256": "68ca0d260841a028181fdeac72db5cd96a752da9c5f2798432a065db6dcd70ff",
+      "size_bytes": 450631505,
+      "source_license_evidence": "no_reuse_permission_established",
+      "rights_issue": "Patch contains game and custom client resources; GitHub asset publication does not grant this installer a redistribution licence.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "patch-z",
+      "kind": "required_patch",
+      "release": "v1.0.6.7",
+      "file": "patch-Z.mpq",
+      "sha256": "5eb17ce5dc7b87990dd173a7c3dd3ff5be7d34219be407eaa854d95625011b3a",
+      "size_bytes": 47337608,
+      "source_license_evidence": "no_reuse_permission_established",
+      "rights_issue": "Older required release file remains separate; neither its binary contents nor third-party redistribution rights have been cleared.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "patch-j",
+      "kind": "optional_patch",
+      "release": "optional-v1.0",
+      "file": "Patch-J.mpq",
+      "sha256": "24385046f0db6c17db5f549fa0f418f5d5ed1d4c2100059f1db9bede709113c9",
+      "size_bytes": 5739890,
+      "source_license_evidence": "original_game_art_or_music_claimed",
+      "rights_issue": "Vanilla-style login art/music and loading visuals; no specific third-party asset licence or permission established for repackaging.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "patch-c",
+      "kind": "optional_patch",
+      "release": "optional-v1.0",
+      "file": "Patch-C.mpq",
+      "sha256": "16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8",
+      "size_bytes": 26753640,
+      "source_license_evidence": "original_game_art_or_music_claimed",
+      "rights_issue": "Burning Crusade login art/music and other game assets; no separate redistribution permission proven.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "patch-u",
+      "kind": "optional_patch",
+      "release": "optional-v1.0",
+      "file": "Patch-U.mpq",
+      "sha256": "51fc8cbd1786537772ea7f59eac7be244eedabf7e6487ee41e5ce2009ecd9a6d",
+      "size_bytes": 11050502,
+      "source_license_evidence": "credited_artwork_not_permission",
+      "rights_issue": "Blizzard-derived loading art and HD artwork credit to slendydaddy; artist credit is not documented redistribution consent.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "ncore",
+      "kind": "suite_folder",
+      "release": "v2.0.0",
+      "file": "NCore",
+      "sha256": null,
+      "size_bytes": null,
+      "source_license_evidence": "no_separate_integrated_license_review",
+      "rights_issue": "Generated suite framework embeds NClassicBattlegrounds; upstream snapshot has no independently identified root licence in this review.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "individual-progression",
+      "kind": "suite_folder",
+      "release": "v2.0.0",
+      "file": "IndividualProgressionAddon",
+      "sha256": null,
+      "size_bytes": null,
+      "source_license_evidence": "no_root_license_identified",
+      "rights_issue": "Original source repository has no root licence file identified by public tree inspection; author permission/credits still require explicit review.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "dungeon-journal",
+      "kind": "suite_folder",
+      "release": "v2.0.0",
+      "file": "DungeonJournal",
+      "sha256": null,
+      "size_bytes": null,
+      "source_license_evidence": "gpl_v2_text_and_detailed_credits_present",
+      "rights_issue": "GPLv2-derived Atlas/AtlasLoot/AtlasQuest material and third-party artwork. Credits explicitly distinguish Blizzard model/world art not covered by GPL; source availability, asset permissions and notices need review.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "multibot",
+      "kind": "suite_folder",
+      "release": "v2.0.0",
+      "file": "MultiBot",
+      "sha256": null,
+      "size_bytes": null,
+      "source_license_evidence": "gpl_v3_text_present",
+      "rights_issue": "Modified GPLv3 fork and bundled libraries; independently check original copyright notices, GPLv3 obligations, library licences and corresponding source path.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    },
+    {
+      "id": "loot-ledger",
+      "kind": "suite_folder",
+      "release": "v2.0.0",
+      "file": "NaxxLootLottery",
+      "sha256": null,
+      "size_bytes": null,
+      "source_license_evidence": "no_root_license_identified",
+      "rights_issue": "No root licence file identified in original source snapshot; owner distribution authority and third-party credits need review. Gameplay WIP.",
+      "redistribution_cleared": false,
+      "installation_approved": false,
+      "public_release_authorised": false
+    }
+  ],
+  "gates": {
+    "asset_fingerprints_authorise_distribution": false,
+    "release_page_authorises_repackaging": false,
+    "source_tag_authorises_repackaging": false,
+    "known_gpl_notice_proves_all_assets_licensed": false,
+    "original_author_credits_are_permission": false,
+    "suite_licence_compatibility_verified": false,
+    "optional_patch_repackaging_approved": false,
+    "required_patch_repackaging_approved": false,
+    "addon_suite_repackaging_approved": false,
+    "real_client_installation_approved": false,
+    "public_client_setup_release_approved": false
+  },
+  "disclaimer": "Evidence inventory only. These public facts and conservative statuses are not legal advice, not a full asset audit and not independently authenticated redistribution consent."
+}

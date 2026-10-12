@@ -1,0 +1,38 @@
+name: Public-source rights evidence cannot authorise distribution
+
+on:
+  pull_request:
+    paths:
+      - 'docs/release-rights-evidence-v1.json'
+      - 'docs/RELEASE-RIGHTS-AND-SOURCE-REVIEW.md'
+      - 'tests/test_release_rights_gate.py'
+      - 'config/optional-content.json'
+      - '.github/workflows/release-rights-evidence.yml'
+  push:
+    paths:
+      - 'docs/release-rights-evidence-v1.json'
+      - 'tests/test_release_rights_gate.py'
+      - 'config/optional-content.json'
+      - '.github/workflows/release-rights-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-not-approval:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout public source evidence and closed rights gates
+        uses: actions/checkout@v4
+      - name: Prepare Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify ten sources and refuse unreviewed distribution or install claims
+        run: python -m unittest discover -s tests -p test_release_rights_gate.py -v
