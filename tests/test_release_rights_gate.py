@@ -84,6 +84,9 @@ def check_evidence(document: object, catalog: object) -> None:
             raise ValueError("incomplete_rights_gap_explanation")
         if key in ASSETS:
             release, file, digest, size = ASSETS[key]
+            if (re.fullmatch(r"[0-9a-f]{64}", digest) is None or
+                re.fullmatch(r"[0-9a-f]{64}", str(item["sha256"])) is None):
+                raise ValueError("invalid_published_sha256_length_or_alphabet")
             if (item["kind"] not in ("required_patch", "optional_patch") or
                 (item["release"], item["file"], item["sha256"], item["size_bytes"]) !=
                 (release, file, digest, size)):
