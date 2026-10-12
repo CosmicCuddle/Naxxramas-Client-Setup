@@ -109,6 +109,10 @@ exit 0
     Check ($missingFixture.exit_code -ne 0 -and $missingFixture.calls.Count -eq 0) 'Missing disposable fixture fails closed'
 
     Write-Host 'All accessibility launcher negative-path tests passed; only temporary fake files were used.' -ForegroundColor Green
+    # Some GH Actions PowerShell wrappers propagate the most recent native
+    # child's LASTEXITCODE even after every expected failure was asserted.
+    # Only reset it once ALL negative-path checks passed successfully.
+    $global:LASTEXITCODE=0
 }finally{
     $env:CI=$previousCi
     $env:GITHUB_ACTIONS=$previousGitHub
