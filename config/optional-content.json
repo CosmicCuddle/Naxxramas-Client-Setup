@@ -25,7 +25,7 @@
     "repository": "https://github.com/CosmicCuddle/N-Addon-Collection",
     "release_page": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
     "archive_name": "N-Addon-Collection-v2.0.0.zip",
-    "archive_sha256": null,
+    "archive_sha256": "07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324",
     "archive_verification_approved": false,
     "automatic_download_approved": false,
     "install_approved": false,
@@ -40,6 +40,12 @@
       "NaxxLootLottery"
     ],
     "standalone_talent_calculator_included": false,
-    "note": "Catalog-only reference to the published addon suite. Does not download, copy, merge or delete any AddOns or SavedVariables. Owner must approve archive fingerprint, licences, update and rollback rules before future installs."
+    "note": "The v2.0.0 release publishes an archive digest and size, but contents/licence/update/rollback approval are outstanding. No downloads, installations, copies, folder deletions or SavedVariables changes. Legacy NClassicBattlegrounds and ServerDungeonJournal folders may conflict with bundled NCore and DungeonJournal and must be reviewed manually.",
+    "archive_size_bytes": 26762217,
+    "archive_digest_source": "GitHub release v2.0.0 published asset metadata; ZIP bytes have NOT been independently downloaded, inspected or verified.",
+    "legacy_folders_to_flag": [
+      "NClassicBattlegrounds",
+      "ServerDungeonJournal"
+    ]
   }
 }

@@ -13,6 +13,7 @@ param(
     [switch]$VanillaLoading,
     [switch]$TbcLogin,
     [switch]$AddonSuite,
+    [string]$AddonModules,
     [switch]$Diagnostics,
     [switch]$PreviewJson,
     [switch]$DetailDiagnostics
@@ -26,6 +27,8 @@ $reviewTool=Join-Path $PSScriptRoot 'Show-Naxxramas-InstallReview.ps1'
 . (Join-Path $PSScriptRoot 'Naxxramas-OptionalContent.ps1')
 $optionalCatalog=Read-NaxxOptionalCatalog
 Assert-NaxxOptionalChoice ([bool]$VanillaLogin) ([bool]$TbcLogin)
+$addonModulesExplicit=[bool]$PSBoundParameters.ContainsKey('AddonModules')
+$initialAddonModules=@(Resolve-NaxxAddonModules ([bool]$AddonSuite) $AddonModules $addonModulesExplicit)
 if(-not (Test-Path -LiteralPath $reviewTool -PathType Leaf)){
     throw 'The read-only planner review is missing.'
 }
@@ -51,7 +54,7 @@ function Invoke-ReadOnlyReview(
 if($PreviewJson){
     $report=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) ([bool]$TbcLogin) $true
     $data=$report | ConvertFrom-Json
-    $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite)
+    $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite) $initialAddonModules $ClientPath
     Write-Output ($data | ConvertTo-Json -Depth 7)
     return
 }
@@ -112,7 +115,7 @@ $initialHeight=[Math]::Min(910,[Math]::Max(520,$workingArea.Height-100))
 $form.ClientSize=New-Object Drawing.Size(962,910)
 $form.MinimumSize=New-Object Drawing.Size(740,540)
 $form.AutoScroll=$true
-$form.AutoScrollMinSize=New-Object Drawing.Size(0,1290)
+$form.AutoScrollMinSize=New-Object Drawing.Size(0,1570)
 $form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
 $form.BackColor=$wizardTheme.Window
 
@@ -184,67 +187,84 @@ $suite.TabIndex=9
 $suite.AccessibleName='Optional N Addon Suite version 2, planning only'
 $suite.ForeColor=$wizardTheme.Text
 $form.Controls.Add($suite)
-$addonInfo=New-Label '' 721
+$moduleChecks=@()
+$moduleNames=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
+$moduleLabels=@('Individual Progression Companion','Dungeon Journal','MultiBot Chatless','N Loot Ledger (WIP)')
+for($i=0;$i -lt 4;$i++){
+    $check=New-Object Windows.Forms.CheckBox
+    $check.Name=$moduleNames[$i]
+    $check.Text=($moduleLabels[$i]+' (future NCore setting)')
+    $check.Location=New-Object Drawing.Point(48,(723+($i*39)))
+    $check.Size=New-Object Drawing.Size(890,32)
+    $check.TabIndex=(10+$i)
+    $check.Checked=(-not $addonModulesExplicit -or $initialAddonModules -ccontains $moduleNames[$i])
+    $check.Enabled=$suite.Checked
+    $check.ForeColor=$wizardTheme.Text
+    $check.AccessibleName=($moduleLabels[$i]+' preference, only active when suite selected')
+    $form.Controls.Add($check)
+    $moduleChecks+=,$check
+}
+$addonInfo=New-Label '' 892
 $addonInfo.Name='AddonSuiteCatalog'
-$addonInfo.Size=New-Object Drawing.Size(914,80)
-$addonInfo.AccessibleName='Addon collection contents and unverified installation status'
-$addonInfo.Text='NCore is required within the suite. Optional: IndividualProgressionAddon, DungeonJournal, MultiBot, NaxxLootLottery.'+[Environment]::NewLine+
-    'N Talent Calculator is NOT included. No addon downloads, changes or backups are possible.'
+$addonInfo.Size=New-Object Drawing.Size(914,82)
+$addonInfo.AccessibleName='Addon collection includes NCore and four separately configurable modules'
+$addonInfo.Text='NCore is always part of the suite and includes Classic Battlegrounds.'+[Environment]::NewLine+
+    'These checkboxes describe future NCore settings, NOT which folders are copied. No addons or SavedVariables are changed.'
 $addonInfo.AccessibleDescription=$addonInfo.Text
 $form.Controls.Add($addonInfo)
-$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 827 $true))
+$form.Controls.Add((New-Label 'Realm address (optional override, blank uses configured value)' 990 $true))
 $realm=New-Object Windows.Forms.TextBox
 $realm.Name='RealmAddress'
 $realm.Text=$RealmHost
-$realm.Location=New-Object Drawing.Point(24,859)
+$realm.Location=New-Object Drawing.Point(24,1022)
 $realm.Size=New-Object Drawing.Size(914,30)
 $realm.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $realm.AccessibleName='Optional realm address'
 $realm.BackColor=$wizardTheme.Input
 $realm.ForeColor=$wizardTheme.InputText
-$realm.TabIndex=10
+$realm.TabIndex=14
 $form.Controls.Add($realm)
 
-$form.Controls.Add((New-Label '4. Review proposed changes' 915 $true))
+$form.Controls.Add((New-Label '4. Review proposed changes' 1078 $true))
 $review=New-Object Windows.Forms.Button
 $review.Name='ReviewOnly'
 $review.Text='Review Only'
-$review.Location=New-Object Drawing.Point(24,955)
+$review.Location=New-Object Drawing.Point(24,1118)
 $review.Size=New-Object Drawing.Size(165,40)
 $review.BackColor=$wizardTheme.Accent
 $review.ForeColor=$wizardTheme.AccentText
 $review.FlatStyle=[Windows.Forms.FlatStyle]::Flat
 $review.AccessibleName='Read-only review of proposed changes'
-$review.TabIndex=11
+$review.TabIndex=15
 $clear=New-Object Windows.Forms.Button
 $clear.Name='ClearReview'
 $clear.Text='Clear Review'
-$clear.Location=New-Object Drawing.Point(203,955)
+$clear.Location=New-Object Drawing.Point(203,1118)
 $clear.Size=New-Object Drawing.Size(140,40)
-$clear.TabIndex=12
+$clear.TabIndex=16
 $clear.AccessibleName='Clear the current read-only review'
 $clear.ForeColor=$wizardTheme.Text
 $close=New-Object Windows.Forms.Button
 $close.Name='CloseWizard'
 $close.Text='Close'
-$close.Location=New-Object Drawing.Point(817,955)
+$close.Location=New-Object Drawing.Point(817,1118)
 $close.Size=New-Object Drawing.Size(121,40)
 $close.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Right
 $close.TabIndex=11
 $details=New-Object Windows.Forms.Button
 $details.Name='ViewFileDetails'
 $details.Text='View File Details...'
-$details.Location=New-Object Drawing.Point(357,955)
+$details.Location=New-Object Drawing.Point(357,1118)
 $details.Size=New-Object Drawing.Size(207,40)
 $details.AccessibleName='Open larger read-only file action table'
 $details.Enabled=$false
-$details.TabIndex=13
+$details.TabIndex=17
 $details.ForeColor=$wizardTheme.Text
-$close.TabIndex=14
+$close.TabIndex=18
 $close.AccessibleName='Close the read-only setup wizard'
 $close.ForeColor=$wizardTheme.Text
 $form.Controls.AddRange(@($review,$clear,$details,$close))
-$status=New-Label 'Not reviewed - no files have been changed.' 1007
+$status=New-Label 'Not reviewed - no files have been changed.' 1170
 $status.Name='ReviewStatus'
 $status.AccessibleName='Read-only review status'
 $status.AccessibleDescription=$status.Text
@@ -259,11 +279,11 @@ $preview.ScrollBars=[Windows.Forms.RichTextBoxScrollBars]::Vertical
 $preview.BackColor=$wizardTheme.Input
 $preview.ForeColor=$wizardTheme.InputText
 $preview.Font=New-Font 10
-$preview.Location=New-Object Drawing.Point(24,1039)
+$preview.Location=New-Object Drawing.Point(24,1202)
 $preview.Size=New-Object Drawing.Size(914,171)
 $preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $preview.AccessibleName='Read-only proposed file changes and review messages'
-$preview.TabIndex=15
+$preview.TabIndex=19
 $form.Controls.Add($preview)
 $script:status=$status
 $script:preview=$preview
@@ -311,7 +331,17 @@ $tbc.Add_CheckedChanged({
     Clear-Preview
     Update-OptionalStatus
 })
-$suite.Add_CheckedChanged({Clear-Preview})
+$suite.Add_CheckedChanged({
+    foreach($item in $moduleChecks){$item.Enabled=$suite.Checked}
+    Clear-Preview
+})
+foreach($item in $moduleChecks){$item.Add_CheckedChanged({Clear-Preview})}
+function Get-SelectedAddonModules {
+    if(-not $suite.Checked){return}
+    foreach($item in $moduleChecks){
+        if($item.Checked){Write-Output ([string]$item.Name)}
+    }
+}
 Update-OptionalStatus
 foreach($group in @($clientField,$sourceField,$backupField)){
     $group.Browse.Tag=$group.Field
@@ -342,7 +372,8 @@ $review.Add_Click({
         $json=Invoke-ReadOnlyReview $clientField.Field.Text $sourceField.Field.Text $backupField.Field.Text $realm.Text $login.Checked $loading.Checked $tbc.Checked $true
         $data=$json | ConvertFrom-Json
         Assert-WizardReadOnlyReport $data
-        $data=Add-NaxxOptionalReview $data $optionalCatalog $tbc.Checked $suite.Checked
+        $modules=@(Get-SelectedAddonModules)
+        $data=Add-NaxxOptionalReview $data $optionalCatalog $tbc.Checked $suite.Checked $modules $clientField.Field.Text
         $script:preview.Text=(Format-WizardSummary $data)+[Environment]::NewLine+[Environment]::NewLine+(Get-NaxxOptionalSummary $data)
         $script:preview.SelectionStart=0
         $script:preview.ScrollToCaret()
@@ -387,7 +418,7 @@ if($DetailDiagnostics){
         $json=Invoke-ReadOnlyReview $ClientPath $PatchSourcePath $BackupRoot $RealmHost ([bool]$VanillaLogin) ([bool]$VanillaLoading) ([bool]$TbcLogin) $true
         $data=$json|ConvertFrom-Json
         Assert-WizardReadOnlyReport $data
-        $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite)
+        $data=Add-NaxxOptionalReview $data $optionalCatalog ([bool]$TbcLogin) ([bool]$AddonSuite) $initialAddonModules $ClientPath
         $dialog=New-WizardDetailsForm $data
         try{
             $grid=@($dialog.Controls.Find('ReadOnlyFileActionGrid',$true))[0]
@@ -421,6 +452,8 @@ if($DetailDiagnostics){
                 review_status=[string]$data.status
                 tbc_login_selected=[bool]$data.tbc_login_selected
                 addon_suite_selected=[bool]$data.addon_suite_selected
+                addon_modules_planned=@($data.addon_modules_planned)
+                addon_folder_inventory=@($data.addon_folder_inventory)
                 optional_content_blocked=([bool]$data.addon_suite_selected) -and
                     $data.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW'
                 concerns_count=@($data.concerns).Count
@@ -493,6 +526,11 @@ if($Diagnostics){
     $suite.Checked=(-not $suite.Checked)
     $suiteClearsReview=($null -eq $script:currentReview -and -not $details.Enabled)
     $suite.Checked=(-not $suite.Checked)
+    $script:currentReview=[pscustomobject]@{fixture_only=$true}
+    $script:details.Enabled=$true
+    $moduleChecks[0].Checked=(-not $moduleChecks[0].Checked)
+    $moduleClearsReview=($null -eq $script:currentReview -and -not $details.Enabled)
+    $moduleChecks[0].Checked=(-not $moduleChecks[0].Checked)
     $contrastTheme=Get-WizardTheme $true
     $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
     $report=[pscustomobject][ordered]@{
@@ -504,13 +542,17 @@ if($Diagnostics){
         folder_count=3
         optional_patch_toggle_count=3
         mandatory_patch_toggle_count=0
-        optional_addon_toggle_count=1
+        optional_addon_toggle_count=5
+        addon_module_names=@($moduleChecks|ForEach-Object {$_.Name})
+        addon_module_choice_count=@($moduleChecks|Where-Object {$_.Checked}).Count
+        module_choices_depend_on_suite=(@($moduleChecks|Where-Object {$_.Enabled -ne $suite.Checked}).Count -eq 0)
+        addon_module_changed_clears_review=$moduleClearsReview
         tbc_login_selected=$tbc.Checked
         addon_suite_selected=$suite.Checked
         tbc_and_vanilla_mutually_exclusive=($cDeselectsJ -and $jDeselectsC -and
             -not ($tbc.Checked -and $login.Checked))
         addon_catalog_visible=($addonInfo.Parent -eq $form -and
-            $addonInfo.Text.Contains('NCore') -and $addonInfo.Text.Contains('NaxxLootLottery'))
+            $addonInfo.Text.Contains('NCore') -and @($moduleChecks).Count -eq 4)
         optional_login_selected=$login.Checked
         optional_loading_selected=$loading.Checked
         optional_status_text=$optionInfo.Text
@@ -549,7 +591,9 @@ if($Diagnostics){
         optional_status_inside_scroll_extent=($optionInfo.Bottom -le $form.AutoScrollMinSize.Height -and $addonInfo.Bottom -le $form.AutoScrollMinSize.Height)
         optional_controls_do_not_overlap=($loading.Top -ge $login.Bottom -and
             $tbc.Top -ge $loading.Bottom -and $suite.Top -ge $optionInfo.Bottom -and
-            $addonInfo.Bottom -lt $realm.Top)
+            $addonInfo.Bottom -lt $realm.Top -and
+            $moduleChecks[0].Top -ge $suite.Bottom -and
+            $moduleChecks[3].Bottom -le $addonInfo.Top)
         folder_browse_buttons_inside_viewport=($clientField.Browse.Right -le $form.ClientSize.Width -and
             $sourceField.Browse.Right -le $form.ClientSize.Width -and
             $backupField.Browse.Right -le $form.ClientSize.Width)
@@ -560,7 +604,7 @@ if($Diagnostics){
         preview_inside_scroll_extent=($preview.Bottom -le $form.AutoScrollMinSize.Height)
         default_keyboard_action=$form.AcceptButton.Name
         cancel_keyboard_action=$form.CancelButton.Name
-        selection_changes_clear_stale_review=($eventClearsStaleReview -and $realmChangeClearsReview -and $suiteClearsReview)
+        selection_changes_clear_stale_review=($eventClearsStaleReview -and $realmChangeClearsReview -and $suiteClearsReview -and $moduleClearsReview)
         actual_installer_action_present=$false
         consent_action_present=$false
         rollback_action_present=$false

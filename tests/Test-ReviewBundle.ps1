@@ -199,6 +199,16 @@ public static class NaxxStandaloneZipFixture {public static int Main(){return 0;
             $_.proposed_action -ceq 'blocked'}).Count -eq 1 -and
         @($tbc.concerns|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0) 'Packaged selected TBC C is blocked if player has a conflicting existing J file'
 
+    $runtime=RunBundledWizard @('-PreviewJson','-ClientPath',$client,
+        '-AddonSuite','-AddonModules','DungeonJournal,MultiBot')
+    Check ($runtime.code -eq 0) ('Unpacked addon preferences run without network or writes: '+$runtime.stderr)
+    $addons=$runtime.stdout|ConvertFrom-Json
+    Check ((@($addons.addon_modules_planned) -join '|') -ceq 'DungeonJournal|MultiBot' -and
+        $addons.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        @($addons.addon_folder_inventory).Count -eq 7 -and
+        $addons.addon_suite_archive_reference_sha256 -ceq '07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324' -and
+        -not $addons.optional_content_file_writes_authorised) 'Extracted suite keeps four configurable preferences, pinned metadata, blocked install and safe inventory'
+
     $runtime=RunBundledWizard @('-DetailDiagnostics','-ClientPath',$client,'-VanillaLoading')
     Check ($runtime.code -eq 0) ('Unpacked six-file details window builds: '+$runtime.stderr)
     $details=$runtime.stdout|ConvertFrom-Json
