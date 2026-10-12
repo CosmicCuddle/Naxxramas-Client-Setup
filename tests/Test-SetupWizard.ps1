@@ -125,8 +125,15 @@ try{
     Check ($choices.tbc_login_selected -and -not $choices.optional_login_selected -and
         $choices.optional_loading_selected -and $choices.addon_suite_selected -and
         $choices.tbc_and_vanilla_mutually_exclusive -and $choices.addon_catalog_visible) 'TBC C and Vanilla U coexist; addon catalogue remains read-only'
-    $badOutput=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard -Diagnostics -VanillaLogin -TbcLogin 2>&1 | Out-String)
-    Check ($LASTEXITCODE -ne 0 -and $badOutput.Contains('mutually exclusive')) 'Direct conflicting C and J selections fail before any review'
+    # Expected native-process stderr must not trigger this harness's strict
+    # terminating ErrorActionPreference before we can inspect exit status.
+    $oldPreference=$ErrorActionPreference
+    try{
+        $ErrorActionPreference='Continue'
+        $badOutput=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard -Diagnostics -VanillaLogin -TbcLogin 2>&1 | Out-String)
+        $badExitCode=$LASTEXITCODE
+    }finally{$ErrorActionPreference=$oldPreference}
+    Check ($badExitCode -ne 0 -and $badOutput.Contains('mutually exclusive')) 'Direct conflicting C and J selections fail before any review'
 
     # Test the actual GUI->read-only-viewer bridge using the same strict
     # synthetic setup as the existing player-review integration suite.
