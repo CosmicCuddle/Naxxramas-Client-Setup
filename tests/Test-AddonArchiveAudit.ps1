@@ -23,7 +23,7 @@ function Make-Zip([string]$Name,[string[]]$Paths,[string]$Symlink=''){
             foreach($path in $Paths){
                 $entry=$z.CreateEntry($path,[IO.Compression.CompressionLevel]::Optimal)
                 if($path -ceq $Symlink){
-                    $entry.ExternalAttributes=[int]([int64]0xA1FF0000-[int64]4294967296)
+                    $entry.ExternalAttributes=-1577123840 # Unix symlink file mode 0xA1FF0000
                 }
                 if(-not $path.EndsWith('/')){
                     $output=$entry.Open()
