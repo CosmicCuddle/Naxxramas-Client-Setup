@@ -244,21 +244,24 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ($summary.proposed_replace_after_backup_count -eq 2 -and
         $summary.proposed_new_file_count -eq 1) 'Previous V and realmlist are original-backup candidates, new U added in preview'
     Check (-not $summary.vanilla_login_selected -and $summary.vanilla_loading_selected -and
-        -not $summary.tbc_login_selected -and -not $summary.addon_suite_selected) 'Independent J/U selection forwarded; unverified C and addons default OFF'
+        -not $summary.tbc_login_selected -and -not $summary.addon_suite_selected) 'Independent J/U selection forwarded; optional C and addons default OFF'
     $optionalArgs=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-TbcLogin','-VanillaLoading','-AddonSuite')
     $optionalReport=Execute $optionalArgs 'Selected unverified C and N Addon Suite plan'
     Check ($optionalReport.patch_c_reference_sha256 -ceq '16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8' -and
         [long]$optionalReport.patch_c_reference_size_bytes -eq 26753640 -and
         $optionalReport.patch_c_release_tag -ceq 'optional-v1.0' -and
-        @($optionalReport.file_reviews|Where-Object {$_.relative_path -ceq 'Data/Patch-C.mpq'}).Count -eq 0) 'GitHub owner-release C SHA/size is pinned, but C remains outside old five-file review'
+        @($optionalReport.file_reviews|Where-Object {
+            $_.relative_path -ceq 'Data/Patch-C.mpq' -and
+            $_.proposed_action -ceq 'install'
+        }).Count -eq 1) 'Patch-C release reference is pinned and C appears in six-file read-only review'
     Check ($optionalReport.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         $optionalReport.file_count -eq 6 -and $optionalReport.tbc_login_selected -and
         $optionalReport.addon_suite_selected -and
         -not $optionalReport.optional_content_downloads_authorised -and
         -not $optionalReport.optional_content_file_writes_authorised -and
         @($optionalReport.concerns|Where-Object {$_ -match 'Patch-C'}).Count -ge 1 -and
-        @($optionalReport.concerns|Where-Object {$_ -match 'N Addon Suite'}).Count -ge 1) 'Unverified Patch-C and addon suite always block extra actions without changing five verified file rows'
+        @($optionalReport.concerns|Where-Object {$_ -match 'N Addon Suite'}).Count -ge 1) 'Existing J conflict and unapproved addon suite block reviewed C without changes'
     $optionalDetails=Execute @('-DetailDiagnostics','-ClientPath',$client,
         '-PatchSourcePath',$source,'-BackupRoot',$backup,'-TbcLogin','-AddonSuite') 'Details retain strict 6-file table with optional blockers'
     Check ($optionalDetails.file_count -eq 6 -and
