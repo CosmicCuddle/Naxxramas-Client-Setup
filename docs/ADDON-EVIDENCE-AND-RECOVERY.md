@@ -91,3 +91,7 @@ The new unit tests build only isolated fake trees and cover all thirteen phase c
 
 **All production permissions remain false without exception:** no real owner authentication, real client writes, download, install, backup copying, automatic resume, rollback, deletion, file restoration or public release. This is test planning for fail-closed behavior, not implementation of a transaction manager.
 
+
+## Independent authority and power-loss safety — SYNTHETIC gate only
+
+The next milestone adds a separate **developer-only, read-only** classifier for locally claimed authority and crash states, with disposable fake addon/WTF trees and no player-side changes. Detailed contract, false-trust warnings, synthetic crash windows, original preservation and requirements for a genuine independently protected monotonic authority are in [ADDON-AUTHORITY-AND-CRASH-GATES.md](ADDON-AUTHORITY-AND-CRASH-GATES.md). An unkeyed journal hash, claimed owner/epoch, an extra local file and even a fully matching fake backup remain **unauthenticated**, replayable claims; no automatic file action or public release is authorised.
