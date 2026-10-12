@@ -32,8 +32,8 @@ function Row([object]$Report,[string]$Path){
 }
 function Invariants([object]$R,[string]$Why){
     Check ($R.kind -ceq 'read_only_player_facing_installation_review' -and
-        $R.schema_version -eq 1 -and $R.file_count -eq 5 -and
-        @($R.file_reviews).Count -eq 5) ($Why+': exact expected report shape')
+        $R.schema_version -eq 1 -and $R.file_count -eq 6 -and
+        @($R.file_reviews).Count -eq 6) ($Why+': exact expected report shape')
     Check ($R.read_only -and $R.review_required -and
         -not $R.client_files_modified -and -not $R.original_backups_created -and
         -not $R.file_writes_authorised -and
@@ -59,9 +59,9 @@ try{
     foreach($name in @('Show-Naxxramas-InstallReview.ps1','Plan-Naxxramas-Install.ps1')){
         Copy-Item -LiteralPath (Join-Path $repo ('tools/'+$name)) -Destination $tools
     }
-    $patches=@('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-U.mpq')
+    $patches=@('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-C.mpq','Patch-U.mpq')
     $entries=@()
-    for($i=0;$i -lt 4;$i++){
+    for($i=0;$i -lt 5;$i++){
         $relative='Data/'+$patches[$i]
         $path=Join-Path $source $relative
         Save $path ('FAKE_SOURCE_CURRENT_'+$patches[$i])
@@ -71,7 +71,7 @@ try{
     }
     $manifest=@{
         schema_version=1;target_client=@{build=12340;locale='enUS'};
-        patch_set_revision=1;patch_set_version='patchset-0001';patches=$entries
+        patch_set_revision=2;patch_set_version='patchset-0002';patches=$entries
     }
     Save (Join-Path $config 'client-patches.json') ($manifest|ConvertTo-Json -Depth 8)
     Save (Join-Path $config 'realm.json') (@{
@@ -108,11 +108,12 @@ public static class NaxxPlayerReviewFixture {
     Check ($r.status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Unblocked preview is still NOT permission'
     Check ($r.proposed_new_file_count -eq 1 -and
         $r.proposed_replace_after_backup_count -eq 2 -and
-        $r.unchanged_or_unselected_count -eq 2 -and
+        $r.unchanged_or_unselected_count -eq 3 -and
         $r.blocked_file_count -eq 0) 'File action count matches actual local plan'
     Check ((Row $r 'Data/patch-V.mpq').original_backup_required) 'Old V would require exact original backup'
     Check ((Row $r 'Data/patch-Z.mpq').proposed_action -ceq 'no_change') 'Current Z unchanged'
     Check ((Row $r 'Data/Patch-J.mpq').proposed_action -ceq 'leave_existing') 'Unselected private J preserved'
+    Check ((Row $r 'Data/Patch-C.mpq').proposed_action -ceq 'not_selected') 'Unselected C remains in six-file plan without installation'
     Check ((Row $r 'Data/Patch-U.mpq').proposed_action -ceq 'install') 'Selected absent U would be new file'
     Check ((Row $r 'Data/enUS/realmlist.wtf').original_backup_required) 'Different realmlist would require exact backup'
     $expected=[long](Get-Item -LiteralPath $v).Length+[long](Get-Item -LiteralPath $realm).Length
@@ -154,6 +155,19 @@ public static class NaxxPlayerReviewFixture {
     Invariants $r 'Both Vanilla cosmetic patch choices'
     Check ($r.status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Verified current J and selected U can be previewed without granting consent'
     Check (@($r.notes | Where-Object {$_ -match 'overlapping loading-screen textures'}).Count -eq 1) 'Overlapping J/U textures reported clearly'
+
+    # A known existing J is not silently removed just because C is selected.
+    $tbc=$baseOptions.Clone()
+    $tbc.TbcLogin=$true
+    $r=Review $tbc
+    Invariants $r 'Selected C with existing J'
+    Check ($r.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        @($r.concerns|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0) 'Existing J blocks selected TBC C'
+    Check ((Row $r 'Data/Patch-C.mpq').proposed_action -ceq 'install') 'C source is represented in the actual six-file table'
+    $bothLogin=$tbc.Clone();$bothLogin.VanillaLogin=$true
+    $rejected=$false
+    try{$null=Review $bothLogin}catch{$rejected=$true}
+    Check $rejected 'Mutually exclusive J and C CLI choices fail closed'
 
     Save $v 'FAKE_UNRECOGNISED_V'
     $r=Review $baseOptions
