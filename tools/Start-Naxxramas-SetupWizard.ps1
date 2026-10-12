@@ -152,7 +152,7 @@ $loading.TabIndex=7
 $loading.AccessibleName='Optional Vanilla loading screens patch U'
 $tbc=New-Object Windows.Forms.CheckBox
 $tbc.Name='TbcLogin'
-$tbc.Text='TBC login screen (Patch-C) - reference not yet verified'
+$tbc.Text='TBC login screen (Patch-C) - release fingerprint recorded'
 $tbc.Checked=[bool]$TbcLogin
 $tbc.Location=New-Object Drawing.Point(27,477)
 $tbc.Size=New-Object Drawing.Size(820,32)
@@ -294,7 +294,7 @@ function Update-OptionalStatus {
             'Patch-C (TBC login) and Patch-J (Vanilla login) cannot be used together.'
     }
     if($tbc.Checked){
-        $info+=[Environment]::NewLine+'Patch-C reference not yet verified; any selected preview is blocked.'
+        $info+=[Environment]::NewLine+'Patch-C release reference recorded; versioned install review pending. Selection remains blocked.'
     }
     $optionInfo.Text=$info
     $optionInfo.AccessibleDescription=$info
