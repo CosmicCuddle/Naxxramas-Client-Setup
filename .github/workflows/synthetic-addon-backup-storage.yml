@@ -1,0 +1,39 @@
+name: Synthetic-only addon backup storage evidence tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_synthetic_addon_backup_storage.py'
+      - 'tests/test_synthetic_addon_backup_storage.py'
+      - 'tools/review_synthetic_addon_recovery.py'
+      - '.github/workflows/synthetic-addon-backup-storage.yml'
+      - 'docs/ADDON-BACKUP-STORAGE-EVIDENCE.md'
+  push:
+    paths:
+      - 'tools/review_synthetic_addon_backup_storage.py'
+      - 'tests/test_synthetic_addon_backup_storage.py'
+      - '.github/workflows/synthetic-addon-backup-storage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Check out developer-only test sources
+        uses: actions/checkout@v4
+      - name: Python 3.12 synthetic fixture runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test synthetic backup storage boundaries
+        run: python -m unittest discover -s tests -p test_synthetic_addon_backup_storage.py -v
+      - name: Re-run whole-addon and full WTF original integrity regressions
+        run: python -m unittest discover -s tests -p test_synthetic_addon_recovery.py -v
