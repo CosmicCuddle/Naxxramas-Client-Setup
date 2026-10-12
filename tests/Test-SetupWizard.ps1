@@ -32,10 +32,23 @@ function Fingerprint([string]$Path){
     }
 }
 function Tree([string]$Root){
-    return (@(Get-ChildItem -LiteralPath $Root -File -Recurse -Force |
+    # Snapshot BOTH contents and structure. A file-only hash inventory would
+    # miss newly created or removed empty directories, and file links could
+    # otherwise point outside this disposable test fixture.
+    return (@(Get-ChildItem -LiteralPath $Root -Recurse -Force |
         Sort-Object FullName | ForEach-Object {
-            $_.FullName.Substring($Root.Length)+':'+
-                (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+            if(($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+                throw 'Synthetic fixture contains an unsafe linked entry.'
+            }
+            $relative=$_.FullName.Substring($Root.Length)
+            if($_.PSIsContainer){
+                'D:'+$relative
+            }elseif($_ -is [IO.FileInfo]){
+                'F:'+$relative+':'+$_.Length+':'+
+                    (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+            }else{
+                throw 'Synthetic fixture contains an unknown entry type.'
+            }
         }) -join '|')
 }
 function Execute([string[]]$Arguments,[string]$Label){
@@ -65,6 +78,20 @@ $tools=Join-Path $root 'tools'
 $config=Join-Path $root 'config'
 $history=Join-Path $config 'patch-versions'
 try{
+    # Regression proof: a file-only snapshot cannot detect empty directory
+    # creation/removal. Use an entirely disposable folder, then remove it
+    # before constructing any simulated Wow.exe or user settings.
+    $inventoryProbe=Join-Path $root 'structure-snapshot-self-test'
+    [void](New-Item -ItemType Directory -Path $inventoryProbe -Force)
+    $emptyBefore=Tree $inventoryProbe
+    $emptyFolder=Join-Path $inventoryProbe 'NewEmptyFolder'
+    [void](New-Item -ItemType Directory -Path $emptyFolder)
+    Check ((Tree $inventoryProbe) -cne $emptyBefore) 'Structural snapshot detects addition of an empty folder'
+    $withEmptyFolder=Tree $inventoryProbe
+    [void](New-Item -ItemType Directory -Path (Join-Path $emptyFolder 'AlsoEmpty'))
+    Check ((Tree $inventoryProbe) -cne $withEmptyFolder) 'Structural snapshot detects nested empty folder changes'
+    Remove-Item -LiteralPath $inventoryProbe -Recurse -Force
+
     Check (Test-Path -LiteralPath $wizard -PathType Leaf) 'Read-only Windows wizard exists'
     Check (Test-Path -LiteralPath (Join-Path $repo 'tools/Naxxramas-WizardDetails.ps1') -PathType Leaf) 'Read-only detailed review helper exists'
     Check (Test-Path -LiteralPath $bat -PathType Leaf) 'Double-click Windows launcher exists'
