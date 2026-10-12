@@ -27,7 +27,8 @@ $reviewTool=Join-Path $PSScriptRoot 'Show-Naxxramas-InstallReview.ps1'
 . (Join-Path $PSScriptRoot 'Naxxramas-OptionalContent.ps1')
 $optionalCatalog=Read-NaxxOptionalCatalog
 Assert-NaxxOptionalChoice ([bool]$VanillaLogin) ([bool]$TbcLogin)
-$initialAddonModules=@(Resolve-NaxxAddonModules ([bool]$AddonSuite) $AddonModules)
+$addonModulesExplicit=[bool]$PSBoundParameters.ContainsKey('AddonModules')
+$initialAddonModules=@(Resolve-NaxxAddonModules ([bool]$AddonSuite) $AddonModules $addonModulesExplicit)
 if(-not (Test-Path -LiteralPath $reviewTool -PathType Leaf)){
     throw 'The read-only planner review is missing.'
 }
@@ -196,7 +197,7 @@ for($i=0;$i -lt 4;$i++){
     $check.Location=New-Object Drawing.Point(48,(723+($i*39)))
     $check.Size=New-Object Drawing.Size(890,32)
     $check.TabIndex=(10+$i)
-    $check.Checked=($null -eq $AddonModules -or $initialAddonModules -ccontains $moduleNames[$i])
+    $check.Checked=(-not $addonModulesExplicit -or $initialAddonModules -ccontains $moduleNames[$i])
     $check.Enabled=$suite.Checked
     $check.ForeColor=$wizardTheme.Text
     $check.AccessibleName=($moduleLabels[$i]+' preference, only active when suite selected')
