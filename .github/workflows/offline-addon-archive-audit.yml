@@ -5,6 +5,8 @@ on:
     paths:
       - 'tools/Test-Naxxramas-AddonArchive.ps1'
       - 'tests/Test-AddonArchiveAudit.ps1'
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
       - 'config/optional-content.json'
       - '.github/workflows/offline-addon-archive-audit.yml'
   push:
@@ -12,6 +14,8 @@ on:
     paths:
       - 'tools/Test-Naxxramas-AddonArchive.ps1'
       - 'tests/Test-AddonArchiveAudit.ps1'
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
       - 'config/optional-content.json'
       - '.github/workflows/offline-addon-archive-audit.yml'
   workflow_dispatch:
@@ -28,3 +32,10 @@ jobs:
       - name: Audit valid and intentionally unsafe synthetic addon ZIPs
         shell: powershell
         run: .\tests\Test-AddonArchiveAudit.ps1
+      - name: Prepare Python for additional ZIP CRC and TOC fixtures
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test synthetic ZIP CRC damage and dependency/settings drift
+        shell: pwsh
+        run: python -m unittest discover -s tests -p test_addon_zip_payload.py -v
