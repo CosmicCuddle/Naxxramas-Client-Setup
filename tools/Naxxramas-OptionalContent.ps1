@@ -83,12 +83,12 @@ function Get-NaxxAddonTocEvidence([object]$Directory,[string]$Name){
     $version=''
     $interface=''
     try{
-        $matches=@(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop |
+        $tocEntries=@(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop |
             Where-Object {$_.Name -ieq ($Name+'.toc')})
-        if($matches.Count -gt 1){
+        if($tocEntries.Count -gt 1){
             $state='toc_ambiguous'
-        }elseif($matches.Count -eq 1){
-            $toc=$matches[0]
+        }elseif($tocEntries.Count -eq 1){
+            $toc=$tocEntries[0]
             if(($toc.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
                 $state='toc_linked_unsafe'
             }elseif($toc.PSIsContainer){
@@ -99,13 +99,12 @@ function Get-NaxxAddonTocEvidence([object]$Directory,[string]$Name){
                 $stream=$null
                 $reader=$null
                 try{
-                    $stream=New-Object IO.FileStream($toc.FullName,
+                    $stream=[IO.FileStream]::new($toc.FullName,
                         [IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
                     if([long]$stream.Length -gt 65536){
                         $state='toc_too_large'
                     }else{
-                        $reader=New-Object IO.StreamReader($stream,
-                            (New-Object Text.UTF8Encoding($false)),$true)
+                        $reader=[IO.StreamReader]::new($stream,[Text.Encoding]::UTF8,$true)
                         $contents=$reader.ReadToEnd()
                         $versions=New-Object 'System.Collections.Generic.List[string]'
                         $interfaces=New-Object 'System.Collections.Generic.List[string]'
