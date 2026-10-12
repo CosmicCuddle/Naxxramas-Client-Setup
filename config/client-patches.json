@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "design_only_not_an_installer_or_distribution_approval",
-  "note": "V/Z hashes and byte sizes pinned from the owner-supplied 2026-10-09 screenshot of the read-only tool. J/U hashes previously derived from owner-provided files. These checksums identify the expected bytes, not file provenance, redistribution rights, or runtime compatibility. No binaries or public download URLs are included.",
+  "note": "V/Z hashes and byte sizes pinned from the owner-supplied 2026-10-09 screenshot of the read-only tool. J/U hashes previously derived from owner-provided files. These checksums identify the expected bytes, not file provenance, redistribution rights, or runtime compatibility. No binaries or public download URLs are included. Patch-C added as optional reference from the owner's optional-v1.0 GitHub release asset metadata. The release fingerprint is not independent MPQ byte verification or distribution approval.",
   "target_client": {
     "game": "World of Warcraft",
     "version": "3.3.5a",
@@ -45,6 +45,18 @@
       "inspection": "archive_listfile_verified_2026-10-09"
     },
     {
+      "path": "Data/Patch-C.mpq",
+      "role": "tbc_login_screen",
+      "detail": "Optional The Burning Crusade Dark Portal login visuals/music. Mutually exclusive with Patch-J; can coexist with Patch-U. Source: owner optional-v1.0 release metadata only.",
+      "required": false,
+      "allow_disable": true,
+      "sha256": "16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8",
+      "size_bytes": 26753640,
+      "public_distribution_approved": false,
+      "hash_reference": "owner_release_optional-v1.0_2026-09-02",
+      "inspection": "github_release_asset_metadata_only"
+    },
+    {
       "path": "Data/Patch-U.mpq",
       "role": "vanilla_loading_screens",
       "detail": "Four BLPs: Eastern Kingdoms and Kalimdor, plus widescreen variants. Two BLP paths overlap with Patch-J.mpq and have different contents.",
@@ -66,9 +78,13 @@
       "Interface/GLUES/LoadingScreens/LoadScreenEasternKingdom.blp",
       "Interface/GLUES/LoadingScreens/LoadScreenKalimdor.blp"
     ],
-    "in_game_joint_option_test_required": true
+    "in_game_joint_option_test_required": true,
+    "optional_login_mutex": [
+      "Data/Patch-J.mpq",
+      "Data/Patch-C.mpq"
+    ]
   },
-  "patch_set_revision": 1,
-  "patch_set_version": "patchset-0001",
-  "patch_set_updated": "2026-10-09"
+  "patch_set_revision": 2,
+  "patch_set_version": "patchset-0002",
+  "patch_set_updated": "2026-10-12"
 }
