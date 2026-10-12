@@ -87,7 +87,11 @@ class JournalCutpointFixture(unittest.TestCase):
             self.assertEqual(report["cutpoint_classification"], tool.CUTPOINT[phase])
             self.assertEqual(report["phase_observed"], phase)
             self.assertEqual(report["events_observed"], len(phases))
-            self.assertEqual(report["status"], "claims_consistent_NO_AUTHORITY")
+            expected = ("manual_review_required" if phase in {
+                "backup_started", "backup_copied", "stage_started", "replace_started",
+                "replace_finished", "recovery_requested", "recovery_started"
+            } else "claims_consistent_NO_AUTHORITY")
+            self.assertEqual(report["status"], expected)
             self.assertTrue(report["journal_self_consistent_untrusted"])
             for denial in ("transaction_identity_authenticated", "durable_checkpoint_verified",
                            "independent_latest_state_verified", "backup_authenticated_or_verified_durable",
@@ -176,7 +180,7 @@ class JournalCutpointFixture(unittest.TestCase):
         self.assertEqual(complete["phase_observed"], "closed")
         self.write_chain(["plan_frozen", "backup_started", "backup_copied"])
         replay = tool.review(self.root)
-        self.assertEqual(replay["status"], "claims_consistent_NO_AUTHORITY")
+        self.assertEqual(replay["status"], "manual_review_required")
         self.assertEqual(replay["phase_observed"], "backup_copied")
         self.assertFalse(replay["coherent_replay_independently_detectable"])
         self.assertFalse(replay["recovery_or_resume_authorised"])
