@@ -1,7 +1,21 @@
 #requires -Version 5.1
 # Disposable Windows fake WoW files only. No actual MPQs or user account data.
 [CmdletBinding()]
-param()
+param(
+    # Local developer/manual UI acceptance, using ONLY an auto-cleaned
+    # synthetic fake client. Never use a real game client for this mode.
+    [switch]$ManualReview,
+    [ValidateSet('Ready','Blocked')][string]$ManualScenario='Ready',
+    # CI-only verification of the exact same fixture branch without ShowDialog.
+    [switch]$ManualHeadless
+)
+if($ManualHeadless -and -not $ManualReview){
+    throw 'ManualHeadless requires ManualReview.'
+}
+if($ManualReview -and -not $ManualHeadless -and
+   ($env:CI -eq 'true' -or $env:GITHUB_ACTIONS -eq 'true')){
+    throw 'Interactive manual review is forbidden in unattended CI.'
+}
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 function Check([bool]$Yes,[string]$What){
@@ -152,6 +166,56 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     $beforeClient=Tree $client
     $beforeSource=Tree $source
     $beforeBackup=Tree $backup
+    if($ManualReview){
+        # This path is intentionally *not* in the player ZIP. It launches the
+        # real read-only WinForms window only against freshly created test data.
+        # Everything is in $root (a fresh temporary directory) and its final
+        # cleanup runs even if the GUI raises an error or the test is aborted.
+        $manualArgs=@('-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
+        if($ManualScenario -eq 'Blocked'){
+            Save $v 'FAKE_UNRECOGNISED_CORE_V_FOR_MANUAL_REVIEW'
+            $beforeClient=Tree $client
+            # Also omit a separate backup folder deliberately, to exercise
+            # more blocked warnings without touching any backup folder.
+        }else{
+            $manualArgs+=@('-BackupRoot',$backup)
+        }
+        if($ManualHeadless){
+            $manual=Execute (@('-PreviewJson')+$manualArgs) 'Disposable manual fixture planner'
+            $expectedStatus=if($ManualScenario -eq 'Blocked'){
+                'read_only_player_review_BLOCKED_MANUAL_REVIEW'
+            }else{
+                'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED'
+            }
+            Check ($manual.status -ceq $expectedStatus -and
+                @($manual.file_reviews).Count -eq 5 -and
+                -not $manual.client_files_modified -and
+                -not $manual.original_backups_created -and
+                -not $manual.file_writes_authorised) ('Manual '+$ManualScenario+' fixture returns five real read-only file reviews')
+            $detail=Execute (@('-DetailDiagnostics')+$manualArgs) 'Disposable manual fixture file details'
+            Check ($detail.review_status -ceq $expectedStatus -and
+                $detail.file_count -eq 5 -and $detail.grid_read_only -and
+                $detail.warnings_read_only -and $detail.no_approval_or_installation) ('Manual '+$ManualScenario+' fixture details behave safely')
+        }else{
+            Write-Host ''
+            Write-Host ('MANUAL ACCESSIBILITY CHECK - '+$ManualScenario) -ForegroundColor Cyan
+            Write-Host 'All paths are freshly generated FAKE files in a temporary folder.'
+            Write-Host 'The wizard is REVIEW ONLY; no game file will be installed or backed up.'
+            Write-Host 'Test the window, keyboard, scaling and screen-reader accessibility.'
+            Write-Host 'You can change J/U selections and press Review Only / View File Details.'
+            Write-Host 'Close the wizard to trigger file-hash verification and cleanup.'
+            Write-Host ''
+            & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard @manualArgs
+            if($LASTEXITCODE -ne 0){
+                throw ('The disposable manual wizard exited with code '+$LASTEXITCODE)
+            }
+        }
+        Check ((Tree $client) -ceq $beforeClient -and
+            (Tree $source) -ceq $beforeSource -and
+            (Tree $backup) -ceq $beforeBackup) ('Manual '+$ManualScenario+' fixture did not change any synthetic files')
+        Write-Host 'Disposable accessibility fixture checks passed; temporary files will be cleaned.' -ForegroundColor Green
+        return
+    }
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-VanillaLoading')
     $summary=Execute $reviewParams 'GUI viewer bridge to actual current planner'
