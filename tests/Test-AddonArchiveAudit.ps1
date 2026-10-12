@@ -58,7 +58,7 @@ function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash
     return [pscustomobject]@{
         code=$exitCode
         stdout=$output
-        stderr=$output
+        stderr=$(if($exitCode -ne 0){$output}else{''})
     }
 }
 $five=@('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
@@ -120,3 +120,6 @@ try{
     # Remove only the uniquely-created synthetic CI fixture, never client files.
     if(Test-Path -LiteralPath $root){Remove-Item -LiteralPath $root -Recurse -Force}
 }
+# Deliberate nonzero native subprocesses were asserted above and are not a
+# failure of this PowerShell 5.1 CI harness itself.
+$global:LASTEXITCODE=0
