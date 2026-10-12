@@ -30,7 +30,7 @@ foreach ($name in @('Test-Naxxramas-Client.ps1','Get-Core-Patch-Hashes.ps1','Pre
 if ($policy.schema_version -ne 1 -or [int]$policy.patch_set_revision -lt 1 -or $policy.patch_set_version -ne ('patchset-{0:D4}' -f [int]$policy.patch_set_revision)) {
   throw 'Unexpected baseline patch version.'
 }
-if (@($policy.patches).Count -ne 4) { throw 'Four patch entries expected.' }
+if (@($policy.patches).Count -ne 5) { throw 'Five MPQ patch entries expected (V/Z/J/C/U).' }
 $versionPath = Join-Path $repo ('config/patch-versions/' + $policy.patch_set_version + '.json')
 $history = Get-Content -LiteralPath $versionPath -Raw | ConvertFrom-Json
 if ($history.revision -ne $policy.patch_set_revision -or $history.version -ne $policy.patch_set_version) { throw 'Invalid current version history.' }
