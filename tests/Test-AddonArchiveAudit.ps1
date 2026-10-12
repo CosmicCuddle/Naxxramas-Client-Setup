@@ -38,23 +38,27 @@ function Make-Zip([string]$Name,[string[]]$Paths,[string]$Symlink=''){
     return $target
 }
 function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash=$null,[long]$OverrideSize=0){
-    $out=Join-Path $root ('result-'+[guid]::NewGuid().ToString('N')+'.txt')
-    $err=Join-Path $root ('error-'+[guid]::NewGuid().ToString('N')+'.txt')
-    $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$auditor+'"'),
-        '-ArchivePath',('"'+$Path+'"'))
-    if($Synthetic){
-        $item=Get-Item -LiteralPath $Path
-        $hash=(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
-        $size=[long]$item.Length
-        if($null -ne $OverrideHash){$hash=$OverrideHash}
-        if($OverrideSize -gt 0){$size=$OverrideSize}
-        $arguments+=@('-Fixture','-ExpectedSha256',$hash,'-ExpectedSizeBytes',"$size")
-    }
-    $p=Start-Process -FilePath 'powershell.exe' -ArgumentList $arguments -NoNewWindow -PassThru -Wait -WorkingDirectory $root -RedirectStandardOutput $out -RedirectStandardError $err
+    # Call native PowerShell directly, preserving an intentional nonzero result
+    # as data rather than allowing the harness to throw before assertions.
+    $previousPreference=$ErrorActionPreference
+    try{
+        $ErrorActionPreference='Continue'
+        if($Synthetic){
+            $item=Get-Item -LiteralPath $Path
+            $hash=(Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+            $size=[long]$item.Length
+            if($null -ne $OverrideHash){$hash=$OverrideHash}
+            if($OverrideSize -gt 0){$size=$OverrideSize}
+            $output=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $auditor -ArchivePath $Path -Fixture -ExpectedSha256 $hash -ExpectedSizeBytes $size 2>&1 | Out-String)
+        }else{
+            $output=(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $auditor -ArchivePath $Path 2>&1 | Out-String)
+        }
+        $exitCode=$LASTEXITCODE
+    }finally{$ErrorActionPreference=$previousPreference}
     return [pscustomobject]@{
-        code=$p.ExitCode
-        stdout=[IO.File]::ReadAllText($out)
-        stderr=[IO.File]::ReadAllText($err)
+        code=$exitCode
+        stdout=$output
+        stderr=$output
     }
 }
 $five=@('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
