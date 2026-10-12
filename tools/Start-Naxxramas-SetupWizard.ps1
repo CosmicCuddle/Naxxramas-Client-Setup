@@ -463,11 +463,15 @@ if($Diagnostics){
     # Verify the actual CheckedChanged handler clears stale details.
     # This is an in-memory UI-only event; no planner or client is accessed.
     $initialLogin=$login.Checked
+    $initialTbc=$tbc.Checked
     $script:currentReview=[pscustomobject]@{fixture_only=$true}
     $script:details.Enabled=$true
     $login.Checked=(-not $initialLogin)
     $eventClearsStaleReview=($null -eq $script:currentReview -and -not $details.Enabled)
     $login.Checked=$initialLogin
+    # J is exclusive with C; an exercised J toggle may have switched C off.
+    # Restore the initially requested diagnostic selection before reporting.
+    $tbc.Checked=$initialTbc
     $originalRealm=$realm.Text
     $script:currentReview=[pscustomobject]@{fixture_only=$true}
     $script:details.Enabled=$true
