@@ -384,6 +384,64 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         -not $inventoryReport.addon_settings_protection.inventory_or_personal_settings_read -and
         -not $inventoryReport.addon_settings_protection.backup_created -and
         (Tree $client) -ceq $withFolders) 'Existing unknown and legacy folders require manual upgrade review; all synthetic WTF files untouched'
+    # Root TOC metadata is a claim made by existing user-owned text, not
+    # an authenticated release version or permission to modify an addon.
+    $manifestPath=Join-Path $addons 'IndividualProgressionAddon/IndividualProgressionAddon.toc'
+    Save $manifestPath ("## Interface: 30300"+[Environment]::NewLine+
+        "## Version: 5.2.0"+[Environment]::NewLine+"FakeFile.lua")
+    $withManifest=Tree $client
+    $claimed=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Read only bounded addon TOC claim'
+    Check (@($claimed.addon_upgrade_assessment|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.toc_metadata_state -ceq 'toc_claims_supported_interface_unverified' -and
+            $_.toc_declared_version -ceq '5.2.0' -and
+            $_.toc_declared_interface -ceq '30300' -and
+            $_.assessment -ceq 'existing_unknown_version_preserve_and_review' -and
+            $_.detected_version -ceq 'unknown_not_inspected' -and
+            -not $_.toc_claim_trusted -and
+            -not $_.version_or_provenance_verified -and
+            -not $_.proposed_client_write
+        }).Count -eq 1 -and
+        $claimed.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        -not $claimed.addon_upgrades_or_deletions_authorised -and
+        (Tree $client) -ceq $withManifest) 'Claimed 5.2.0/30300 is visible but NEVER verified as an actual suite version'
+    Save $manifestPath ("## Interface: 20400"+[Environment]::NewLine+
+        "## Version: 5.2.0")
+    $withOldInterface=Tree $client
+    $wrongInterface=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Old interface TOC claim'
+    Check (@($wrongInterface.addon_folder_inventory|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.toc_metadata_state -ceq 'toc_claims_other_interface_unverified' -and
+            $_.toc_declared_interface -ceq '20400'
+        }).Count -eq 1 -and
+        (Tree $client) -ceq $withOldInterface) 'Other WoW interface declaration is distinguishable but cannot trigger replacement'
+    Save $manifestPath ("## Interface: 30300"+[Environment]::NewLine+
+        "## Version: 5.2.0"+[Environment]::NewLine+"## Version: 1.0.0")
+    $withDuplicate=Tree $client
+    $duplicate=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Conflicting version TOC declarations'
+    Check (@($duplicate.addon_folder_inventory|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.toc_metadata_state -ceq 'toc_missing_or_conflicting_fields' -and
+            -not $_.toc_declared_version
+        }).Count -eq 1 -and
+        (Tree $client) -ceq $withDuplicate) 'Contradictory TOC metadata is not presented as a version'
+    Save $manifestPath (('X'*65537))
+    $withOversized=Tree $client
+    $oversized=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-AddonSuite') 'Oversized TOC is not read'
+    Check (@($oversized.addon_folder_inventory|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.toc_metadata_state -ceq 'toc_too_large' -and
+            -not $_.toc_claim_trusted
+        }).Count -eq 1 -and
+        (Tree $client) -ceq $withOversized -and
+        (Get-Content -LiteralPath $fakeSettings -Raw) -ceq
+            'SYNTHETIC_PRIVATE_ACCOUNT_SETTINGS_DO_NOT_READ_OR_MODIFY') 'Oversized manifest fails conservatively; all fake WTF contents stay intact'
+    Remove-Item -LiteralPath $manifestPath -Force
+
     $withoutSuite=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup) 'No addon suite requested with legacy folders existing'
     Check (@($withoutSuite.addon_upgrade_assessment|Where-Object {

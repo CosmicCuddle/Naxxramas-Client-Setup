@@ -75,7 +75,79 @@ function Resolve-NaxxAddonModules([bool]$UseSuite,[string]$Choices,[bool]$Explic
         if($seen.Contains($name)){Write-Output $name}
     }
 }
-# Inspect just the immediate child names and filesystem metadata: no TOC/Lua
+# Examine one fixed root TOC in each known addon folder, without executing it.
+# Version and Interface are user-controlled claims, NEVER verified released bytes.
+# Only the first 64 KiB of a regular, non-linked TOC can be inspected.
+function Get-NaxxAddonTocEvidence([object]$Directory,[string]$Name){
+    $state='toc_missing'
+    $version=''
+    $interface=''
+    try{
+        $tocEntries=@(Get-ChildItem -LiteralPath $Directory.FullName -Force -ErrorAction Stop |
+            Where-Object {$_.Name -ieq ($Name+'.toc')})
+        if($tocEntries.Count -gt 1){
+            $state='toc_ambiguous'
+        }elseif($tocEntries.Count -eq 1){
+            $toc=$tocEntries[0]
+            if(($toc.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+                $state='toc_linked_unsafe'
+            }elseif($toc.PSIsContainer){
+                $state='toc_not_a_file'
+            }elseif([long]$toc.Length -gt 65536){
+                $state='toc_too_large'
+            }else{
+                $stream=$null
+                $reader=$null
+                try{
+                    $stream=[IO.FileStream]::new($toc.FullName,
+                        [IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read)
+                    if([long]$stream.Length -gt 65536){
+                        $state='toc_too_large'
+                    }else{
+                        $reader=[IO.StreamReader]::new($stream,[Text.Encoding]::UTF8,$true)
+                        $contents=$reader.ReadToEnd()
+                        $versions=New-Object 'System.Collections.Generic.List[string]'
+                        $interfaces=New-Object 'System.Collections.Generic.List[string]'
+                        foreach($line in ($contents -split '\r?\n')){
+                            if($line -match '^\s*##\s*Version\s*:\s*(.*?)\s*$'){
+                                $versions.Add([string]$Matches[1])
+                            }
+                            if($line -match '^\s*##\s*Interface\s*:\s*(.*?)\s*$'){
+                                $interfaces.Add([string]$Matches[1])
+                            }
+                        }
+                        if($versions.Count -ne 1 -or $interfaces.Count -ne 1 -or
+                            $versions[0] -cnotmatch '^[A-Za-z0-9][A-Za-z0-9.+_-]{0,39}$' -or
+                            $interfaces[0] -cnotmatch '^[0-9]{5}$'){
+                            $state='toc_missing_or_conflicting_fields'
+                        }else{
+                            $version=$versions[0]
+                            $interface=$interfaces[0]
+                            $state=if($interface -ceq '30300'){
+                                'toc_claims_supported_interface_unverified'
+                            }else{'toc_claims_other_interface_unverified'}
+                        }
+                    }
+                }finally{
+                    if($null -ne $reader){$reader.Dispose()}
+                    elseif($null -ne $stream){$stream.Dispose()}
+                }
+            }
+        }
+    }catch{
+        # Locked, changed, unreadable or disappeared. No private error paths.
+        $state='toc_read_error'
+        $version=''
+        $interface=''
+    }
+    return [pscustomobject][ordered]@{
+        toc_metadata_state=$state
+        toc_declared_version=$version
+        toc_declared_interface=$interface
+        toc_claim_trusted=$false
+    }
+}
+# Inspect only the immediate addon entries and their fixed root TOC text; no Lua
 # code execution, recursive file content reads, hashing or directory creation.
 # Never follow linked addon roots, junctions, or symlinks.
 function Get-NaxxAddonInventory([string]$Client,[object]$Catalog){
@@ -104,7 +176,13 @@ function Get-NaxxAddonInventory([string]$Client,[object]$Catalog){
                 @($Catalog.addon_suite.optional_folders)+
                 @($Catalog.addon_suite.legacy_folders_to_flag)
             foreach($name in $known){
-                [pscustomobject]@{folder=[string]$name;state='absent'}
+                [pscustomobject]@{
+                    folder=[string]$name;state='absent'
+                    toc_metadata_state='not_present'
+                    toc_declared_version=''
+                    toc_declared_interface=''
+                    toc_claim_trusted=$false
+                }
             }
             return
         }
@@ -129,13 +207,28 @@ function Get-NaxxAddonInventory([string]$Client,[object]$Catalog){
                 $state='present_unverified'
             }
         }
-        [pscustomobject]@{folder=[string]$name;state=$state}
+        $evidence=[pscustomobject]@{
+            toc_metadata_state='not_present'
+            toc_declared_version=''
+            toc_declared_interface=''
+        }
+        if($state -ceq 'present_unverified'){
+            $evidence=Get-NaxxAddonTocEvidence $found[0] $name
+        }elseif($state -ne 'absent'){
+            $evidence.toc_metadata_state='folder_unsafe_not_inspected'
+        }
+        [pscustomobject][ordered]@{
+            folder=[string]$name
+            state=$state
+            toc_metadata_state=[string]$evidence.toc_metadata_state
+            toc_declared_version=[string]$evidence.toc_declared_version
+            toc_declared_interface=[string]$evidence.toc_declared_interface
+            toc_claim_trusted=$false
+        }
     }
 }
 
-# Conservatively classify only folder existence and *future* settings
-# protection. This must never infer addon version, checksum, owner, integrity
-# or actual SavedVariables presence from directory names.
+# A claimed TOC version adds context but NEVER changes preservation or trust.
 function Get-NaxxAddonUpgradeAssessment(
     [object[]]$Inventory,[bool]$UseSuite,[string[]]$Modules
 ){
@@ -181,6 +274,10 @@ function Get-NaxxAddonUpgradeAssessment(
             future_module_preference_selected=[bool]$requested
             assessment=$action
             detected_version='unknown_not_inspected'
+            toc_metadata_state=[string]$row.toc_metadata_state
+            toc_declared_version=[string]$row.toc_declared_version
+            toc_declared_interface=[string]$row.toc_declared_interface
+            toc_claim_trusted=$false
             version_or_provenance_verified=$false
             proposed_client_write=$false
             proposed_deletion=$false
@@ -259,10 +356,16 @@ function Add-NaxxOptionalReview(
         $notes.Add('NCore and all four optional addon folders are packaged in the published suite; choices describe proposed NCore module activation, NOT selective installation.')
         $notes.Add('Future settings protection must include every existing WTF account, realm and character; no WTF files or SavedVariables were read or backed up.')
     }else{
-        $notes.Add('N Addon Suite is not selected. Existing addon folders are inspected by name only, with no changes.')
+        $notes.Add('N Addon Suite is not selected. Known folders and bounded root TOC declarations are observed, but no version is authenticated and nothing is changed.')
     }
     foreach($row in $inventory){
-        $notes.Add(('Addon folder '+$row.folder+': '+$row.state+' (name only, content/version unverified).'))
+        $tocDetail=if($row.toc_declared_version){
+            'TOC claims version '+$row.toc_declared_version+', Interface '+
+                $row.toc_declared_interface+'; not authenticated'
+        }else{
+            'TOC evidence: '+$row.toc_metadata_state+'; version not verified'
+        }
+        $notes.Add(('Addon folder '+$row.folder+': '+$row.state+'; '+$tocDetail+'.'))
         if($row.state -in @('linked_unsafe','not_a_folder','ambiguous')){
             $extra.Add(('Addon folder '+$row.folder+' is '+$row.state+'. Stop and review manually; no changes made.'))
         }
@@ -314,11 +417,14 @@ function Get-NaxxOptionalSummary([object]$Report){
         $state=if(@($Report.addon_modules_planned) -ccontains $folder){'ON'}else{'OFF'}
         $lines.Add(('  '+$folder+': '+$state))
     }
-    $lines.Add('Existing addon folders (names only, NOT verified or installed by this tool):')
+    $lines.Add('Existing addon folders (root TOC claims are not verified releases):')
     foreach($row in @($Report.addon_folder_inventory)){
-        $lines.Add(('  '+$row.folder+': '+$row.state))
+        $claim=if($row.toc_declared_version){
+            'TOC says '+$row.toc_declared_version+' (Interface '+$row.toc_declared_interface+')'
+        }else{$row.toc_metadata_state}
+        $lines.Add(('  '+$row.folder+': '+$row.state+'; '+$claim+' - unverified'))
     }
-    $lines.Add('Future upgrade assessment (folder names only; version always UNKNOWN):')
+    $lines.Add('Future upgrade assessment (all existing versions unverified, no overwrite):')
     foreach($row in @($Report.addon_upgrade_assessment)){
         $lines.Add(('  '+$row.folder+': '+$row.assessment))
     }
