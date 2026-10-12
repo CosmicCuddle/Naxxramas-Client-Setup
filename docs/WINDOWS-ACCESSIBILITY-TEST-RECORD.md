@@ -63,3 +63,9 @@ If anything is clipped, impossible to focus, unreadable with assistive technolog
 ## Meaning of the launcher result
 
 The helper reports that the **fake fixture bytes were unchanged** after you close each window. It cannot determine what your actual Windows scaling is, whether you saw clipped labels or whether a screen reader announced text. A green console output must **not** change any physical test cell from `NOT TESTED`. Fill those entries **only from your own direct observation**. Never submit private screenshots, folder paths or SavedVariables to CI.
+
+## QA launcher failure handling (automated safety tests)
+
+The **source-only** launcher requires exactly one of `-Interactive` or `-Headless`. Missing/conflicting modes, an unrecognised `-Scenario`, an attempt to provide `-ClientPath`, or a GUI request from CI are rejected **before** the fixture is invoked. If the Ready fixture exits with an error, the Blocked fixture **will not** open; if Blocked fails, the launcher reports a failure rather than completion. These behaviours are regression-tested in a disposable Windows PowerShell 5.1 sandbox; they are not a guarantee about a real game installation.
+
+The underlying disposable test now checks the **directory structure, including empty subfolders**, as well as file content and length. Linked/reparse entries in that disposable snapshot are refused. This closes a testing blind spot, but it does not create or verify actual original backups, guarantee crash durability, or constitute human accessibility acceptance. A failure means **do not mark that session PASS**; retain a privacy-safe description of which scenario failed and rerun after correction. All physical scaling, Narrator, contrast-theme and keyboard acceptance cells above remain **NOT TESTED** until directly observed.
