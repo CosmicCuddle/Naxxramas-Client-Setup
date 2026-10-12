@@ -241,12 +241,17 @@ def review(root: Path, between_observations=None) -> dict:
     if content_result["current_conflict_scopes"]:
         blockers.append("changed_player_files_or_settings_preserve")
 
+    interruption_phases = {
+        "backup_started", "backup_copied", "stage_started",
+        "replace_started", "replace_finished", "recovery_requested",
+        "recovery_started",
+    }
     return {
         "kind": "naxxramas_synthetic_addon_journal_cutpoint_review",
         "schema_version": 1,
         "synthetic_fixture_only": True,
         "read_only": True,
-        "status": "manual_review_required" if blockers else "claims_consistent_NO_AUTHORITY",
+        "status": "manual_review_required" if (blockers or phase in interruption_phases) else "claims_consistent_NO_AUTHORITY",
         "phase_observed": phase,
         "cutpoint_classification": CUTPOINT[phase],
         "events_observed": count,
