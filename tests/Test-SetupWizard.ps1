@@ -276,6 +276,27 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ((@($subset.addon_modules_planned) -join '|') -ceq 'MultiBot|NaxxLootLottery' -and
         $subset.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         -not $subset.optional_content_file_writes_authorised) 'Selected modules remain planning-only and cannot write'
+    Check (@($subset.addon_upgrade_assessment).Count -eq 7 -and
+        @($subset.addon_upgrade_assessment | Where-Object {
+            $_.folder -ceq 'MultiBot' -and $_.future_module_preference_selected -and
+            $_.included_in_published_archive -and $_.assessment -ceq 'future_addition_not_authorised'
+        }).Count -eq 1 -and
+        @($subset.addon_upgrade_assessment | Where-Object {
+            $_.folder -ceq 'DungeonJournal' -and -not $_.future_module_preference_selected -and
+            $_.included_in_published_archive -and $_.assessment -ceq 'future_addition_not_authorised'
+        }).Count -eq 1 -and
+        -not $subset.addon_upgrades_or_deletions_authorised) 'Future module choices are NOT falsely represented as selective archive extraction'
+    Check ($subset.addon_settings_protection.scope -ceq 'all_existing_WTF_accounts_realms_characters_and_affected_addon_folders' -and
+        $subset.addon_settings_protection.backup_required_before_future_upgrade -and
+        -not $subset.addon_settings_protection.inventory_or_personal_settings_read -and
+        -not $subset.addon_settings_protection.backup_created -and
+        -not $subset.addon_settings_protection.backup_verified -and
+        -not $subset.addon_settings_protection.backup_or_restore_authorised -and
+        @($subset.addon_settings_protection.declared_variables | Where-Object {
+            $_.addon -ceq 'MultiBot' -and
+            (@($_.character_variables) -join '|') -ceq 'MultiBotSave|MultiBotDB|MultiBotSaved' -and
+            (@($_.account_variables) -join '|') -ceq 'MultiBotGlobalSave'
+        }).Count -eq 1) 'Read-only preview names relevant account/character settings but creates zero backup and reads no WTF data'
     $none=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-AddonSuite','-AddonModules','None') 'NCore only suite selection'
     Check (@($none.addon_modules_planned).Count -eq 0 -and
@@ -338,6 +359,8 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     [void](New-Item -ItemType Directory -Path $addons -Force)
     [void](New-Item -ItemType Directory -Path (Join-Path $addons 'IndividualProgressionAddon') -Force)
     [void](New-Item -ItemType Directory -Path (Join-Path $addons 'NClassicBattlegrounds') -Force)
+    $fakeSettings=Join-Path $client 'WTF/Account/FAKE_ACCOUNT/SavedVariables/MultiBot.lua'
+    Save $fakeSettings 'SYNTHETIC_PRIVATE_ACCOUNT_SETTINGS_DO_NOT_READ_OR_MODIFY'
     $withFolders=Tree $client
     $inventoryReport=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
         '-BackupRoot',$backup,'-AddonSuite') 'Inspect existing folders and legacy duplicate risks'
@@ -346,6 +369,32 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         }).Count -eq 1 -and
         @($inventoryReport.notes|Where-Object {$_ -match 'Legacy addon NClassicBattlegrounds'}).Count -eq 1 -and
         (Tree $client) -ceq $withFolders) 'Legacy NClassicBattlegrounds warning appears without deleting or changing anything'
+    Check (@($inventoryReport.addon_upgrade_assessment | Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.assessment -ceq 'existing_unknown_version_preserve_and_review' -and
+            $_.detected_version -ceq 'unknown_not_inspected' -and
+            -not $_.proposed_client_write -and -not $_.proposed_deletion
+        }).Count -eq 1 -and
+        @($inventoryReport.addon_upgrade_assessment | Where-Object {
+            $_.folder -ceq 'NClassicBattlegrounds' -and
+            $_.assessment -ceq 'legacy_conflict_manual_review'
+        }).Count -eq 1 -and
+        (Get-Content -LiteralPath $fakeSettings -Raw) -ceq 'SYNTHETIC_PRIVATE_ACCOUNT_SETTINGS_DO_NOT_READ_OR_MODIFY' -and
+        -not $inventoryReport.addon_settings_protection.inventory_or_personal_settings_read -and
+        -not $inventoryReport.addon_settings_protection.backup_created -and
+        (Tree $client) -ceq $withFolders) 'Existing unknown and legacy folders require manual upgrade review; all synthetic WTF files untouched'
+    $withoutSuite=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup) 'No addon suite requested with legacy folders existing'
+    Check (@($withoutSuite.addon_upgrade_assessment|Where-Object {
+            $_.folder -ceq 'NClassicBattlegrounds' -and
+            $_.assessment -ceq 'legacy_present_preserve_existing'
+        }).Count -eq 1 -and
+        @($withoutSuite.addon_upgrade_assessment|Where-Object {
+            $_.folder -ceq 'IndividualProgressionAddon' -and
+            $_.assessment -ceq 'not_requested_preserve_existing'
+        }).Count -eq 1 -and
+        -not $withoutSuite.addon_settings_protection.backup_required_before_future_upgrade -and
+        (Tree $client) -ceq $withFolders) 'Without selected suite existing addons are preserved and never treated as upgrade targets'
     Save (Join-Path $addons 'NCore') 'FAKE_CONFLICTING_FILE_NOT_AN_ADDON_FOLDER'
     $fileBefore=Tree $client
     $unsafe=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
@@ -354,7 +403,11 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
             $_.folder -ceq 'NCore' -and $_.state -ceq 'not_a_folder'
         }).Count -eq 1 -and
         @($unsafe.concerns|Where-Object {$_ -match 'NCore is not_a_folder'}).Count -eq 1 -and
-        (Tree $client) -ceq $fileBefore) 'Non-folder NCore fails closed, preserving the original file'
+        @($unsafe.addon_upgrade_assessment|Where-Object {
+            $_.folder -ceq 'NCore' -and
+            $_.assessment -ceq 'unsafe_existing_entry_manual_review'
+        }).Count -eq 1 -and
+        (Tree $client) -ceq $fileBefore) 'Non-folder NCore fails closed in upgrade assessment, preserving the original file'
     Remove-Item -LiteralPath (Join-Path $addons 'NCore') -Force
 
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
