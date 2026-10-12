@@ -52,13 +52,13 @@ function Assert-NaxxOptionalChoice([bool]$Vanilla,[bool]$Tbc){
 
 # These four are *future NCore activation preferences*, not a promise to
 # extract a custom subset of the release ZIP. NCore remains mandatory.
-function Resolve-NaxxAddonModules([bool]$UseSuite,[string]$Choices){
+function Resolve-NaxxAddonModules([bool]$UseSuite,[string]$Choices,[bool]$Explicit){
     if(-not $UseSuite){
-        if($null -ne $Choices){throw 'Addon modules require selecting N Addon Suite first.'}
+        if($Explicit){throw 'Addon modules require selecting N Addon Suite first.'}
         return
     }
     $allowed=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
-    if($null -eq $Choices){
+    if(-not $Explicit){
         foreach($name in $allowed){Write-Output $name}
         return
     }
