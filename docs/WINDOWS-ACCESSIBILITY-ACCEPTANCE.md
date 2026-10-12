@@ -12,7 +12,7 @@ Double-click `tools/Start-Naxxramas-SetupWizard.bat` from a clean copy of the sc
 
 Record each configuration separately. **Unrecorded is NOT passed.** Windows scaling must actually be changed on the desktop; setting a test variable does not simulate DPI or establish visual compatibility.
 
-| Windows display setting | Wizard window and Browse fields | Optional J/U + overlap warning | Five-file details, long warnings and backup label | Keyboard and assistive technology |
+| Windows display setting | Wizard window and Browse fields | Optional C/J/U + overlap warning | Six-file details, long warnings and backup label | Keyboard and assistive technology |
 | --- | --- | --- | --- | --- |
 | 100% | Not tested | Not tested | Not tested | Not tested |
 | 125% | Not tested | Not tested | Not tested | Not tested |
@@ -24,7 +24,7 @@ Record each configuration separately. **Unrecorded is NOT passed.** Windows scal
 1. **Open** the wizard. Make sure its heading, three folder selectors, independent J and U choices, always-required V/Z reminder and read-only wording are legible. Scroll down if needed; no action should disappear behind a border.
 2. **Select J only, U only, neither and both.** Check the status displays each choice as ON/OFF. With **both** selected, a written WARNING must explain overlapping loading screens and untested combined appearance **before Review Only is pressed**. The warning must not rely on colour.
 3. **Tab forward, then Shift+Tab back** through the three folder textboxes and Browse buttons, J/U checkboxes, realm address, Review Only, Clear Review, View File Details (after a valid review), Close and review output. Labels must be understandable when read out of context. The default Enter key must not install anything; Escape must close.
-4. **Review a disposable fake client** using local-only synthetic fixtures or a separate backed-up test client. Verify exactly five ordered rows in File Details and that the original-backup-required label reads **YES - not created**. Confirm that no review action is presented as approval.
+4. **Review a disposable fake client** using local-only synthetic fixtures or a separate backed-up test client. Verify exactly six ordered rows (V, Z, J, C, U and realm settings) in File Details and that the original-backup-required label reads **YES - not created**. Confirm that no review action is presented as approval.
 5. **Try long warnings.** The warning area must scroll and remain keyboard-readable after making the window shorter/taller; the Close Review button must remain reachable.
 6. **Use a screen reader and Windows high contrast** if available. Confirm the J/U status, overlap warning, proposed file actions, original backup warning, Close and blocked errors are communicated by text, not only by colour or mouse hover.
 7. **Change a selection after reviewing.** Confirm the old review clears and View File Details becomes unavailable until a fresh Review Only operation.
@@ -43,7 +43,7 @@ It does **not** establish rendered pixel-level text clipping, DPI scaling at 100
 
 ## Compact-window exploratory check
 
-In addition to the scaling matrix above, make the **File Details** window approximately 640 × 480 while the display scale is set in Windows. Verify the five-file grid remains above the warnings; scroll down to find the exact **original backup not created** notice and **Close Review** without the controls obscuring each other. Tab through the grid, warning reader and Close Review, then return to the wizard. Do not mark the scaling matrix as passed based on CI's compact logical-viewport check.
+In addition to the scaling matrix above, make the **File Details** window approximately 640 × 480 while the display scale is set in Windows. Verify the six-file grid remains above the warnings; scroll down to find the exact **original backup not created** notice and **Close Review** without the controls obscuring each other. Tab through the grid, warning reader and Close Review, then return to the wizard. Do not mark the scaling matrix as passed based on CI's compact logical-viewport check.
 
 
 ## High Contrast and initial focus test (PR #34)
@@ -58,7 +58,7 @@ For each manual 100/125/150/200% scaling test, launch **by double-clicking the a
 
 If you have a **Windows computer** and a local clone/download of the **source repository** (not merely the scripts-only candidate ZIP), you can visually test the real read-only WinForms wizard without pointing it at an existing WoW installation. Open **Windows PowerShell 5.1** in the source repository root, at each actual Windows display-scaling setting.
 
-**Scenario 1 — expected review (five actions, two originals needing future backup):**
+**Scenario 1 — expected review (six file rows, two originals needing future backup):**
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Ready
@@ -70,7 +70,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizar
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Blocked
 ```
 
-Each command generates its *own* uniquely named temporary directory, a synthetic C# build-12340 `Wow.exe` (not an actual game client), four tiny fake patch sources, fake V/Z/J files, a fake `realmlist.wtf`, and an existing fake backup sentinel. It then opens the genuine **Review Only** WinForms window with those synthetic paths already filled in. In either case, press **Review Only**, open **View File Details**, read/scroll warnings, try both J/U selections, Tab and Shift+Tab through the controls, and check screen-reader announcements and contrast manually. **Close the wizard** to let the test compare SHA-256 hashes of synthetic client/source/backup files and automatically delete its temporary directory.
+Each command generates its *own* uniquely named temporary directory, a synthetic C# build-12340 `Wow.exe` (not an actual game client), five tiny fake patch sources, fake V/Z/J files, a fake `realmlist.wtf`, and an existing fake backup sentinel. It then opens the genuine **Review Only** WinForms window with those synthetic paths already filled in. In either case, press **Review Only**, open **View File Details**, read/scroll warnings, try both J/U selections, Tab and Shift+Tab through the controls, and check screen-reader announcements and contrast manually. **Close the wizard** to let the test compare SHA-256 hashes of synthetic client/source/backup files and automatically delete its temporary directory.
 
 The `Ready` fixture's no-blocker status **does not grant installation permission**. The `Blocked` fixture must still preserve all fake data and deny modifications. Do not point either wizard at your real WoW directory. Do **not** share screenshots containing local usernames or private paths.
 
@@ -107,3 +107,15 @@ The wizard now includes a **Read Review Text** button below the Review Only / Cl
 After any selection change, the result text is reset and its accessible description includes the updated status. After a completed or blocked **Review Only**, the status and result reader descriptions also stay synchronized. The separate **View File Details** dialog retains its read-only six-file table and keyboard-reachable warnings; no new file-change commands are provided.
 
 **Physical verification still required** at 100/125/150/200% scaling: Tab to **Read Review Text**, press Space or Enter, and check that focus enters the read-only result where Up/Down and screen-reader reading commands work. Then Shift+Tab to the button and continue to **View File Details**. Repeat with J+U overlap warning, C/J exclusion, addon suite BLOCKED, missing backup, and intentional blocked file review. Confirm the status is understandable with a real screen reader rather than only reading the accessibility metadata in CI. Review the concise [blank Windows QA record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md). **Do not mark any human screen-reader or physical display checks passed from CI alone.**
+
+## Simplified hands-on launch — one command
+
+From the **source repository** on Windows PowerShell 5.1, use this one command at each *actual* Windows display scale:
+
+```powershell
+powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Interactive -Scenario Both
+```
+
+The helper opens a fresh disposable **Ready** fixture first, checks fake-client/source/backup hashes and cleans it up when closed, then opens a separately generated **Blocked** fixture. There is no real client-path parameter, download, backup writer or installation action. The command **does not** set DPI or record a physical pass; the user must change Windows display scaling in Settings and personally check legibility, keyboard focus, actual narrator announcements and High Contrast.
+
+For developers/CI, `-Headless -Scenario Both` exercises the same disposable branches **without showing a window**. It must never be confused with physical acceptance. The helper rejects interactive runs in unattended CI. The official [blank acceptance record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md) remains **NOT TESTED** until someone documents actual display and assistive-technology observations. For final acceptance, also test the original scripts-only candidate launcher separately; this synthetic helper is *not* a substitute for packaging tests.
