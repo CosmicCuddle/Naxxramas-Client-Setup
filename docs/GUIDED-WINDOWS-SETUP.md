@@ -154,3 +154,11 @@ Keyboard focus starts at the **existing client folder field** rather than the re
 Windows CI constructs the real forms **without displaying them**, asserts the active palette follows the current Windows flag and checks the explicit High Contrast palette maps to Windows system colours. CI does **not** enable the OS contrast mode, render visible pixels, announce screen-reader text, or exercise live theme switching. **Close and reopen the wizard after changing Windows High Contrast settings** before manual testing.
 
 The [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md) checklist is still **not manually completed** at 100%, 125%, 150% or 200% desktop scaling. The CI ZIP remains only an internal scripts-only candidate. No game file modifications, patch redistribution or actual backup actions have been introduced.
+
+## Standalone extracted ZIP verification (PR #35)
+
+The Windows scripts-only candidate now has a separate **extracted-package runtime smoke test**. CI checks that the ZIP unpacks with all required relative scripts and JSON, then invokes `tools/Start-Naxxramas-SetupWizard.ps1` directly *from the extracted ZIP* using `-Diagnostics`, `-PreviewJson` and `-DetailDiagnostics` while running from a different working folder.
+
+All review calls use a newly generated, disposable **fake** WoW build-12340 client with a synthetic existing optional Patch-J and realmlist; **no real game archives or personal files** are used. Because no verified local core patch sources are present, the review must remain **blocked**, show exactly five read-only file actions, leave unrecognised J intact and explain the J/U overlap when both are selected. CI verifies the synthetic client and the unpacked scripts have exactly the same SHA-256 hashes before and after.
+
+This test checks that the package is functional and safely refuses unavailable patches, **not** that game patch assets are legal to redistribute or that the interface looks correct at actual Windows 100–200% display scaling. The ZIP remains only a short-lived internal CI candidate. Human accessibility acceptance must be completed separately before any public pre-release.
