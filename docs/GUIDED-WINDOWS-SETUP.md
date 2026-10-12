@@ -254,3 +254,15 @@ The read-only wizard provides a **Read Review Text** button below the main actio
 
 The result control's accessible description now carries the current read-only review status, including when a selection invalidates the previous result. This is an improvement in available text and keyboard navigation, **not proof that any screen reader announced a change**. Human Windows tests must verify focus, spoken text, actual 100/125/150/200% desktop scaling and High Contrast. Use the short [manual test record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md), whose entries remain NOT TESTED until physically checked. The standard double-click launcher and all safety/permission limits remain unchanged.
 
+
+## One-command physical accessibility QA (developer/source checkout only)
+
+For a simpler **human** check on Windows PowerShell 5.1, open the **source repository root**, not your actual WoW client directory, and run:
+
+```powershell
+powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Interactive -Scenario Both
+```
+
+The tool launches the existing disposable test fixture's **Ready** read-only wizard, prints a short keyboard/checklist prompt, and verifies/cleans the **fake** files when the window closes. It then opens an independent **Blocked** fixture. No real-client path, local game patch, player backup or addon is needed or accepted. The tool exists only in the source repository; it is **not** added to the player-facing scripts-only ZIP candidate.
+
+Repeat at actual 100%, 125%, 150% and 200% Windows display scaling, with High Contrast and a real screen reader where available. Physical results are **not recorded by the tool**: use the blank [Windows Accessibility Test Record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md). Successful fake-file hash checks and headless CI do **not** establish on-screen legibility, spoken announcements or release approval. Test the original extracted scripts-only launcher separately before any potential public candidate.
