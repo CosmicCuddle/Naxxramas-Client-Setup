@@ -140,12 +140,19 @@ def review(root: Path, between_observations=None) -> dict:
     root = Path(os.path.abspath(root))
     try:
         integrity.fixture_guard(root)
-        marker = journal._regular(root / MARKER, len(MARKER_BYTES))
+        try:
+            marker = journal._regular(root / MARKER, len(MARKER_BYTES))
+        except journal.Refusal as exc:
+            raise Refusal("not_disposable_authority_fixture") from exc
         if marker != MARKER_BYTES:
             raise Refusal("not_disposable_authority_fixture")
         # An extra guard: require the previous journal marker before reading
         # any original/backup/current fixture bytes.
-        if journal._regular(root / journal.MARKER, len(journal.MARKER_BYTES)) != journal.MARKER_BYTES:
+        try:
+            journal_marker = journal._regular(root / journal.MARKER, len(journal.MARKER_BYTES))
+        except journal.Refusal as exc:
+            raise Refusal("not_disposable_journal_fixture") from exc
+        if journal_marker != journal.MARKER_BYTES:
             raise Refusal("not_disposable_journal_fixture")
         auth_bytes, auth = _read_claim(root / AUTHORITY)
         crash_bytes, crash = _read_claim(root / CRASH)
