@@ -260,12 +260,23 @@ $details.AccessibleName='Open larger read-only file action table'
 $details.Enabled=$false
 $details.TabIndex=17
 $details.ForeColor=$wizardTheme.Text
-$close.TabIndex=18
+$readText=New-Object Windows.Forms.Button
+$readText.Name='ReadReviewText'
+$readText.Text='Read Review Text'
+$readText.Location=New-Object Drawing.Point(24,1169)
+$readText.Size=New-Object Drawing.Size(183,40)
+$readText.TabIndex=18
+$readText.AccessibleName='Focus the read-only review text'
+$readText.AccessibleDescription='Moves keyboard focus to the review result. It never installs, approves or changes files.'
+$readText.ForeColor=$wizardTheme.Text
+$close.TabIndex=19
 $close.AccessibleName='Close the read-only setup wizard'
 $close.ForeColor=$wizardTheme.Text
-$form.Controls.AddRange(@($review,$clear,$details,$close))
-$status=New-Label 'Not reviewed - no files have been changed.' 1170
+$form.Controls.AddRange(@($review,$clear,$details,$close,$readText))
+$status=New-Label 'Not reviewed - no files have been changed.' 1169
 $status.Name='ReviewStatus'
+$status.Location=New-Object Drawing.Point(222,1166)
+$status.Size=New-Object Drawing.Size(712,51)
 $status.AccessibleName='Read-only review status'
 $status.AccessibleDescription=$status.Text
 $form.Controls.Add($status)
@@ -279,11 +290,11 @@ $preview.ScrollBars=[Windows.Forms.RichTextBoxScrollBars]::Vertical
 $preview.BackColor=$wizardTheme.Input
 $preview.ForeColor=$wizardTheme.InputText
 $preview.Font=New-Font 10
-$preview.Location=New-Object Drawing.Point(24,1202)
+$preview.Location=New-Object Drawing.Point(24,1231)
 $preview.Size=New-Object Drawing.Size(914,171)
 $preview.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $preview.AccessibleName='Read-only proposed file changes and review messages'
-$preview.TabIndex=19
+$preview.TabIndex=20
 $form.Controls.Add($preview)
 $script:status=$status
 $script:preview=$preview
@@ -292,7 +303,12 @@ $script:currentReview=$null
 function Set-ReviewStatus([string]$Message){
     $script:status.Text=$Message
     $script:status.AccessibleDescription=$Message
+    # Static accessible metadata is not guaranteed to trigger a screen-reader
+    # announcement. Keep the focusable read-only reader's description current.
+    $script:preview.AccessibleDescription=('Review status: '+$Message+
+        ' Read-only result. Use Read Review Text to read it with the keyboard.')
 }
+Set-ReviewStatus $status.Text
 function Clear-Preview {
     $script:currentReview=$null
     $script:details.Enabled=$false
@@ -403,6 +419,13 @@ $details.Add_Click({
     finally{$dialog.Dispose()}
 })
 $clear.Add_Click({Clear-Preview})
+# Explicit keyboard path to the existing read-only, scrollable result. This
+# control never invokes the planner and never changes a file or grants consent.
+$readText.Add_Click({
+    $form.ActiveControl=$script:preview
+    $script:preview.Select(0,0)
+    $script:preview.ScrollToCaret()
+})
 $close.Add_Click({$form.Close()})
 $form.AcceptButton=$review
 $form.CancelButton=$close
@@ -532,7 +555,18 @@ if($Diagnostics){
     $moduleClearsReview=($null -eq $script:currentReview -and -not $details.Enabled)
     $moduleChecks[0].Checked=(-not $moduleChecks[0].Checked)
     $contrastTheme=Get-WizardTheme $true
-    $buttons=@($review,$clear,$details,$close,$clientField.Browse,$sourceField.Browse,$backupField.Browse)
+    $buttons=@($review,$clear,$details,$readText,$close,
+        $clientField.Browse,$sourceField.Browse,$backupField.Browse)
+    # Exercise the ACTUAL registered click handler while the form is hidden:
+    # this checks the keyboard-focus route without showing a window or
+    # reading any client path / file.
+    $readerClick=[Windows.Forms.Control].GetMethod('OnClick',
+        ([Reflection.BindingFlags]::Instance -bor [Reflection.BindingFlags]::NonPublic))
+    if($null -eq $readerClick){throw 'Cannot exercise Read Review Text click handler.'}
+    [void]$readerClick.Invoke($readText,[object[]]@([EventArgs]::Empty))
+    $readerFocusesResult=($form.ActiveControl -eq $preview -and
+        $preview.SelectionStart -eq 0)
+    $form.ActiveControl=$clientField.Field
     $report=[pscustomobject][ordered]@{
         kind='read_only_windows_setup_wizard_layout'
         schema_version=1
@@ -577,6 +611,13 @@ if($Diagnostics){
             $preview.BackColor -eq $wizardTheme.Input)
         review_status_accessible=($status.AccessibleDescription -ceq $status.Text -and
             $status.AccessibleName -ceq 'Read-only review status')
+        result_reader_status_synchronised=($preview.AccessibleDescription.Contains(
+            'Review status: '+$status.Text) -and $preview.ReadOnly)
+        read_review_text_accessible=($readText.TabStop -and
+            $readText.TabIndex -eq 18 -and $close.TabIndex -eq 19 -and
+            $preview.TabIndex -eq 20 -and
+            $readText.AccessibleName -ceq 'Focus the read-only review text')
+        read_review_text_click_focuses_result=$readerFocusesResult
         initial_keyboard_focus_target=$form.ActiveControl.Name
         clear_and_close_accessible=(-not [string]::IsNullOrWhiteSpace($clear.AccessibleName) -and
             -not [string]::IsNullOrWhiteSpace($close.AccessibleName))
@@ -598,7 +639,8 @@ if($Diagnostics){
             $sourceField.Browse.Right -le $form.ClientSize.Width -and
             $backupField.Browse.Right -le $form.ClientSize.Width)
         action_buttons_inside_viewport=($close.Right -le $form.ClientSize.Width -and
-            $details.Right -le $form.ClientSize.Width)
+            $details.Right -le $form.ClientSize.Width -and
+            $readText.Right -le $form.ClientSize.Width)
         form_height=$form.Height
         working_area_height=$workingArea.Height
         preview_inside_scroll_extent=($preview.Bottom -le $form.AutoScrollMinSize.Height)
