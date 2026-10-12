@@ -283,8 +283,7 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     $oldPreference=$ErrorActionPreference
     try{
         $ErrorActionPreference='Continue'
-        $badChoices=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard
-            -Diagnostics -AddonSuite -AddonModules 'InvalidAddon' 2>&1 | Out-String)
+        $badChoices=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard -Diagnostics -AddonSuite -AddonModules 'InvalidAddon' 2>&1 | Out-String)
         $badCode=$LASTEXITCODE
     }finally{$ErrorActionPreference=$oldPreference}
     Check ($badCode -ne 0 -and $badChoices.Contains('Invalid, repeated')) 'Unlisted addon modules fail closed before any inspection'
@@ -357,11 +356,6 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         @($unsafe.concerns|Where-Object {$_ -match 'NCore is not_a_folder'}).Count -eq 1 -and
         (Tree $client) -ceq $fileBefore) 'Non-folder NCore fails closed, preserving the original file'
     Remove-Item -LiteralPath (Join-Path $addons 'NCore') -Force
-    # Existing addon root must not be a linked directory: no network, copy or
-    # link traversal is needed to detect its unexpected type.
-    $badClientAddonRoot=Join-Path $client 'Interface'
-    # The linked-root branch is exercised separately when suitable for CI,
-    # while the non-directory root is validated safely on all runners.
 
     $reviewParams=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,'-VanillaLoading')
     $summary=Execute $reviewParams 'Wizard reports omitted backup folder'
