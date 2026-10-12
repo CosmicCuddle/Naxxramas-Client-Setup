@@ -10,6 +10,7 @@ on:
       - 'tools/Start-Naxxramas-SetupWizard.bat'
       - 'tests/Test-SetupWizard.ps1'
       - 'tests/Start-Accessibility-ManualCheck.ps1'
+      - 'tests/Test-Accessibility-ManualCheck.ps1'
       - 'docs/GUIDED-WINDOWS-SETUP.md'
       - '.github/workflows/guided-windows-setup.yml'
   push:
@@ -21,6 +22,7 @@ on:
       - 'tools/Start-Naxxramas-SetupWizard.bat'
       - 'tests/Test-SetupWizard.ps1'
       - 'tests/Start-Accessibility-ManualCheck.ps1'
+      - 'tests/Test-Accessibility-ManualCheck.ps1'
       - 'docs/GUIDED-WINDOWS-SETUP.md'
       - '.github/workflows/guided-windows-setup.yml'
   workflow_dispatch:
@@ -37,6 +39,9 @@ jobs:
       - name: Smoke-test actual Windows Forms and inspect disposable planner fixtures
         shell: powershell
         run: .\tests\Test-SetupWizard.ps1
+      - name: Prove accessibility QA rejects unsafe or ambiguous invocation and stops on failures
+        shell: powershell
+        run: .\tests\Test-Accessibility-ManualCheck.ps1
       - name: Test one-command accessibility QA harness in noninteractive mode (Ready and Blocked)
         shell: powershell
         run: .\tests\Start-Accessibility-ManualCheck.ps1 -Headless -Scenario Both
