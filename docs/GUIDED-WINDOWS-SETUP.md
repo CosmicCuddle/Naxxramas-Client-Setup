@@ -266,3 +266,9 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Acce
 The tool launches the existing disposable test fixture's **Ready** read-only wizard, prints a short keyboard/checklist prompt, and verifies/cleans the **fake** files when the window closes. It then opens an independent **Blocked** fixture. No real-client path, local game patch, player backup or addon is needed or accepted. The tool exists only in the source repository; it is **not** added to the player-facing scripts-only ZIP candidate.
 
 Repeat at actual 100%, 125%, 150% and 200% Windows display scaling, with High Contrast and a real screen reader where available. Physical results are **not recorded by the tool**: use the blank [Windows Accessibility Test Record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md). Successful fake-file hash checks and headless CI do **not** establish on-screen legibility, spoken announcements or release approval. Test the original extracted scripts-only launcher separately before any potential public candidate.
+
+## QA launcher fail-closed and disposable integrity checks
+
+The source-only Windows accessibility coordinator refuses **no mode**, `-Headless` plus `-Interactive` together, invalid scenario labels, arbitrary client-path parameters and interactive runs in CI. A failure in the first generated **Ready** fixture stops the sequence instead of opening **Blocked**; any failure denies the final fixture-complete message. The fixture's structural comparison now detects added/removed *empty folders* along with changed fake files, and refuses linked entries.
+
+These tests are implemented in `tests/Test-Accessibility-ManualCheck.ps1` and run in Windows CI. They do not certify that a user can read the wizard at actual desktop DPI or with a screen reader; keep the [manual record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md) accurate. No live client installation, repair, backup or recovery is added.

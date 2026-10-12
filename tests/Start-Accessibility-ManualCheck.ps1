@@ -15,11 +15,9 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Acce
 .EXAMPLE
 powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Headless -Scenario Both
 #>
-[CmdletBinding(DefaultParameterSetName='ChooseMode')]
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true,ParameterSetName='Manual')]
     [switch]$Interactive,
-    [Parameter(Mandatory=$true,ParameterSetName='CI')]
     [switch]$Headless,
     [ValidateSet('Both','Ready','Blocked')]
     [string]$Scenario='Both'
@@ -27,6 +25,12 @@ param(
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
+# Fail before inspecting or invoking any fixture if the caller omits a mode
+# or requests both. Explicit validation avoids PowerShell 5.1 prompting for
+# mandatory parameter-set choices in unattended execution.
+if(([bool]$Interactive) -eq ([bool]$Headless)){
+    throw 'Specify exactly one QA mode: -Interactive or -Headless.'
+}
 if([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT){
     throw 'This check requires Windows PowerShell 5.1 on Windows.'
 }
