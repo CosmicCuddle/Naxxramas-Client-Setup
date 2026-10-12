@@ -1,0 +1,40 @@
+name: Synthetic-only addon journal interruption checks
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_synthetic_addon_journal.py'
+      - 'tools/review_synthetic_addon_recovery.py'
+      - 'tests/test_synthetic_addon_journal.py'
+      - '.github/workflows/synthetic-addon-journal-cutpoints.yml'
+      - 'docs/ADDON-EVIDENCE-AND-RECOVERY.md'
+  push:
+    paths:
+      - 'tools/review_synthetic_addon_journal.py'
+      - 'tools/review_synthetic_addon_recovery.py'
+      - 'tests/test_synthetic_addon_journal.py'
+      - '.github/workflows/synthetic-addon-journal-cutpoints.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-writes-to-client:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source and synthetic tests
+        uses: actions/checkout@v4
+      - name: Install Python for synthetic tests
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test all journal interruption and replay refusal cases
+        run: python -m unittest discover -s tests -p test_synthetic_addon_journal.py -v
+      - name: Recheck existing complete fake-addon original/backup conflict tests
+        run: python -m unittest discover -s tests -p test_synthetic_addon_recovery.py -v
