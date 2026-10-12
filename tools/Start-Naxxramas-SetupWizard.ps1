@@ -387,8 +387,18 @@ if($DetailDiagnostics){
                 warnings_scrollable=($issues.ScrollBars -eq [Windows.Forms.RichTextBoxScrollBars]::Vertical)
                 warnings_expand_with_window=(($issues.Anchor -band [Windows.Forms.AnchorStyles]::Bottom) -ne 0)
                 keyboard_tab_order=($grid.TabIndex -eq 0 -and $issues.TabIndex -eq 1)
+                close_review_click_closes_dialog=$false
                 no_approval_or_installation=$true
             }
+            # Dispatch the REAL registered Click event without Show/ShowDialog.
+            # The protected WinForms OnClick method invokes the handler even
+            # while the test form is not visible, catching event-scope defects
+            # that static geometry diagnostics cannot detect.
+            $clickMethod=[Windows.Forms.Control].GetMethod('OnClick',
+                ([Reflection.BindingFlags]::Instance -bor [Reflection.BindingFlags]::NonPublic))
+            if($null -eq $clickMethod){throw 'Cannot exercise the Close Review click handler.'}
+            [void]$clickMethod.Invoke($closeReview,[object[]]@([EventArgs]::Empty))
+            $info.close_review_click_closes_dialog=[bool]$dialog.IsDisposed
             Write-Output ($info|ConvertTo-Json -Depth 5)
         }finally{$dialog.Dispose()}
     }finally{$form.Dispose()}
