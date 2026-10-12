@@ -251,7 +251,16 @@ function New-WizardDetailsForm([object]$Report){
     $close.AccessibleName='Close read-only file details'
     $close.ForeColor=$theme.Text
     $close.TabIndex=2
-    $close.Add_Click({$win.Close()})
+    # This callback executes *after* New-WizardDetailsForm has returned.
+    # Local $win is then out of scope in an event callback (StrictMode would
+    # throw an unhandled exception). Resolve the actual owning form from the
+    # clicked control instead; no file operations are involved.
+    $close.Add_Click({
+        param($sender,$eventArgs)
+        $owner=[Windows.Forms.Control]$sender
+        $parentForm=$owner.FindForm()
+        if($null -ne $parentForm){$parentForm.Close()}
+    })
     $content.Controls.Add($close)
     $win.AcceptButton=$close
     $win.CancelButton=$close
