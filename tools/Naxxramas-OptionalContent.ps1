@@ -356,7 +356,7 @@ function Add-NaxxOptionalReview(
         $notes.Add('NCore and all four optional addon folders are packaged in the published suite; choices describe proposed NCore module activation, NOT selective installation.')
         $notes.Add('Future settings protection must include every existing WTF account, realm and character; no WTF files or SavedVariables were read or backed up.')
     }else{
-        $notes.Add('N Addon Suite is not selected. Existing addon folders are inspected by name only, with no changes.')
+        $notes.Add('N Addon Suite is not selected. Known folders and bounded root TOC declarations are observed, but no version is authenticated and nothing is changed.')
     }
     foreach($row in $inventory){
         $tocDetail=if($row.toc_declared_version){
