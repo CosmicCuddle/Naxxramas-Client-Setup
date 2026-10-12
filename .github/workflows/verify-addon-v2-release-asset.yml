@@ -1,6 +1,12 @@
 name: Verify actual N Addon Suite v2.0.0 release ZIP (developer only)
 
 on:
+  push:
+    branches: [main, 'milestone4-*']
+    paths:
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
+      - '.github/workflows/verify-addon-v2-release-asset.yml'
   pull_request:
     paths:
       - '.github/workflows/verify-addon-v2-release-asset.yml'
