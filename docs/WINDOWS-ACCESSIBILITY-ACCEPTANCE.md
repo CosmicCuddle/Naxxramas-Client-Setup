@@ -53,3 +53,27 @@ Before opening the wizard, enable **Windows High Contrast / contrast theme** and
 ## Starting the real launcher
 
 For each manual 100/125/150/200% scaling test, launch **by double-clicking the actual `tools/Start-Naxxramas-SetupWizard.bat` in the extracted scripts-only candidate**, not by invoking `-Diagnostics` (which never displays a window). Run this from an ordinary folder with spaces in its name to exercise the packaged path handling. Validate the real UI, Windows security prompts (if any), and safe Close behaviour. The CI headless BAT test confirms argument wiring only and must **not** be recorded as a passed human accessibility test.
+
+## Disposable local visual acceptance fixtures (PR #37)
+
+If you have a **Windows computer** and a local clone/download of the **source repository** (not merely the scripts-only candidate ZIP), you can visually test the real read-only WinForms wizard without pointing it at an existing WoW installation. Open **Windows PowerShell 5.1** in the source repository root, at each actual Windows display-scaling setting.
+
+**Scenario 1 — expected review (five actions, two originals needing future backup):**
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Ready
+```
+
+**Scenario 2 — intentionally blocked review (unknown fake core V and omitted backup selection):**
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Blocked
+```
+
+Each command generates its *own* uniquely named temporary directory, a synthetic C# build-12340 `Wow.exe` (not an actual game client), four tiny fake patch sources, fake V/Z/J files, a fake `realmlist.wtf`, and an existing fake backup sentinel. It then opens the genuine **Review Only** WinForms window with those synthetic paths already filled in. In either case, press **Review Only**, open **View File Details**, read/scroll warnings, try both J/U selections, Tab and Shift+Tab through the controls, and check screen-reader announcements and contrast manually. **Close the wizard** to let the test compare SHA-256 hashes of synthetic client/source/backup files and automatically delete its temporary directory.
+
+The `Ready` fixture's no-blocker status **does not grant installation permission**. The `Blocked` fixture must still preserve all fake data and deny modifications. Do not point either wizard at your real WoW directory. Do **not** share screenshots containing local usernames or private paths.
+
+There is a separate, headless CI option `-ManualHeadless` that tests the generated fixtures and their real five-file reports but **never shows a GUI**. CI passing that mode is **not** completion of the 100%, 125%, 150% or 200% physical desktop matrix above.
+
+**Important distinction:** these commands exercise the repository's copied read-only wizard against a **test-only policy** whose SHA-256 values match tiny fake patches. They do **not** test the untouched extracted ZIP's real patch policy. For final packaged-BAT acceptance, also use the separately documented **Starting the real launcher** instructions, and record results independently. No public prerelease is authorised until actual human checks are recorded.
