@@ -7,7 +7,13 @@
 ## Before testing
 
 - Open the source repository on a physical Windows desktop using Windows PowerShell 5.1; do not run the headless `-Diagnostics` variant as a substitute for seeing the window.
-- Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Ready` to open the actual wizard with throwaway fake files. Repeat with `-ManualScenario Blocked`.
+- Run the **one-command manual QA launcher** from the source repository root in **Windows PowerShell 5.1**:
+
+  ```powershell
+  powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Interactive -Scenario Both
+  ```
+
+  This opens the disposable **Ready** wizard first. Close it normally after checking the UI; the fixture verifies its unchanged bytes and cleans up before opening **Blocked**. It is source/developer-only, not in the player ZIP. For a single scenario use `-Scenario Ready` or `-Scenario Blocked`.
 - The generated fixture is removed after the window is closed. No genuine MPQs or SavedVariables are required. **Keep the console open until its final unchanged-file confirmation.**
 - Check a real extracted scripts-only **candidate** launcher separately using `tools/Start-Naxxramas-SetupWizard.bat`, to test startup rather than synthetic file contents. Do not treat that as an installation.
 - Never include personal paths, character names, player folders, screenshots containing private content, or complete game archives in a public issue.
@@ -53,3 +59,7 @@ For each scale, set actual **Windows display scaling**, close and reopen the wiz
 If anything is clipped, impossible to focus, unreadable with assistive technology, or claims approval when none exists: mark **FAIL**, preserve privacy-safe reproduction notes and hold the public release. A CI pass cannot override a physical failure.
 
 **Release gate:** physical DPI, High Contrast, screen-reader and keyboard acceptance remain **OPEN** until the owner records results. Also independent source rights, game compatibility, complete originals preservation and genuine installation/recovery permission remain separate **BLOCKED** gates.
+
+## Meaning of the launcher result
+
+The helper reports that the **fake fixture bytes were unchanged** after you close each window. It cannot determine what your actual Windows scaling is, whether you saw clipped labels or whether a screen reader announced text. A green console output must **not** change any physical test cell from `NOT TESTED`. Fill those entries **only from your own direct observation**. Never submit private screenshots, folder paths or SavedVariables to CI.
