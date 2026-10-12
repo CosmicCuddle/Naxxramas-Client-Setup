@@ -282,13 +282,13 @@ The developer-only real-release CI job https://github.com/CosmicCuddle/Naxxramas
 - [ ] All addon installation, source downloading, filesystem updates, actual backups, restoration and public release remain **BLOCKED** pending distinct owner approval.
 
 
-### 12 October 2026 — Milestone 5 synthetic backup integrity and rollback-conflict review (PR pending)
+### 12 October 2026 — Milestone 5 synthetic backup integrity and rollback-conflict review ([PR #52](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/pull/52))
 
 - [x] Add a developer-only, **read-only and synthetic-only** four-snapshot integrity observer (`tools/review_synthetic_addon_recovery.py`): `original`, `backup`, `claimed_after` and `current`, under a disposable marked fixture. No backup creation, copying, restoration, removal, downloads or real client operation.
 - [x] Compare complete byte lengths/SHA-256 hashes and directory structures, including empty folders, for the five suite addon roots, two legacy roots and the **entire WTF** account/realm/character settings tree. The observer never emits personal file names, file hashes or file bytes in JSON.
 - [x] Refuse unsafe linked/reparse or hardlinked files, conflicting Windows-case entry names, strange file types, too-large files/trees and between-pass changes. Any unknown/settings changes are preserved for manual review even if a caller-controlled after-image appears consistent; never infer genuine backup durability, approval, authentic journal or safe rollback.
-- [x] Add disposable unit tests and a separate Windows/Linux Python 3.12 CI workflow for matching/missing/corrupt copies, new/unknown files, changed player addons, multi-account WTF settings, symlink/hardlink refusal, missing fixture marker and deliberate race between two observations. CI and PR review **pending** at this entry.
+- [x] Add disposable unit tests and a separate Windows/Linux Python 3.12 CI workflow for matching/missing/corrupt copies, new/unknown files, changed player addons, multi-account WTF settings, symlink/hardlink refusal, missing fixture marker and deliberate race between two observations. Initial cross-platform Windows/Linux [integrity CI](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38259526404) and prior [scope tests](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38259526548) passed on code head `5d26c929`.
 - [x] Update [ADDON-EVIDENCE-AND-RECOVERY.md](ADDON-EVIDENCE-AND-RECOVERY.md) with precise read-only classifications, threat limits, privacy and next journal cutpoint gates.
-- [ ] Require final-head cross-platform CI plus standard repository checks, safe diff, and reviewed PR before merge.
+- [x] On code head `5d26c929`, Windows/Linux new integrity and prior scope CI, [registration safety](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38259526583) and [PowerShell validation](https://github.com/CosmicCuddle/Naxxramas-Client-Setup/actions/runs/38259526542) passed; exact diff is source/test/docs-only. Confirm the **final documentation head** and review state before merging.
 - [ ] Continue synthetic-only journal and interruption modelling, actual WinForms physical 100/125/150/200% DPI/keyboard/High Contrast/screen-reader acceptance, and rights/licence review separately. Player-side installer/backup/recovery remain **BLOCKED**.
 
