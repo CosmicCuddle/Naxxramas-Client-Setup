@@ -147,8 +147,8 @@ try{
     $wizard=Join-Path $tools 'Start-Naxxramas-SetupWizard.ps1'
     Copy-Item -LiteralPath (Join-Path $repo 'config/optional-content.json') -Destination $config
     $policy=@()
-    foreach($i in 0..3){
-        $name=@('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-U.mpq')[$i]
+    foreach($i in 0..4){
+        $name=@('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-C.mpq','Patch-U.mpq')[$i]
         $path='Data/'+$name
         $target=Join-Path $source $path
         Save $target ('FAKE_NEW_'+$name)
@@ -157,7 +157,7 @@ try{
             sha256=$fp.sha256;size_bytes=$fp.size_bytes;public_distribution_approved=$false}
     }
     Save (Join-Path $config 'client-patches.json') (@{
-        schema_version=1;patch_set_version='patchset-0001';patch_set_revision=1;
+        schema_version=1;patch_set_version='patchset-0002';patch_set_revision=2;
         target_client=@{build=12340;locale='enUS'};patches=$policy
     }|ConvertTo-Json -Depth 8)
     Save (Join-Path $config 'realm.json') (@{
@@ -207,13 +207,13 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
                 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED'
             }
             Check ($manual.status -ceq $expectedStatus -and
-                @($manual.file_reviews).Count -eq 5 -and
+                @($manual.file_reviews).Count -eq 6 -and
                 -not $manual.client_files_modified -and
                 -not $manual.original_backups_created -and
                 -not $manual.file_writes_authorised) ('Manual '+$ManualScenario+' fixture returns five real read-only file reviews')
             $detail=Execute (@('-DetailDiagnostics')+$manualArgs) 'Disposable manual fixture file details'
             Check ($detail.review_status -ceq $expectedStatus -and
-                $detail.file_count -eq 5 -and $detail.grid_read_only -and
+                $detail.file_count -eq 6 -and $detail.grid_read_only -and
                 $detail.warnings_read_only -and $detail.no_approval_or_installation -and
                 $detail.close_review_click_closes_dialog) ('Manual '+$ManualScenario+' fixture details behave safely and Close Review click closes without errors')
         }else{
@@ -253,15 +253,15 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
         $optionalReport.patch_c_release_tag -ceq 'optional-v1.0' -and
         @($optionalReport.file_reviews|Where-Object {$_.relative_path -ceq 'Data/Patch-C.mpq'}).Count -eq 0) 'GitHub owner-release C SHA/size is pinned, but C remains outside old five-file review'
     Check ($optionalReport.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
-        $optionalReport.file_count -eq 5 -and $optionalReport.tbc_login_selected -and
+        $optionalReport.file_count -eq 6 -and $optionalReport.tbc_login_selected -and
         $optionalReport.addon_suite_selected -and
         -not $optionalReport.optional_content_downloads_authorised -and
         -not $optionalReport.optional_content_file_writes_authorised -and
         @($optionalReport.concerns|Where-Object {$_ -match 'Patch-C'}).Count -ge 1 -and
         @($optionalReport.concerns|Where-Object {$_ -match 'N Addon Suite'}).Count -ge 1) 'Unverified Patch-C and addon suite always block extra actions without changing five verified file rows'
     $optionalDetails=Execute @('-DetailDiagnostics','-ClientPath',$client,
-        '-PatchSourcePath',$source,'-BackupRoot',$backup,'-TbcLogin','-AddonSuite') 'Details retain strict 5-file table with optional blockers'
-    Check ($optionalDetails.file_count -eq 5 -and
+        '-PatchSourcePath',$source,'-BackupRoot',$backup,'-TbcLogin','-AddonSuite') 'Details retain strict 6-file table with optional blockers'
+    Check ($optionalDetails.file_count -eq 6 -and
         $optionalDetails.tbc_login_selected -and
         $optionalDetails.addon_suite_selected -and
         $optionalDetails.optional_content_blocked -and
@@ -269,6 +269,16 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check (@($summary.file_reviews | Where-Object {
         $_.relative_path -ceq 'Data/Patch-J.mpq' -and $_.proposed_action -ceq 'leave_existing'
     }).Count -eq 1) 'Existing unselected J remains untouched'
+    Check (@($summary.file_reviews | Where-Object {
+        $_.relative_path -ceq 'Data/Patch-C.mpq' -and $_.proposed_action -ceq 'not_selected'
+    }).Count -eq 1) 'C is present but unselected in the genuine six-file review'
+    $tbcOnly=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-TbcLogin') 'TBC selection with existing incompatible J'
+    Check ($tbcOnly.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        @($tbcOnly.concerns|Where-Object {$_ -match 'Patch-C and Patch-J'}).Count -gt 0 -and
+        @($tbcOnly.file_reviews|Where-Object {
+            $_.relative_path -ceq 'Data/Patch-C.mpq' -and $_.proposed_action -ceq 'install'
+        }).Count -eq 1) 'TBC C gets a real six-file action but installed J conflict blocks the plan'
     Check ($summary.review_required -and -not $summary.client_files_modified -and
         -not $summary.file_writes_authorised -and -not $summary.genuine_user_consent_collected -and
         -not $summary.original_backups_created) 'Wizard cannot authenticate or write files'
@@ -277,7 +287,7 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     $detail=Execute $detailArgs 'Construct actual read-only file details dialog without displaying'
     Check ($detail.kind -ceq 'read_only_windows_wizard_file_details_diagnostics' -and
         $detail.detail_window_created -and -not $detail.detail_window_displayed) 'Actual details dialog constructs with no modal window'
-    Check ($detail.file_count -eq 5 -and @($detail.file_names).Count -eq 5) 'Exactly five file rows displayed in detailed review'
+    Check ($detail.file_count -eq 6 -and @($detail.file_names).Count -eq 6) 'Exactly six file rows displayed in detailed review'
     Check (@($detail.backup_labels | Where-Object {$_ -ceq 'YES - not created'}).Count -eq 2) 'V and realmlist clearly identify originals not yet backed up'
     Check (@($detail.proposed_actions | Where-Object {$_ -match 'replace ONLY after an exact original backup'}).Count -eq 2) 'Detailed action table explains the exact replacement gate'
     Check ($detail.grid_read_only -and $detail.grid_add_delete_disabled -and
