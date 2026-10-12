@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "read_only_optional_content_catalog",
+  "status": "planning_only_no_asset_approval",
+  "patch_c": {
+    "label": "Optional TBC login screen (Patch-C)",
+    "relative_path_candidate": "Data/Patch-C.mpq",
+    "name_and_file_case_verified": false,
+    "required": false,
+    "allow_disable": true,
+    "mutually_exclusive_with": "Data/Patch-J.mpq",
+    "sha256": null,
+    "size_bytes": null,
+    "reference_approved": false,
+    "redistribution_approved": false,
+    "note": "Owner confirmed optional TBC login visuals, mutually exclusive with Vanilla login Patch-J. File spelling, size, SHA-256, contents and licence are not yet verified. Selection only creates a blocked read-only planning note."
+  },
+  "addon_suite": {
+    "label": "N Addon Suite",
+    "version": "v2.0.0",
+    "repository": "https://github.com/CosmicCuddle/N-Addon-Collection",
+    "release_page": "https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0",
+    "archive_name": "N-Addon-Collection-v2.0.0.zip",
+    "archive_sha256": null,
+    "archive_verification_approved": false,
+    "automatic_download_approved": false,
+    "install_approved": false,
+    "target_directory": "Interface/AddOns",
+    "required_with_suite": [
+      "NCore"
+    ],
+    "optional_folders": [
+      "IndividualProgressionAddon",
+      "DungeonJournal",
+      "MultiBot",
+      "NaxxLootLottery"
+    ],
+    "standalone_talent_calculator_included": false,
+    "note": "Catalog-only reference to the published addon suite. Does not download, copy, merge or delete any AddOns or SavedVariables. Owner must approve archive fingerprint, licences, update and rollback rules before future installs."
+  }
+}
