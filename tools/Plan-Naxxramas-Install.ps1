@@ -11,11 +11,15 @@ param(
     [string]$BackupRoot,
     [switch]$VanillaLogin,
     [switch]$VanillaLoading,
+    [switch]$TbcLogin,
     [string]$RealmHost,
     [switch]$Json
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+if($TbcLogin -and $VanillaLogin){
+    throw 'Patch-C (TBC login) and Patch-J (Vanilla login) are mutually exclusive.'
+}
 
 function Assert-NoLinks([string]$Path) {
     $cursor = [IO.Path]::GetFullPath($Path)
@@ -162,9 +166,13 @@ if ([int]$patchManifest.schema_version -ne 1 -or [int]$patchManifest.patch_set_r
 if ([int]$realm.schema_version -ne 1 -or [string]$realm.relative_path -cne 'Data/enUS/realmlist.wtf') {
     throw 'Unsupported realmlist policy.'
 }
-$expectedPaths = @('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-U.mpq')
-if (@($patchManifest.patches).Count -ne 4) { throw 'Expected exactly four patch policy entries.' }
-for ($i=0; $i -lt 4; $i++) {
+$expectedPaths = @('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq','Data/Patch-C.mpq','Data/Patch-U.mpq')
+if ($patchManifest.patch_set_version -cne 'patchset-0002' -or
+    [int]$patchManifest.patch_set_revision -ne 2 -or
+    @($patchManifest.patches).Count -ne 5) {
+    throw 'Expected the reviewed five-patch policy version 0002.'
+}
+for ($i=0; $i -lt 5; $i++) {
     $p = $patchManifest.patches[$i]
     if ([string]$p.path -cne $expectedPaths[$i] -or
         [bool]$p.required -ne ($i -lt 2) -or
@@ -242,6 +250,7 @@ foreach ($patch in @($patchManifest.patches)) {
     $required = [bool]$patch.required
     $selected = $required -or
         ($path -ceq 'Data/Patch-J.mpq' -and [bool]$VanillaLogin) -or
+        ($path -ceq 'Data/Patch-C.mpq' -and [bool]$TbcLogin) -or
         ($path -ceq 'Data/Patch-U.mpq' -and [bool]$VanillaLoading)
     $existingFile = Patch-At $dest $path
     $existing = if ($existingFile) { Fingerprint $existingFile } else { $null }
@@ -292,6 +301,16 @@ foreach ($patch in @($patchManifest.patches)) {
     })
 }
 
+# A user can uncheck a login patch without removing its existing MPQ. That
+# must not let the read-only planner silently imply a compatible C/J setup.
+# Both destinations were already inspected by Patch-At above (including
+# linked-file rejection); none is ever deleted.
+$existingJ=Patch-At $dest 'Data/Patch-J.mpq'
+$existingC=Patch-At $dest 'Data/Patch-C.mpq'
+if(($VanillaLogin -and $existingC) -or ($TbcLogin -and $existingJ) -or
+   ($existingJ -and $existingC)){
+    $blockers.Add('Patch-C and Patch-J login screens conflict. An existing incompatible login MPQ must be reviewed manually; no automatic deletion or replacement is available.')
+}
 if ($VanillaLogin -and $VanillaLoading) {
     $warnings.Add('J and U contain overlapping loading-screen textures; joint in-game precedence is untested.')
 }
@@ -434,6 +453,7 @@ $plan = [pscustomobject][ordered]@{
     client_target = 'WoW 3.3.5a build 12340 enUS'
     optional_selections = [pscustomobject]@{
         vanilla_login = [bool]$VanillaLogin
+        tbc_login = [bool]$TbcLogin
         vanilla_loading = [bool]$VanillaLoading
     }
     realm_host = $realmTargetHost
