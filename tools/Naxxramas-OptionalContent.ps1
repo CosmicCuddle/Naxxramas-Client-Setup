@@ -132,6 +132,106 @@ function Get-NaxxAddonInventory([string]$Client,[object]$Catalog){
         [pscustomobject]@{folder=[string]$name;state=$state}
     }
 }
+
+# Conservatively classify only folder existence and *future* settings
+# protection. This must never infer addon version, checksum, owner, integrity
+# or actual SavedVariables presence from directory names.
+function Get-NaxxAddonUpgradeAssessment(
+    [object[]]$Inventory,[bool]$UseSuite,[string[]]$Modules
+){
+    $known=@('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
+    $legacy=@('NClassicBattlegrounds','ServerDungeonJournal')
+    $result=New-Object 'System.Collections.Generic.List[object]'
+    foreach($row in $Inventory){
+        $name=[string]$row.folder
+        $state=[string]$row.state
+        if(($known -cnotcontains $name) -and ($legacy -cnotcontains $name)){
+            throw 'Unreviewed addon inventory folder in future upgrade assessment.'
+        }
+        if($state -cnotin @('absent','present_unverified','linked_unsafe','not_a_folder','ambiguous')){
+            throw 'Unreviewed addon inventory state in future upgrade assessment.'
+        }
+        $isLegacy=$legacy -ccontains $name
+        $requested=$UseSuite -and ($name -ceq 'NCore' -or $Modules -ccontains $name)
+        # The v2.0.0 archive includes all five new suite folders regardless of
+        # *module activation preference*: never suggest a partial ZIP extract.
+        $bundled=$known -ccontains $name
+        $action='no_upgrade_requested_preserve_existing'
+        if($isLegacy){
+            if($state -eq 'present_unverified'){
+                $action=if($UseSuite){'legacy_conflict_manual_review'}else{'legacy_present_preserve_existing'}
+            }elseif($state -ne 'absent'){
+                $action='unsafe_existing_entry_manual_review'
+            }else{
+                $action='legacy_not_present'
+            }
+        }elseif($state -in @('linked_unsafe','not_a_folder','ambiguous')){
+            $action='unsafe_existing_entry_manual_review'
+        }elseif($UseSuite -and $state -eq 'present_unverified'){
+            $action='existing_unknown_version_preserve_and_review'
+        }elseif($UseSuite -and $state -eq 'absent'){
+            $action='future_addition_not_authorised'
+        }elseif($state -eq 'present_unverified'){
+            $action='not_requested_preserve_existing'
+        }
+        $result.Add([pscustomobject][ordered]@{
+            folder=$name
+            current_state=$state
+            included_in_published_archive=$bundled
+            future_module_preference_selected=[bool]$requested
+            assessment=$action
+            detected_version='unknown_not_inspected'
+            version_or_provenance_verified=$false
+            proposed_client_write=$false
+            proposed_deletion=$false
+            requires_manual_review_before_any_upgrade=[bool]($UseSuite -or $state -in @('linked_unsafe','not_a_folder','ambiguous'))
+        })
+    }
+    if($result.Count -ne 7){throw 'Addon inventory must contain exactly seven known folder assessments.'}
+    return @($result.ToArray())
+}
+# Static, source-tag derived VARIABLE names only. We do not inspect the user's
+# WTF folder: multiple accounts, realms and characters could exist and files
+# may contain unrelated/private data. A future recovery design must preserve
+# the WHOLE relevant WTF tree plus all original modified addon folders.
+function Get-NaxxAddonSettingsProtection([bool]$UseSuite){
+    $scope=@(
+        [pscustomobject][ordered]@{
+            addon='IndividualProgressionAddon'
+            account_variables=@('IndividualProgressionDB')
+            character_variables=@()
+        },
+        [pscustomobject][ordered]@{
+            addon='DungeonJournal'
+            account_variables=@('DungeonJournalDB')
+            character_variables=@()
+        },
+        [pscustomobject][ordered]@{
+            addon='MultiBot'
+            account_variables=@('MultiBotGlobalSave')
+            character_variables=@('MultiBotSave','MultiBotDB','MultiBotSaved')
+        },
+        [pscustomobject][ordered]@{
+            addon='NaxxLootLottery'
+            account_variables=@('NaxxLootLotteryDB')
+            character_variables=@()
+        }
+    )
+    return [pscustomobject][ordered]@{
+        scope='all_existing_WTF_accounts_realms_characters_and_affected_addon_folders'
+        variable_names_are_reference_only=$true
+        source='N-Addon-Collection/v2.0.0 source TOC declarations'
+        inventory_or_personal_settings_read=$false
+        source_files_touched=$false
+        backup_required_before_future_upgrade=[bool]$UseSuite
+        backup_created=$false
+        backup_verified=$false
+        restore_tested=$false
+        backup_or_restore_authorised=$false
+        declared_variables=@($scope)
+    }
+}
+
 function Add-NaxxOptionalReview(
     [object]$Report,[object]$Catalog,[bool]$UseTbc,[bool]$UseSuite,
     [string[]]$Modules,[string]$Client
@@ -145,6 +245,8 @@ function Add-NaxxOptionalReview(
         throw 'Addon module selections are invalid or duplicated.'
     }
     $inventory=@(Get-NaxxAddonInventory $Client $Catalog)
+    $upgrade=@(Get-NaxxAddonUpgradeAssessment $inventory $UseSuite $Modules)
+    $settings=Get-NaxxAddonSettingsProtection $UseSuite
     $extra=New-Object 'System.Collections.Generic.List[string]'
     $notes=New-Object 'System.Collections.Generic.List[string]'
     if($UseTbc){
@@ -153,8 +255,9 @@ function Add-NaxxOptionalReview(
         $notes.Add('Patch-C is optional; an unselected existing MPQ is never automatically removed.')
     }
     if($UseSuite){
-        $extra.Add('N Addon Suite v2.0.0 is planning only. Archive contents, installation, SavedVariables backup and recovery have not been approved. No addon files are changed.')
+        $extra.Add('N Addon Suite v2.0.0 upgrade is blocked: original addon versions are unknown and verified full-folder / multi-account WTF backups, recovery and separate installation approval are not available.')
         $notes.Add('NCore and all four optional addon folders are packaged in the published suite; choices describe proposed NCore module activation, NOT selective installation.')
+        $notes.Add('Future settings protection must include every existing WTF account, realm and character; no WTF files or SavedVariables were read or backed up.')
     }else{
         $notes.Add('N Addon Suite is not selected. Existing addon folders are inspected by name only, with no changes.')
     }
@@ -166,6 +269,14 @@ function Add-NaxxOptionalReview(
         if($row.folder -in @('NClassicBattlegrounds','ServerDungeonJournal') -and
            $row.state -eq 'present_unverified'){
             $notes.Add(('Legacy addon '+$row.folder+' is present. The suite release flags potential duplicate functionality; manual review required. Nothing will be removed.'))
+        }
+    }
+    foreach($row in $upgrade){
+        if($UseSuite -and $row.assessment -eq 'existing_unknown_version_preserve_and_review'){
+            $notes.Add(('Upgrade assessment for '+$row.folder+': existing folder found, version UNKNOWN; preserve entire folder until manually verified.'))
+        }
+        if($UseSuite -and $row.assessment -eq 'legacy_conflict_manual_review'){
+            $extra.Add(('Legacy addon conflict: '+$row.folder+' is still present. No automatic migration, deletion or overwrite is authorised.'))
         }
     }
     if($UseSuite -or $extra.Count -gt 0){
@@ -180,6 +291,9 @@ function Add-NaxxOptionalReview(
     $Report | Add-Member -NotePropertyName addon_suite_selected -NotePropertyValue $UseSuite -Force
     $Report | Add-Member -NotePropertyName addon_modules_planned -NotePropertyValue @($Modules) -Force
     $Report | Add-Member -NotePropertyName addon_folder_inventory -NotePropertyValue @($inventory) -Force
+    $Report | Add-Member -NotePropertyName addon_upgrade_assessment -NotePropertyValue @($upgrade) -Force
+    $Report | Add-Member -NotePropertyName addon_settings_protection -NotePropertyValue $settings -Force
+    $Report | Add-Member -NotePropertyName addon_upgrades_or_deletions_authorised -NotePropertyValue $false -Force
     $Report | Add-Member -NotePropertyName addon_suite_archive_reference_sha256 -NotePropertyValue ([string]$Catalog.addon_suite.archive_sha256) -Force
     $Report | Add-Member -NotePropertyName addon_suite_archive_reference_size_bytes -NotePropertyValue ([long]$Catalog.addon_suite.archive_size_bytes) -Force
     $Report | Add-Member -NotePropertyName optional_content_approval -NotePropertyValue 'read_only_no_install_authorisation' -Force
@@ -204,6 +318,14 @@ function Get-NaxxOptionalSummary([object]$Report){
     foreach($row in @($Report.addon_folder_inventory)){
         $lines.Add(('  '+$row.folder+': '+$row.state))
     }
+    $lines.Add('Future upgrade assessment (folder names only; version always UNKNOWN):')
+    foreach($row in @($Report.addon_upgrade_assessment)){
+        $lines.Add(('  '+$row.folder+': '+$row.assessment))
+    }
+    $lines.Add('Settings protection: all existing WTF accounts, realms and characters must be preserved before any future approved change.')
+    $lines.Add('Known account-wide settings: IndividualProgressionDB, DungeonJournalDB, MultiBotGlobalSave, NaxxLootLotteryDB.')
+    $lines.Add('Known per-character MultiBot settings: MultiBotSave, MultiBotDB, MultiBotSaved.')
+    $lines.Add('No settings files were inspected; no addon/WTF backups or restores were created or authorised.')
     $lines.Add('N Talent Calculator is not included. Legacy addon folders are never deleted. SavedVariables are never modified.')
     return ($lines -join [Environment]::NewLine)
 }
