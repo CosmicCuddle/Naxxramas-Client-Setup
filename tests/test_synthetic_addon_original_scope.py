@@ -42,7 +42,7 @@ class SyntheticAddonOriginalScope(unittest.TestCase):
                    b"unknown character settings")
         self._save("WTF/Account/FAKE_ACCOUNT_TWO/RealmThree/CharacterThree/SavedVariables/NewAddon.lua",
                    b"another account")
-        self._save("outside-client-sentinel.txt", b"NEVER_TOUCH_OUTSIDE")
+        (self.root / "outside-client-sentinel.txt").write_bytes(b"NEVER_TOUCH_OUTSIDE")
 
     def _save(self, relative: str, value: bytes) -> Path:
         dest = self.client / relative
@@ -158,6 +158,20 @@ class SyntheticAddonOriginalScope(unittest.TestCase):
         self.assertEqual(report["scopes"][-1]["state"], "absent")
         self.assertTrue(report["whole_wtf_tree_in_scope"])
         self.assertFalse((other / "WTF").exists())
+
+    def test_mismatched_folder_case_requires_manual_review(self) -> None:
+        # A case-only alternate path is not a canonical owned addon root.
+        source = self.addons / "NCore"
+        renamed = self.addons / "ncore"
+        try:
+            source.rename(renamed)
+        except OSError:
+            self.skipTest("Case-only rename unavailable on this filesystem")
+        before = self.fingerprint()
+        result = scanner.review(self.client)
+        self.assertEqual(result["scopes"][0]["unsafe_reason"], "case_mismatched_folder")
+        self.assertEqual(result["scopes"][0]["state"], "unsafe_preserve_manual_review")
+        self.assertEqual(before, self.fingerprint())
 
     def test_entry_budget_fails_closed(self) -> None:
         original = scanner.MAX_ENTRIES
