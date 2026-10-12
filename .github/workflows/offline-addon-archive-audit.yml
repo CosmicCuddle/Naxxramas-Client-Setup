@@ -1,0 +1,30 @@
+name: Developer-only offline addon archive safety tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/Test-Naxxramas-AddonArchive.ps1'
+      - 'tests/Test-AddonArchiveAudit.ps1'
+      - 'config/optional-content.json'
+      - '.github/workflows/offline-addon-archive-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tools/Test-Naxxramas-AddonArchive.ps1'
+      - 'tests/Test-AddonArchiveAudit.ps1'
+      - 'config/optional-content.json'
+      - '.github/workflows/offline-addon-archive-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-powershell-51:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Audit valid and intentionally unsafe synthetic addon ZIPs
+        shell: powershell
+        run: .\tests\Test-AddonArchiveAudit.ps1
