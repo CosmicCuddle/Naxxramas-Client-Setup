@@ -168,3 +168,16 @@ This test checks that the package is functional and safely refuses unavailable p
 The normal player instructions are unchanged: extract the scripts-only ZIP **outside the WoW folder** and double-click `tools/Start-Naxxramas-SetupWizard.bat`. It opens only the read-only review wizard. A developer-only `--diagnostics` argument is also understood by the BAT: it starts the same packaged Windows PowerShell script in STA, builds the interface headlessly and prints diagnostic JSON, **without displaying the wizard or operating on client files**. Invalid arguments exit immediately. No command is required for ordinary players.
 
 Windows CI now tests the actual `cmd.exe` to `.bat` to `.ps1` path from an extracted ZIP located in a directory with **spaces**, not just direct invocation of the PS1. It verifies that a missing PS1 dependency produces a nonzero exit rather than hanging in a `pause`, and still checks the synthetic client and extracted scripts remain byte-identical. This does not certify desktop DPI, real screen-reader announcements or public release suitability; those remain manual gates.
+
+## Safe human accessibility trial with fake data (PR #37)
+
+For genuine *human* Windows scaling, High Contrast, keyboard and screen-reader inspection **without connecting a real client**, the source repository's existing disposable Windows wizard test now provides an interactive mode. From the source repository root on Windows PowerShell 5.1:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Ready
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-SetupWizard.ps1" -ManualReview -ManualScenario Blocked
+```
+
+Run each scenario **separately**: the first shows a synthetic plausible five-file review and original-backup warning, the second intentionally introduces unknown fake core V and an omitted backup selection to exercise blocker messages. The real GUI stays read-only. Closing it triggers automatic byte-for-byte SHA-256 tree checks and cleanup of the newly generated *temporary* client/source/backup directory. The second command must not start until the first window is closed.
+
+This fixture remains **developer/source-only**: it is *not* in the player scripts-only candidate ZIP. CI runs both with `-ManualHeadless` (no displayed UI) to prove fixture setup and read-only result consistency. Neither automation nor real on-screen/manual accessibility testing has been marked passed until evidence is actually collected. For the separate extracted-ZIP/BAT test, use the ordinary candidate launcher and follow [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md).
