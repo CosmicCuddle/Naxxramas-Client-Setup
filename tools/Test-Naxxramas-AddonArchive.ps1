@@ -78,7 +78,7 @@ if($size -ne $ExpectedSizeBytes){
 $stream=$null
 $archive=$null
 try{
-    $stream=New-Object IO.FileStream($absolute,[IO.FileMode]::Open,
+    $stream=[IO.FileStream]::new($absolute,[IO.FileMode]::Open,
         [IO.FileAccess]::Read,[IO.FileShare]::Read)
     $digest=(Get-FileHash -InputStream $stream -Algorithm SHA256).Hash.ToLowerInvariant()
     if($digest -cne $ExpectedSha256){
@@ -86,7 +86,7 @@ try{
     }
     $stream.Position=0
     Add-Type -AssemblyName System.IO.Compression
-    $archive=New-Object IO.Compression.ZipArchive($stream,
+    $archive=[IO.Compression.ZipArchive]::new($stream,
         [IO.Compression.ZipArchiveMode]::Read,$true)
     $entries=@($archive.Entries)
     if($entries.Count -lt 5 -or $entries.Count -gt 15000){
