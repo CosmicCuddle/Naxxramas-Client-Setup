@@ -33,6 +33,20 @@ function RunBundledWizard([string[]]$Arguments){
         stderr=[IO.File]::ReadAllText($err)
     }
 }
+function RunBundledLauncher([string]$Switch){
+    # Execute the packaged .bat through Windows cmd.exe from an unrelated
+    # working directory. /S /C needs an outer quote pair for spaced paths.
+    $bat=Join-Path $unpack 'tools/Start-Naxxramas-SetupWizard.bat'
+    $out=Join-Path $root ('batch-out-'+[guid]::NewGuid().ToString('N')+'.txt')
+    $err=Join-Path $root ('batch-err-'+[guid]::NewGuid().ToString('N')+'.txt')
+    $command='""'+$bat+'" '+$Switch+'"'
+    $p=Start-Process -FilePath 'cmd.exe' -ArgumentList @('/D','/S','/C',$command) -WorkingDirectory $root -NoNewWindow -PassThru -Wait -RedirectStandardOutput $out -RedirectStandardError $err
+    return [pscustomobject]@{
+        code=$p.ExitCode
+        stdout=[IO.File]::ReadAllText($out)
+        stderr=[IO.File]::ReadAllText($err)
+    }
+}
 function CallBuilder([string]$Output){
     $out=Join-Path $root ('builder-out-'+[guid]::NewGuid().ToString('N')+'.txt')
     $err=Join-Path $root ('builder-err-'+[guid]::NewGuid().ToString('N')+'.txt')
@@ -50,7 +64,7 @@ $repo=Split-Path -Parent $PSScriptRoot
 $root=Join-Path ([IO.Path]::GetTempPath()) ('NaxxReviewBundle-'+[guid]::NewGuid().ToString('N'))
 $mirror=Join-Path $root 'fake-repository'
 $dst=Join-Path $root 'empty-output'
-$unpack=Join-Path $root 'unpacked'
+$unpack=Join-Path $root 'unpacked candidate with spaces'
 $paths=@(
     'README-REVIEW-ONLY.md',
     'tools/Start-Naxxramas-SetupWizard.bat',
@@ -136,6 +150,20 @@ public static class NaxxStandaloneZipFixture {public static int Main(){return 0;
         $layout.form_built -and -not $layout.form_displayed -and
         -not $layout.actual_installer_action_present) 'Unpacked WinForms entrypoint builds headlessly without an install action'
 
+    # Exercise the actual double-click entrypoint in a noninteractive CI mode.
+    # Unlike PR #35, this executes cmd.exe -> packaged BAT -> packaged PS1.
+    $batch=RunBundledLauncher '--diagnostics'
+    Check ($batch.code -eq 0) ('Unpacked double-click launcher works in spaced path: '+$batch.stderr)
+    $batchLayout=$batch.stdout|ConvertFrom-Json
+    Check ($batchLayout.kind -ceq 'read_only_windows_setup_wizard_layout' -and
+        $batchLayout.form_built -and -not $batchLayout.form_displayed -and
+        $batchLayout.initial_keyboard_focus_target -ceq 'ClientFolder' -and
+        -not $batchLayout.actual_installer_action_present) 'Launcher forwards STA diagnostics into the packaged read-only form'
+
+    $batch=RunBundledLauncher '--unexpected-option'
+    Check ($batch.code -eq 2 -and
+        $batch.stdout.Contains('Only --diagnostics is supported') -and
+        -not $batch.stdout.Contains('READ-ONLY PREVIEW')) 'Launcher refuses unsupported options without opening the wizard'
     $runtime=RunBundledWizard @('-PreviewJson','-ClientPath',$client,'-VanillaLoading')
     Check ($runtime.code -eq 0) ('Unpacked planner executes using ZIP-local policy: '+$runtime.stderr)
     $preview=$runtime.stdout|ConvertFrom-Json
@@ -170,6 +198,18 @@ public static class NaxxStandaloneZipFixture {public static int Main(){return 0;
         $both.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         @($both.notes|Where-Object {$_ -match 'overlap'}).Count -gt 0) 'Both optional patches retain the overlap warning while required sources remain blocked'
 
+    # Failure must propagate an error code instead of silently succeeding or
+    # pausing indefinitely when an extracted dependency is missing.
+    $packagedPs1=Join-Path $unpack 'tools/Start-Naxxramas-SetupWizard.ps1'
+    $temporaryPs1=Join-Path $root 'held-out-wizard.ps1'
+    [IO.File]::Move($packagedPs1,$temporaryPs1)
+    try{
+        $missing=RunBundledLauncher '--diagnostics'
+        Check ($missing.code -ne 0 -and
+            ($missing.stdout+$missing.stderr).Contains('Start-Naxxramas-SetupWizard.ps1')) 'Packaged launcher fails closed when its PowerShell entrypoint is missing'
+    }finally{
+        [IO.File]::Move($temporaryPs1,$packagedPs1)
+    }
     Check ((Snapshot-Tree $client) -ceq $beforeClient -and
         (Snapshot-Tree $unpack) -ceq $beforeUnpacked) 'Packaged standalone runtime does not mutate synthetic client or its own extracted scripts'
     Check (-not $runtime.stdout.Contains($client)) 'Packaged JSON review never reveals the private client directory'
