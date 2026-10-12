@@ -1,10 +1,18 @@
 name: Verify actual N Addon Suite v2.0.0 release ZIP (developer only)
 
 on:
+  push:
+    branches: [main, 'milestone4-*']
+    paths:
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
+      - '.github/workflows/verify-addon-v2-release-asset.yml'
   pull_request:
     paths:
       - '.github/workflows/verify-addon-v2-release-asset.yml'
       - 'tools/Test-Naxxramas-AddonArchive.ps1'
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
       - 'config/optional-content.json'
   workflow_dispatch:
 
@@ -18,6 +26,13 @@ jobs:
     steps:
       - name: Check out read-only source
         uses: actions/checkout@v4
+      - name: Prepare isolated Python for streaming ZIP payload checks
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check synthetic payload validation first
+        shell: pwsh
+        run: python -m unittest discover -s tests -p test_addon_zip_payload.py -v
       - name: Fetch and inspect genuine v2.0.0 ZIP in ephemeral runner only
         shell: powershell
         run: |
@@ -58,6 +73,34 @@ jobs:
                $report.client_files_changed) {
               throw 'Downloaded asset failed the developer-only no-approval read-only audit contract.'
             }
+            # Streaming ZIP members verifies CRC to EOF without extraction;
+            # bounded TOC-only content parsing checks NCore dependencies,
+            # saved-variable declarations and licence/credit file presence.
+            $payloadJson=(& python .\tools\audit_addon_zip_payload.py --archive $archive | Out-String)
+            if($LASTEXITCODE -ne 0){throw 'Developer-only payload audit rejected the release ZIP.'}
+            $payload=$payloadJson | ConvertFrom-Json
+            if($payload.kind -cne 'naxxramas_addon_payload_read_only_audit' -or
+               $payload.reference_kind -cne 'published_v2.0.0_sha256_verified' -or
+               $payload.archive_sha256 -cne $referenceSha -or
+               [long]$payload.archive_size_bytes -ne $referenceSize -or
+               [int]$payload.files_crc_verified -lt 5 -or
+               [int]$payload.toc_load_file_references_checked -lt 9 -or
+               -not $payload.five_addon_tocs_interface_30300 -or
+               -not $payload.ncore_dependency_and_expected_versions_checked -or
+               -not $payload.savedvariables_declarations_match_tag -or
+               -not $payload.license_and_credits_files_readable -or
+               -not $payload.no_extraction -or
+               $payload.lua_executed -or
+               $payload.license_compliance_approved -or
+               $payload.gameplay_compatibility_approved -or
+               $payload.installation_backup_or_rollback_authorised -or
+               $payload.redistribution_authorised -or
+               $payload.client_files_modified){
+              throw 'Real addon ZIP payload audit did not meet read-only safety requirements.'
+            }
+            Write-Host 'PASS: streamed each release member, checked CRCs, five TOCs, NCore dependencies, pinned versions, SavedVariables, license text presence and load paths.'
+            Write-Host ('ZIP entries CRC-checked: '+$payload.files_crc_verified)
+            Write-Host ('TOC load paths checked: '+$payload.toc_load_file_references_checked)
             Write-Host 'PASS: published N Addon Suite v2.0.0 ZIP bytes, hash, metadata directory layout and 12 packaging markers.'
             Write-Host ('Verified SHA-256: '+$actualSha)
             Write-Host ('Verified byte length: '+$actualSize)

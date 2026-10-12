@@ -40,9 +40,9 @@
       "NaxxLootLottery"
     ],
     "standalone_talent_calculator_included": false,
-    "note": "The v2.0.0 release publishes an archive digest and size, but contents/licence/update/rollback approval are outstanding. No downloads, installations, copies, folder deletions or SavedVariables changes. Legacy NClassicBattlegrounds and ServerDungeonJournal folders may conflict with bundled NCore and DungeonJournal and must be reviewed manually.",
+    "note": "The exact v2.0.0 release ZIP passed read-only developer byte/hash/CRC and defined TOC/dependency/settings/licence-text checks. This is not approval to install, redistribute, update, delete or back up player files. NCore includes Classic Battlegrounds; NClassicBattlegrounds and ServerDungeonJournal legacy folders may conflict and must be reviewed manually. No WoW files or SavedVariables were touched.",
     "archive_size_bytes": 26762217,
-    "archive_digest_source": "GitHub release v2.0.0 published asset metadata; ZIP bytes have NOT been independently downloaded, inspected or verified.",
+    "archive_digest_source": "Original upstream v2.0.0 ZIP size and SHA-256 independently checked by developer-only ephemeral Windows GitHub Actions (#45). All 796 ZIP members CRC-read and 187 TOC load paths checked, source-tag version/dependency/SavedVariables and licence-text presence verified by developer-only CI (#46). No game/client compatibility, legal licence compliance, installation, recovery or redistribution approval.",
     "legacy_folders_to_flag": [
       "NClassicBattlegrounds",
       "ServerDungeonJournal"
