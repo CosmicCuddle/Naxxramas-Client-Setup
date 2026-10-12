@@ -247,3 +247,10 @@ The same review names known v2.0.0 settings that a future recovery system would 
 
 The preview JSON exposes `addon_upgrade_assessment` and `addon_settings_protection` (no private paths, content, account names or character names). On physical Windows, check scrollability, the File Details Close button, keyboard reading, High Contrast and desktop scales 100/125/150/200%, using **disposable synthetic files only**. CI does not substitute for screen-reader acceptance or in-game compatibility.
 
+
+## Keyboard-first reading of review results (accessibility follow-up)
+
+The read-only wizard provides a **Read Review Text** button below the main action row. After **Review Only** (or after changing any selection), use **Tab** to reach this button and press **Space** or **Enter**. Keyboard focus moves to the beginning of the existing read-only result area. You can now use the arrow keys or your screen reader to read the summary and warnings without searching the entire form. This control never runs a planner, installs files, creates backups, records consent or changes settings. **View File Details** still provides the six-file read-only table and additional scrollable notes.
+
+The result control's accessible description now carries the current read-only review status, including when a selection invalidates the previous result. This is an improvement in available text and keyboard navigation, **not proof that any screen reader announced a change**. Human Windows tests must verify focus, spoken text, actual 100/125/150/200% desktop scaling and High Contrast. Use the short [manual test record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md), whose entries remain NOT TESTED until physically checked. The standard double-click launcher and all safety/permission limits remain unchanged.
+
