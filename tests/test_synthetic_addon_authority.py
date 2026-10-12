@@ -154,9 +154,9 @@ class AuthorityCrashFixture(unittest.TestCase):
             with self.subTest(counter=name):
                 self.write_claims(authority_changes={name: 1})
                 result = reviewer.review(self.root)
-                self.assertIn("already_" + ("consumed" if name.startswith("consumed") else "revoked"),
-                              "already_" + ("consumed" if name.startswith("consumed") else "revoked"))
-                self.assertTrue(any("already_" in s for s in result["blockers"]))
+                expected = ("claimed_receipt_already_consumed" if name.startswith("consumed")
+                            else "claimed_receipt_already_revoked")
+                self.assertIn(expected, result["blockers"])
                 self.assertEqual(result["status"], "manual_review_required")
 
     def test_pending_revoked_expired_or_missing_claim_blocks(self):
@@ -254,7 +254,7 @@ class AuthorityCrashFixture(unittest.TestCase):
 
     def test_missing_marker_and_linked_claim_refuse(self):
         (self.root / reviewer.MARKER).unlink()
-        with self.assertRaisesRegex(reviewer.Refusal, "unsafe_or_unreadable_claim"):
+        with self.assertRaisesRegex(reviewer.Refusal, "not_disposable_authority_fixture"):
             reviewer.review(self.root)
         (self.root / reviewer.MARKER).write_bytes(reviewer.MARKER_BYTES)
         claim = self.root / reviewer.AUTHORITY
