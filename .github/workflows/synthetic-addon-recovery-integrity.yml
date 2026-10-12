@@ -1,0 +1,36 @@
+name: Synthetic-only addon recovery integrity tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_synthetic_addon_recovery.py'
+      - 'tests/test_synthetic_addon_recovery.py'
+      - 'docs/ADDON-EVIDENCE-AND-RECOVERY.md'
+      - '.github/workflows/synthetic-addon-recovery-integrity.yml'
+  push:
+    paths:
+      - 'tools/review_synthetic_addon_recovery.py'
+      - 'tests/test_synthetic_addon_recovery.py'
+      - '.github/workflows/synthetic-addon-recovery-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-fixtures:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - name: Checkout read-only engineering sources
+        uses: actions/checkout@v4
+      - name: Set up fixture Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compare synthetic originals, copies and changed settings
+        run: python -m unittest discover -s tests -p test_synthetic_addon_recovery.py -v

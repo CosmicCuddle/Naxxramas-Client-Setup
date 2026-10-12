@@ -54,3 +54,23 @@ Windows and Linux disposable tests simulate two accounts, three realms, three ch
 
 The next meaningful design gate is a separately approved and **still synthetic-only** detailed original-to-copy integrity and restore-conflict model. It must preserve complete original data, distinguish original and player-modified bytes, and refuse any ambiguous/partial checkpoint. Future real-client scanning and all file writes remain separately blocked.
 
+
+## Synthetic addon original-to-copy and recovery-conflict comparison (PR pending)
+
+The next separate developer-only reviewer, `tools/review_synthetic_addon_recovery.py`, accepts **only a disposable fake fixture root** with an explicit `.naxx-recovery-synthetic-only` marker and four pre-existing synthetic directories: `original`, `backup`, `claimed_after`, and `current`. The Python reviewer itself is **read only**. Only its unit-test setup creates and changes fake fixture bytes. Neither this tool nor its tests appear in the strict player ZIP allowlist. The marker is an accidental-use guard, not proof of ownership or source authenticity.
+
+For exactly five published suite addon roots, two legacy roots and the **entire** `WTF` tree (all accounts, realms, characters and unknown files), the inspector reads bounded synthetic file bytes in SHA-256 streams, compares exact relative file *and empty-directory* names, file lengths and digests, and takes two sequential observations. It refuses linked/reparse entries, linked files, case-colliding directory names, hardlinked files, nonstandard objects, unsafe folder spelling, excessive scan depth/count/size and file changes during each observed read. A changing observation between passes is flagged. These are best-effort read-only observations and **not atomic or race-resistant Windows production file handles**.
+
+- `matching_observed_bytes_not_backup_proof`: fake backup was observed to contain the same scoped original bytes and directory layout; not independently held, authenticated, durable or known to be recoverable.
+- `missing_or_extra_entries_preserve` / `changed_bytes_preserve`: complete copy mismatch; preserve everything and investigate rather than assuming it is usable.
+- `already_original_preserve`: synthetic current tree matches the original and needs no hypothetical restore.
+- `matches_untrusted_after_claim_not_recovery_permission`: a non-settings addon happens to match a caller-controlled after-image; this is **not** an approved restore.
+- `player_or_unknown_changes_preserve`: current addon differs from both original and claimed after-image; no automatic overwriting.
+- `settings_changed_preserve_manual_review`: any synthetic `WTF` difference from original is a manual conflict, **even when current matches a claimed after-image**.
+- `unsafe_manual_review`: a path/identity/read error or between-pass change prevents reliable scope comparison. Partial scope counts are not passed off as complete.
+
+The JSON intentionally returns only fixed known scope labels, aggregate counts and safe classification names, not private account/realm/character filenames, file data, or hashes. All approvals stay false: `backup_created`, `original_backup_authenticated_or_durable`, `journal_authenticity_verified`, `client_updated`, `restore_or_delete_performed`, `automatic_recovery_authorised`, `installation_or_backup_authorised`, and `public_release_authorised`.
+
+Run the **CI-only synthetic regression**, not on a player folder: `python -m unittest discover -s tests -p test_synthetic_addon_recovery.py -v`. Cross-platform Windows and Linux Python 3.12 tests construct throwaway trees covering matching bytes, missing/extra and corrupted copies, untouched unknown addon files, full two-account/three-character `WTF` scopes, changed player files, matching untrusted after-images, unsafe symlinks/hardlinks, missing markers and injected between-pass changes. No protected journal, genuine one-use consent, backup writer, restore implementation, disk crash consistency, actual client scan, human physical DPI/screen reader acceptance or public release is established.
+
+**Next after this fixture:** a separate synthetic journal/checkpoint-state classifier (complete vs incomplete/forged/stale sessions) and proof of refusal at every interrupted stage, then manual real Windows accessibility checks. Installation and restoration remain prohibited.
