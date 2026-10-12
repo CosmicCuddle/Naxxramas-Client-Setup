@@ -48,3 +48,9 @@ This section is a **review checklist, not implementation instructions to run now
 9. **Human QA.** Complete 100%, 125%, 150%, 200% physical Windows DPI, keyboard, screen reader, High Contrast and test fresh install, v1 upgrade, duplicate legacy folders, actual game/server compatibility and rollback. Record per-test results.
 
 **Until every separate gate is met, no client modification, installation or public redistribution is authorised.**
+
+## Source-tag structural contract (PR #44)
+
+The public v2.0.0 source tag's builder explicitly generates `NCore/ExpectedVersions.lua`, embeds `NCore/ClassicBattlegrounds/NClassicBattlegrounds.lua` and retains original addon TOCs and credit/licence files. The offline auditor now checks the **twelve exact tagged recipe markers**, not just any one root `.toc` per folder. It rejects executable/launcher extensions, implausible compression ratios and file/directory path collisions based on ZIP metadata. No bytes are extracted and this is not a third-party licence or malware review. A synthetic ZIP passing these checks is never equivalent to independently verifying the actual published archive.
+
+See [v2 source-tag review and SavedVariables inventory](ADDON-V2-SOURCE-TAG-REVIEW.md) for the exact source lock, TOC names and account-wide vs character-specific settings. The original GitHub release ZIP could not be fetched in this task; obtaining and checking the genuine release remains a separate manual step.

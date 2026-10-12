@@ -62,7 +62,15 @@ function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash
     }
 }
 $five=@('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
-$entries=@($five|ForEach-Object {$_+'/'+$_+'.toc'})
+$entries=@($five|ForEach-Object {$_+'/'+$_+'.toc'})+@(
+    'NCore/ExpectedVersions.lua',
+    'NCore/ClassicBattlegrounds/NClassicBattlegrounds.lua',
+    'NCore/LegacyCheck.lua',
+    'NCore/Settings.lua',
+    'DungeonJournal/LICENSE-GPL-2.0.txt',
+    'DungeonJournal/CREDITS.txt',
+    'MultiBot/LICENSE'
+)
 try{
     Check (Test-Path -LiteralPath $auditor -PathType Leaf) 'Offline audit script exists'
     $client=Join-Path $root 'FAKE WoW Client'
@@ -79,6 +87,8 @@ try{
         $report.reference_kind -ceq 'synthetic_test_only' -and
         $report.reference_fingerprint_matches -and
         $report.zip_metadata_layout_passed -and
+        $report.packaging_recipe_marker_count -eq 12 -and
+        $report.packaging_recipe_source.Contains('v2.0.0') -and
         @($report.folders).Count -eq 5 -and
         @($report.folders|Where-Object {$_.root_toc_count -ne 1}).Count -eq 0 -and
         -not $report.archive_contents_extracted -and
@@ -103,7 +113,16 @@ try{
         @{name='no-toc.zip';paths=@('NCore/info.txt')+@($entries|Where-Object {$_ -cne 'NCore/NCore.toc'});text='missing an addon directory or root-level .toc'},
         @{name='absolute.zip';paths=@($entries)+@('/NCore/strange.txt');text='invalid, duplicate or unsafe path'},
         @{name='windows-device.zip';paths=@($entries)+@('NCore/CON.txt');text='unsafe Windows filename'},
-        @{name='standalone-file.zip';paths=@($entries)+@('NCoreFile.lua');text='unrecognised root folder'}
+        @{name='standalone-file.zip';paths=@($entries)+@('NCoreFile.lua');text='unrecognised root folder'},
+        @{name='missing-version-manifest.zip';paths=@($entries|Where-Object {$_ -cne 'NCore/ExpectedVersions.lua'});text='missing a v2.0.0 source-tag packaging marker'},
+        @{name='missing-embedded-battlegrounds.zip';paths=@($entries|Where-Object {$_ -cne 'NCore/ClassicBattlegrounds/NClassicBattlegrounds.lua'});text='missing a v2.0.0 source-tag packaging marker'},
+        @{name='missing-gpl-license.zip';paths=@($entries|Where-Object {$_ -cne 'DungeonJournal/LICENSE-GPL-2.0.txt'});text='missing a v2.0.0 source-tag packaging marker'},
+        @{name='missing-multibot-license.zip';paths=@($entries|Where-Object {$_ -cne 'MultiBot/LICENSE'});text='missing a v2.0.0 source-tag packaging marker'},
+        @{name='fake-toc.zip';paths=@($entries|Where-Object {$_ -cne 'MultiBot/MultiBot.toc'})+@('MultiBot/Other.toc');text='missing a v2.0.0 source-tag packaging marker'},
+        @{name='executable.zip';paths=@($entries)+@('NCore/evil.exe');text='forbidden executable or launcher'},
+        @{name='windows-shortcut.zip';paths=@($entries)+@('NCore/evil.lnk');text='forbidden executable or launcher'},
+        @{name='parent-file.zip';paths=@($entries)+@('NCore/Conflict','NCore/Conflict/child.lua');text='file used as a parent directory'},
+        @{name='file-directory.zip';paths=@($entries)+@('NCore/Collision','NCore/Collision/');text='file and directory path collision'}
     )
     foreach($case in $cases){
         $zip=Make-Zip $case.name $case.paths

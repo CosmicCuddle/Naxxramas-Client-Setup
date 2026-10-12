@@ -19,6 +19,24 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version Latest
 
 $known=@('NCore','IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
+# Required marker names follow the owner's v2.0.0 source TAG and its
+# scripts/build_bundle.py packaging recipe, not an assertion that the
+# published release ZIP bytes have already been inspected.
+$requiredFiles=@(
+    'NCore/NCore.toc',
+    'NCore/ExpectedVersions.lua',
+    'NCore/ClassicBattlegrounds/NClassicBattlegrounds.lua',
+    'NCore/LegacyCheck.lua',
+    'NCore/Settings.lua',
+    'IndividualProgressionAddon/IndividualProgressionAddon.toc',
+    'DungeonJournal/DungeonJournal.toc',
+    'DungeonJournal/LICENSE-GPL-2.0.txt',
+    'DungeonJournal/CREDITS.txt',
+    'MultiBot/MultiBot.toc',
+    'MultiBot/LICENSE',
+    'NaxxLootLottery/NaxxLootLottery.toc'
+)
+$forbiddenFileExtensions=@('.exe','.com','.dll','.msi','.msp','.bat','.cmd','.ps1','.vbs','.vbe','.wsf','.scr','.lnk')
 $expectedName='N-Addon-Collection-v2.0.0.zip'
 $officialHash='07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324'
 $officialSize=[long]26762217
@@ -93,6 +111,8 @@ try{
         throw 'Unexpected archive entry count; inspection refused.'
     }
     $seen=New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    $filePaths=New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    $directoryPaths=New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
     $files=@{}
     $toc=@{}
     foreach($name in $known){$files[$name]=0;$toc[$name]=0}
@@ -130,15 +150,23 @@ try{
         }
         if($dir){
             if([long]$entry.Length -ne 0){throw 'Invalid ZIP directory entry.'}
+            [void]$directoryPaths.Add($path)
             continue
         }
+        [void]$filePaths.Add($path)
         if($parts.Count -lt 2){
             throw 'Archive contains a file at root instead of inside an addon folder.'
         }
+        $extension=[IO.Path]::GetExtension($parts[-1])
+        if($forbiddenFileExtensions -contains $extension.ToLowerInvariant()){
+            throw 'Archive contains a forbidden executable or launcher entry.'
+        }
         $length=[long]$entry.Length
         $compressed=[long]$entry.CompressedLength
-        if($length -lt 0 -or $length -gt 134217728 -or $compressed -lt 0){
-            throw 'Archive entry exceeds safe inspection limits.'
+        if($length -lt 0 -or $length -gt 134217728 -or $compressed -lt 0 -or
+           ($length -gt 0 -and $compressed -eq 0) -or
+           ($compressed -gt 0 -and $length -gt $compressed * 2000)){
+            throw 'Archive entry exceeds safe inspection limits or has extreme compression.'
         }
         $totalBytes += $length
         if($totalBytes -gt 536870912){
@@ -155,6 +183,25 @@ try{
             throw ('Archive is missing an addon directory or root-level .toc: '+$name)
         }
     }
+    # ZIPs can store a file and a directory with the same Windows path;
+    # such an archive is structurally unsuitable even if never extracted.
+    foreach($path in $filePaths){
+        if($directoryPaths.Contains($path)){
+            throw 'Archive contains a file and directory path collision.'
+        }
+        $parts=@($path.Split([char]'/'))
+        for($i=1;$i -lt $parts.Count;$i++){
+            $ancestor=($parts[0..($i-1)] -join '/')
+            if($filePaths.Contains($ancestor)){
+                throw 'Archive contains a file used as a parent directory.'
+            }
+        }
+    }
+    foreach($required in $requiredFiles){
+        if(-not $filePaths.Contains($required)){
+            throw ('Archive is missing a v2.0.0 source-tag packaging marker: '+$required)
+        }
+    }
     # Get-FileHash was computed from the same exclusively-read stream; it
     # remains open while the central-directory layout is inspected.
     [pscustomobject][ordered]@{
@@ -163,6 +210,8 @@ try{
         reference_kind=$referenceKind
         reference_fingerprint_matches=$true
         zip_metadata_layout_passed=$true
+        packaging_recipe_marker_count=$requiredFiles.Count
+        packaging_recipe_source='N-Addon-Collection/v2.0.0 scripts/build_bundle.py; metadata only'
         archive_file_count=@($entries | Where-Object {-not $_.FullName.EndsWith('/')}).Count
         declared_uncompressed_bytes=$totalBytes
         folders=@($known | ForEach-Object {
