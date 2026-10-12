@@ -7,7 +7,7 @@ Loaded by Start-Naxxramas-SetupWizard.ps1 after Windows Forms assemblies.
 Set-StrictMode -Version Latest
 function Assert-WizardReadOnlyReport([object]$Report){
     $paths=@('Data/patch-V.mpq','Data/patch-Z.mpq','Data/Patch-J.mpq',
-             'Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
+             'Data/Patch-C.mpq','Data/Patch-U.mpq','Data/enUS/realmlist.wtf')
     $actions=@('no_change','leave_existing','not_selected','install',
                'replace_after_backup','blocked')
     if($null -eq $Report -or
@@ -15,7 +15,7 @@ function Assert-WizardReadOnlyReport([object]$Report){
        [int]$Report.schema_version -ne 1 -or
        $Report.status -cnotin @('read_only_player_review_BLOCKED_MANUAL_REVIEW',
           'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') -or
-       @($Report.file_reviews).Count -ne 5 -or
+       @($Report.file_reviews).Count -ne 6 -or
        -not [bool]$Report.read_only -or
        -not [bool]$Report.review_required -or
        [bool]$Report.client_files_modified -or
@@ -27,7 +27,7 @@ function Assert-WizardReadOnlyReport([object]$Report){
        [bool]$Report.public_patch_distribution_authorised){
         throw 'Unexpected review data or permission fields.'
     }
-    for($i=0;$i -lt 5;$i++){
+    for($i=0;$i -lt 6;$i++){
         if($Report.file_reviews[$i].relative_path -cne $paths[$i] -or
            $Report.file_reviews[$i].proposed_action -cnotin $actions -or
            [bool]$Report.file_reviews[$i].original_backup_created){
@@ -176,7 +176,7 @@ function New-WizardDetailsForm([object]$Report){
     }
     $grid.ColumnHeadersHeight=38
     $grid.ColumnHeadersHeightSizeMode=[Windows.Forms.DataGridViewColumnHeadersHeightSizeMode]::DisableResizing
-    $grid.AccessibleName='Five read-only game file actions'
+    $grid.AccessibleName='Six read-only game file actions'
     $grid.TabIndex=0
     $grid.TabStop=$true
     [void]$grid.Columns.Add('File','Game file')
