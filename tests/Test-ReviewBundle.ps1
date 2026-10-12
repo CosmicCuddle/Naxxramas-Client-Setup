@@ -206,8 +206,17 @@ public static class NaxxStandaloneZipFixture {public static int Main(){return 0;
     Check ((@($addons.addon_modules_planned) -join '|') -ceq 'DungeonJournal|MultiBot' -and
         $addons.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
         @($addons.addon_folder_inventory).Count -eq 7 -and
+        @($addons.addon_upgrade_assessment).Count -eq 7 -and
+        @($addons.addon_upgrade_assessment|Where-Object {
+            $_.folder -ceq 'NCore' -and $_.assessment -ceq 'future_addition_not_authorised' -and
+            $_.detected_version -ceq 'unknown_not_inspected'
+        }).Count -eq 1 -and
+        $addons.addon_settings_protection.backup_required_before_future_upgrade -and
+        -not $addons.addon_settings_protection.backup_created -and
+        -not $addons.addon_settings_protection.inventory_or_personal_settings_read -and
+        -not $addons.addon_upgrades_or_deletions_authorised -and
         $addons.addon_suite_archive_reference_sha256 -ceq '07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324' -and
-        -not $addons.optional_content_file_writes_authorised) 'Extracted suite keeps four configurable preferences, pinned metadata, blocked install and safe inventory'
+        -not $addons.optional_content_file_writes_authorised) 'Extracted suite retains seven conservative upgrade assessments, required future WTF protection and zero installation approval'
 
     $runtime=RunBundledWizard @('-DetailDiagnostics','-ClientPath',$client,'-VanillaLoading')
     Check ($runtime.code -eq 0) ('Unpacked six-file details window builds: '+$runtime.stderr)
