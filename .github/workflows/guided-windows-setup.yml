@@ -5,6 +5,8 @@ on:
     paths:
       - 'tools/Start-Naxxramas-SetupWizard.ps1'
       - 'tools/Naxxramas-WizardDetails.ps1'
+      - 'tools/Naxxramas-OptionalContent.ps1'
+      - 'config/optional-content.json'
       - 'tools/Start-Naxxramas-SetupWizard.bat'
       - 'tests/Test-SetupWizard.ps1'
       - 'docs/GUIDED-WINDOWS-SETUP.md'
@@ -13,6 +15,8 @@ on:
     paths:
       - 'tools/Start-Naxxramas-SetupWizard.ps1'
       - 'tools/Naxxramas-WizardDetails.ps1'
+      - 'tools/Naxxramas-OptionalContent.ps1'
+      - 'config/optional-content.json'
       - 'tools/Start-Naxxramas-SetupWizard.bat'
       - 'tests/Test-SetupWizard.ps1'
       - 'docs/GUIDED-WINDOWS-SETUP.md'
