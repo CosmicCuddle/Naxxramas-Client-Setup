@@ -77,8 +77,11 @@ try{
     Check ($layout.kind -ceq 'read_only_windows_setup_wizard_layout' -and
         $layout.form_built -and -not $layout.form_displayed) 'The real Windows Form builds without showing a modal window'
     Check ($layout.folder_count -eq 3 -and
-        $layout.optional_patch_toggle_count -eq 2 -and
-        $layout.mandatory_patch_toggle_count -eq 0) 'Three folder pickers and two independent optional toggles'
+        $layout.optional_patch_toggle_count -eq 3 -and
+        $layout.mandatory_patch_toggle_count -eq 0 -and
+        $layout.optional_addon_toggle_count -eq 1 -and
+        $layout.tbc_and_vanilla_mutually_exclusive -and
+        $layout.addon_catalog_visible) 'Three folder pickers, exclusive C/J login choices, independent U and an addon catalogue'
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
     Check ($layout.contrast_matches_windows -and $layout.theme_preserves_standard_palette -and
         $layout.high_contrast_palette_uses_system_colours -and
@@ -107,7 +110,8 @@ try{
         -not $layout.rollback_action_present -and
         -not $layout.client_files_changed -and -not $layout.backups_created) 'No real installation or consent surfaced'
     $choices=Execute @('-Diagnostics','-VanillaLogin','-VanillaLoading') 'Independent selections in WinForms'
-    Check ($choices.optional_login_selected -and $choices.optional_loading_selected) 'Both optional checkboxes can be independently selected'
+    Check ($choices.optional_login_selected -and $choices.optional_loading_selected -and
+        -not $choices.tbc_login_selected) 'J and U are independently available without selecting TBC login C'
     Check ($choices.combined_overlap_warning_shown -and $choices.optional_status_accessible -and
         $choices.optional_status_text.Contains('Patch-J ON') -and
         $choices.optional_status_text.Contains('Patch-U ON') -and
@@ -117,16 +121,24 @@ try{
     Check (-not $choices.combined_overlap_warning_shown -and
         $choices.optional_status_text.Contains('Patch-J OFF') -and $choices.optional_status_text.Contains('Patch-U ON')) 'U alone does not incorrectly claim J/U overlap'
 
+    $choices=Execute @('-Diagnostics','-TbcLogin','-VanillaLoading','-AddonSuite') 'C, U and addon catalogue headless selection'
+    Check ($choices.tbc_login_selected -and -not $choices.optional_login_selected -and
+        $choices.optional_loading_selected -and $choices.addon_suite_selected -and
+        $choices.tbc_and_vanilla_mutually_exclusive -and $choices.addon_catalog_visible) 'TBC C and Vanilla U coexist; addon catalogue remains read-only'
+    $badOutput=(& powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File $wizard -Diagnostics -VanillaLogin -TbcLogin 2>&1 | Out-String)
+    Check ($LASTEXITCODE -ne 0 -and $badOutput.Contains('mutually exclusive')) 'Direct conflicting C and J selections fail before any review'
+
     # Test the actual GUI->read-only-viewer bridge using the same strict
     # synthetic setup as the existing player-review integration suite.
     foreach($p in @($client,$source,$backup,$tools,$history,
         (Join-Path $client 'Data/enUS'),(Join-Path $source 'Data'))){
         $null=New-Item -ItemType Directory -Path $p -Force
     }
-    foreach($name in @('Show-Naxxramas-InstallReview.ps1','Plan-Naxxramas-Install.ps1','Start-Naxxramas-SetupWizard.ps1','Naxxramas-WizardDetails.ps1')){
+    foreach($name in @('Show-Naxxramas-InstallReview.ps1','Plan-Naxxramas-Install.ps1','Start-Naxxramas-SetupWizard.ps1','Naxxramas-WizardDetails.ps1','Naxxramas-OptionalContent.ps1')){
         Copy-Item -LiteralPath (Join-Path $repo ('tools/'+$name)) -Destination $tools
     }
     $wizard=Join-Path $tools 'Start-Naxxramas-SetupWizard.ps1'
+    Copy-Item -LiteralPath (Join-Path $repo 'config/optional-content.json') -Destination $config
     $policy=@()
     foreach($i in 0..3){
         $name=@('patch-V.mpq','patch-Z.mpq','Patch-J.mpq','Patch-U.mpq')[$i]
@@ -224,7 +236,25 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     Check ($summary.status -ceq 'read_only_player_review_NO_PREFLIGHT_BLOCKERS_NOT_APPROVED') 'Even no-blocker preview is not consent'
     Check ($summary.proposed_replace_after_backup_count -eq 2 -and
         $summary.proposed_new_file_count -eq 1) 'Previous V and realmlist are original-backup candidates, new U added in preview'
-    Check (-not $summary.vanilla_login_selected -and $summary.vanilla_loading_selected) 'Independent J/U selection correctly forwarded'
+    Check (-not $summary.vanilla_login_selected -and $summary.vanilla_loading_selected -and
+        -not $summary.tbc_login_selected -and -not $summary.addon_suite_selected) 'Independent J/U selection forwarded; unverified C and addons default OFF'
+    $optionalArgs=@('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
+        '-BackupRoot',$backup,'-TbcLogin','-VanillaLoading','-AddonSuite')
+    $optionalReport=Execute $optionalArgs 'Selected unverified C and N Addon Suite plan'
+    Check ($optionalReport.status -ceq 'read_only_player_review_BLOCKED_MANUAL_REVIEW' -and
+        $optionalReport.file_count -eq 5 -and $optionalReport.tbc_login_selected -and
+        $optionalReport.addon_suite_selected -and
+        -not $optionalReport.optional_content_downloads_authorised -and
+        -not $optionalReport.optional_content_file_writes_authorised -and
+        @($optionalReport.concerns|Where-Object {$_ -match 'Patch-C'}).Count -ge 1 -and
+        @($optionalReport.concerns|Where-Object {$_ -match 'N Addon Suite'}).Count -ge 1) 'Unverified Patch-C and addon suite always block extra actions without changing five verified file rows'
+    $optionalDetails=Execute @('-DetailDiagnostics','-ClientPath',$client,
+        '-PatchSourcePath',$source,'-BackupRoot',$backup,'-TbcLogin','-AddonSuite') 'Details retain strict 5-file table with optional blockers'
+    Check ($optionalDetails.file_count -eq 5 -and
+        $optionalDetails.tbc_login_selected -and
+        $optionalDetails.addon_suite_selected -and
+        $optionalDetails.optional_content_blocked -and
+        $optionalDetails.close_review_click_closes_dialog) 'File Details includes selected optional-content concerns without claiming extra verified MPQs'
     Check (@($summary.file_reviews | Where-Object {
         $_.relative_path -ceq 'Data/Patch-J.mpq' -and $_.proposed_action -ceq 'leave_existing'
     }).Count -eq 1) 'Existing unselected J remains untouched'
