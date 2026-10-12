@@ -92,6 +92,10 @@ try{
         $layout.contrast_applied_to_actual_controls) 'Wizard uses the active Windows palette and the High Contrast palette resolves OS system colours'
     Check ($layout.review_status_accessible -and $layout.clear_and_close_accessible -and
         $layout.initial_keyboard_focus_target -ceq 'ClientFolder') 'Review status descriptions, safe buttons and initial keyboard focus remain available'
+    Check ($layout.read_review_text_accessible -and
+        $layout.read_review_text_click_focuses_result -and
+        $layout.result_reader_status_synchronised -and
+        $layout.preview_read_only) 'Read Review Text click focuses the existing scrollable read-only result and status context tracks changes'
     Check ($layout.scrollable_layout -and $layout.minimum_scroll_height -ge 950 -and
         $layout.optional_controls_do_not_overlap -and $layout.optional_status_inside_scroll_extent -and
         $layout.preview_inside_scroll_extent) 'Stacked choices, visible option summary and review remain available by scrolling'
@@ -104,10 +108,11 @@ try{
     Check ($layout.folder_browse_buttons_inside_viewport -and $layout.action_buttons_inside_viewport) 'Right-anchored browse and review controls fit inside initial viewport'
     Check ($layout.default_keyboard_action -ceq 'ReviewOnly' -and
         $layout.cancel_keyboard_action -ceq 'CloseWizard') 'Enter reviews only; Escape closes safely'
-    Check (@($layout.action_labels).Count -eq 7 -and
+    Check (@($layout.action_labels).Count -eq 8 -and
         @($layout.action_labels) -ccontains 'Review Only' -and
         @($layout.action_labels) -ccontains 'Clear Review' -and
-        @($layout.action_labels) -ccontains 'View File Details...') 'Review details added without Apply or confirmation control'
+        @($layout.action_labels) -ccontains 'Read Review Text' -and
+        @($layout.action_labels) -ccontains 'View File Details...') 'Keyboard-readable result button added without Apply, backup or confirmation controls'
     Check ($layout.details_action_initially_disabled -and $layout.detail_view_is_read_only) 'Detailed view disabled until real successful inspection'
     Check (-not $layout.actual_installer_action_present -and
         -not $layout.consent_action_present -and
