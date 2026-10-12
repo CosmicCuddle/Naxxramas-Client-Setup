@@ -43,3 +43,14 @@ The historical `detected_version=unknown_not_inspected` and `version_or_provenan
 The current WinForms summary reports seven short addon metadata statuses in the read-only results, while File Details shows scrollable concerns and notes. Physical **100%, 125%, 150%, 200% DPI**, High Contrast, keyboard-only operation and real screen-reader navigation must be performed on a disposable synthetic client. Check non-overlapping controls, long text, focus order, readable status updates and that “claimed version” is never announced as verified. Record evidence without player folder paths or `WTF` contents.
 
 **Decision:** next work may continue improving observation and human review. Every install, download, file mutation, backup creation, automatic recovery and public release remains disabled pending separately documented approval.
+
+## Synthetic complete-original scope rehearsal (Milestone 5 follow-up)
+
+A **developer-only, fixture-gated** read-only tool, `tools/review_synthetic_addon_original_scope.py`, enumerates filesystem **metadata only** beneath the exact five suite addon directories, both named legacy addon directories and **all** contents of a disposable fake client's `WTF` tree. It does not read private configuration contents, execute addon Lua, hash files, enumerate arbitrary third-party addon contents, or emit account/realm/character/folder filenames.
+
+The tool requires an explicit `--synthetic-fixture-client` argument and an exact `.naxx-synthetic-only` marker. **The marker is not cryptographic authentication; this is not a tool to run against a real client.** Its output includes only safe hardcoded scope labels, observed counts/sizes and fixed error categories. It rejects linked or junction paths, hardlinked files, invalid filesystem types, case-colliding entries and overly deep/large trees. Any incomplete observation is `unsafe_preserve_manual_review`; even a fully observed scope is `present_unverified_metadata`, not a complete or trusted backup manifest. Missing `WTF` is reported without creating it.
+
+Windows and Linux disposable tests simulate two accounts, three realms, three characters, extra unknown character SavedVariables, a custom file within a known addon, a standalone legacy addon, and unrelated third-party addon files. They check unchanged fixture bytes, link/hardlink fail-closed behaviour, refusal without the fake-client marker, budget limits and privacy-safe report fields. This tests a **scope-planning assumption**, not verified copied originals, crash durability, live game compatibility, consent, installation or recoverability.
+
+The next meaningful design gate is a separately approved and **still synthetic-only** detailed original-to-copy integrity and restore-conflict model. It must preserve complete original data, distinguish original and player-modified bytes, and refuse any ambiguous/partial checkpoint. Future real-client scanning and all file writes remain separately blocked.
+

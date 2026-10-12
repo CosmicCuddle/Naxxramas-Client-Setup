@@ -1,0 +1,36 @@
+name: Synthetic-only addon and WTF preservation scope
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_synthetic_addon_original_scope.py'
+      - 'tests/test_synthetic_addon_original_scope.py'
+      - 'docs/ADDON-EVIDENCE-AND-RECOVERY.md'
+      - '.github/workflows/synthetic-addon-original-scope.yml'
+  push:
+    paths:
+      - 'tools/review_synthetic_addon_original_scope.py'
+      - 'tests/test_synthetic_addon_original_scope.py'
+      - '.github/workflows/synthetic-addon-original-scope.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    steps:
+      - name: Checkout developer test sources only
+        uses: actions/checkout@v4
+      - name: Set up test-only Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run synthetic scope tests (never touch player game clients)
+        run: python -m unittest discover -s tests -p test_synthetic_addon_original_scope.py -v
