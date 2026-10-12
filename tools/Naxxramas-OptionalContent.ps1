@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 READ-ONLY optional-content catalogue and preview layer.
-Does not verify or distribute Patch-C or addon ZIP, and does not authorize
+Pins C release metadata but does not download or distribute Patch-C/addon ZIP or authorize
 file writes. The original four-patch/five-file planner remains unchanged.
 #>
 Set-StrictMode -Version Latest
@@ -17,10 +17,14 @@ function Read-NaxxOptionalCatalog {
        $item.patch_c.relative_path_candidate -cne 'Data/Patch-C.mpq' -or
        $item.patch_c.mutually_exclusive_with -cne 'Data/Patch-J.mpq' -or
        [bool]$item.patch_c.required -or -not [bool]$item.patch_c.allow_disable -or
-       [bool]$item.patch_c.reference_approved -or
-       [bool]$item.patch_c.name_and_file_case_verified -or
+       -not [bool]$item.patch_c.reference_approved -or
+       -not [bool]$item.patch_c.name_and_file_case_verified -or
        [bool]$item.patch_c.redistribution_approved -or
-       $null -ne $item.patch_c.sha256 -or $null -ne $item.patch_c.size_bytes -or
+       $item.patch_c.sha256 -cne '16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8' -or
+       [long]$item.patch_c.size_bytes -ne 26753640 -or
+       $item.patch_c.release_tag -cne 'optional-v1.0' -or
+       $item.patch_c.release_url -cne 'https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/tag/optional-v1.0' -or
+       $item.patch_c.asset_download_url -cne 'https://github.com/CosmicCuddle/Naxxramas-Server-Patches/releases/download/optional-v1.0/Patch-C.mpq' -or
        $item.addon_suite.version -cne 'v2.0.0' -or
        $item.addon_suite.repository -cne 'https://github.com/CosmicCuddle/N-Addon-Collection' -or
        $item.addon_suite.release_page -cne 'https://github.com/CosmicCuddle/N-Addon-Collection/releases/tag/v2.0.0' -or
@@ -49,9 +53,9 @@ function Add-NaxxOptionalReview([object]$Report,[object]$Catalog,[bool]$UseTbc,[
     $extra=New-Object 'System.Collections.Generic.List[string]'
     $notes=New-Object 'System.Collections.Generic.List[string]'
     if($UseTbc){
-        $extra.Add('Patch-C (TBC login) is selected for FUTURE planning, but file path, fingerprint and permissions are not yet verified. No Patch-C operation is available.')
+        $extra.Add('Patch-C (TBC login) matches a published owner-release reference fingerprint, but is NOT integrated into the five-file versioned planner and is NOT approved for installation or redistribution. No Patch-C operation is available.')
     }else{
-        $notes.Add('Patch-C (TBC login) is optional, not selected; file hash and provenance are still unverified.')
+        $notes.Add('Patch-C (TBC login) is optional and not selected; its owner-release reference SHA-256 is recorded but not yet integrated into the versioned file planner.')
     }
     if($UseSuite){
         $extra.Add('N Addon Suite v2.0.0 is selected for FUTURE planning only. Its package checksum and installation/rollback approval are outstanding; no addon operation is available.')
@@ -63,6 +67,9 @@ function Add-NaxxOptionalReview([object]$Report,[object]$Catalog,[bool]$UseTbc,[
     }
     $Report.concerns=@($Report.concerns)+@($extra.ToArray())
     $Report.notes=@($Report.notes)+@($notes.ToArray())
+    $Report | Add-Member -NotePropertyName patch_c_reference_sha256 -NotePropertyValue ([string]$Catalog.patch_c.sha256) -Force
+    $Report | Add-Member -NotePropertyName patch_c_reference_size_bytes -NotePropertyValue ([long]$Catalog.patch_c.size_bytes) -Force
+    $Report | Add-Member -NotePropertyName patch_c_release_tag -NotePropertyValue ([string]$Catalog.patch_c.release_tag) -Force
     $Report | Add-Member -NotePropertyName tbc_login_selected -NotePropertyValue $UseTbc -Force
     $Report | Add-Member -NotePropertyName addon_suite_selected -NotePropertyValue $UseSuite -Force
     $Report | Add-Member -NotePropertyName optional_content_approval -NotePropertyValue 'planning_only_unverified_no_file_actions' -Force
@@ -76,7 +83,7 @@ function Get-NaxxOptionalSummary([object]$Report){
     return @(
         'OPTIONAL CONTENT - PLANNING ONLY; NO DOWNLOADS OR INSTALLS',
         ('Patch-C (TBC login): '+$(if($Report.tbc_login_selected){'SELECTED - BLOCKED UNTIL VERIFIED'}else{'OFF - not reviewed as a file'})),
-        'Patch-C and Patch-J cannot be selected together.',
+        'Patch-C and Patch-J cannot be selected together. C release hash is pinned; install review remains pending.',
         ('N Addon Suite '+$Report.addon_suite_version+': '+$(if($Report.addon_suite_selected){'SELECTED - BLOCKED UNTIL VERIFIED'}else{'OFF'})),
         'Suite folders: NCore (required); IndividualProgressionAddon, DungeonJournal, MultiBot, NaxxLootLottery (optional).',
         'N Talent Calculator is not included in v2.0.0. Existing addons and SavedVariables will not be changed.'
