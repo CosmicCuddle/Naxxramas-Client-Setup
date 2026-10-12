@@ -49,3 +49,7 @@ In addition to the scaling matrix above, make the **File Details** window approx
 ## High Contrast and initial focus test (PR #34)
 
 Before opening the wizard, enable **Windows High Contrast / contrast theme** and then start the wizard afresh. Check foreground/background contrast for the main heading, client/source/backup fields, J/U status, Review Only, status message, scrollable review result and File Details table/warnings. Toggle back to ordinary Windows colours and **restart the wizard**; verify ordinary styling remains readable. Test initial Tab focus at the existing client-folder field and keyboard traversal to Clear Review and Close. Use a real screen reader to check whether status changes are **actually announced**; setting `AccessibleDescription` alone is not proof of a spoken notification. Record actual results per desktop configuration. The automated system-colour assertions do not replace this check.
+
+## Starting the real launcher
+
+For each manual 100/125/150/200% scaling test, launch **by double-clicking the actual `tools/Start-Naxxramas-SetupWizard.bat` in the extracted scripts-only candidate**, not by invoking `-Diagnostics` (which never displays a window). Run this from an ordinary folder with spaces in its name to exercise the packaged path handling. Validate the real UI, Windows security prompts (if any), and safe Close behaviour. The CI headless BAT test confirms argument wiring only and must **not** be recorded as a passed human accessibility test.
