@@ -360,6 +360,7 @@ public static class NaxxWizardFixture {public static int Main(){return 0;}}
     [void](New-Item -ItemType Directory -Path (Join-Path $addons 'IndividualProgressionAddon') -Force)
     [void](New-Item -ItemType Directory -Path (Join-Path $addons 'NClassicBattlegrounds') -Force)
     $fakeSettings=Join-Path $client 'WTF/Account/FAKE_ACCOUNT/SavedVariables/MultiBot.lua'
+    [void][IO.Directory]::CreateDirectory((Split-Path -Parent $fakeSettings))
     Save $fakeSettings 'SYNTHETIC_PRIVATE_ACCOUNT_SETTINGS_DO_NOT_READ_OR_MODIFY'
     $withFolders=Tree $client
     $inventoryReport=Execute @('-PreviewJson','-ClientPath',$client,'-PatchSourcePath',$source,
