@@ -24,7 +24,7 @@ ASSETS = {
     "patch-j": ("optional-v1.0", "Patch-J.mpq",
                 "24385046f0db6c17db5f549fa0f418f5d5ed1d4c2100059f1db9bede709113c9", 5739890),
     "patch-c": ("optional-v1.0", "Patch-C.mpq",
-                "16b339522ca9394c11a5afe505e25cf9f326325eb2518df08a99920c8", 26753640),
+                "16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8", 26753640),
     "patch-u": ("optional-v1.0", "Patch-U.mpq",
                 "51fc8cbd1786537772ea7f59eac7be244eedabf7e6487ee41e5ce2009ecd9a6d", 11050502),
 }
