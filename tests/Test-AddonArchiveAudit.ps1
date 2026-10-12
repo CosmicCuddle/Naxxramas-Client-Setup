@@ -40,7 +40,7 @@ function Make-Zip([string]$Name,[string[]]$Paths,[string]$Symlink=''){
 function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash=$null,[long]$OverrideSize=0){
     $out=Join-Path $root ('result-'+[guid]::NewGuid().ToString('N')+'.txt')
     $err=Join-Path $root ('error-'+[guid]::NewGuid().ToString('N')+'.txt')
-    $args=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$auditor+'"'),
+    $arguments=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$auditor+'"'),
         '-ArchivePath',('"'+$Path+'"'))
     if($Synthetic){
         $item=Get-Item -LiteralPath $Path
@@ -48,9 +48,9 @@ function Invoke-Audit([string]$Path,[bool]$Synthetic=$true,[string]$OverrideHash
         $size=[long]$item.Length
         if($null -ne $OverrideHash){$hash=$OverrideHash}
         if($OverrideSize -gt 0){$size=$OverrideSize}
-        $args+=@('-Fixture','-ExpectedSha256',$hash,'-ExpectedSizeBytes',"$size")
+        $arguments+=@('-Fixture','-ExpectedSha256',$hash,'-ExpectedSizeBytes',"$size")
     }
-    $p=Start-Process -FilePath 'powershell.exe' -ArgumentList $args -NoNewWindow -PassThru -Wait -WorkingDirectory $root -RedirectStandardOutput $out -RedirectStandardError $err
+    $p=Start-Process -FilePath 'powershell.exe' -ArgumentList $arguments -NoNewWindow -PassThru -Wait -WorkingDirectory $root -RedirectStandardOutput $out -RedirectStandardError $err
     return [pscustomobject]@{
         code=$p.ExitCode
         stdout=[IO.File]::ReadAllText($out)
