@@ -1,6 +1,12 @@
 name: Developer-only offline addon archive safety tests
 
 on:
+  push:
+    branches: [main, 'milestone4-*']
+    paths:
+      - 'tools/audit_addon_zip_payload.py'
+      - 'tests/test_addon_zip_payload.py'
+      - '.github/workflows/offline-addon-archive-audit.yml'
   pull_request:
     paths:
       - 'tools/Test-Naxxramas-AddonArchive.ps1'
