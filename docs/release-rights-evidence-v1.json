@@ -71,7 +71,7 @@
       "kind": "optional_patch",
       "release": "optional-v1.0",
       "file": "Patch-C.mpq",
-      "sha256": "16b339522ca9394c11a5afe505e25cf9f326325eb2518df08a99920c8",
+      "sha256": "16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8",
       "size_bytes": 26753640,
       "source_license_evidence": "original_game_art_or_music_claimed",
       "rights_issue": "Burning Crusade login art/music and other game assets; no separate redistribution permission proven.",
