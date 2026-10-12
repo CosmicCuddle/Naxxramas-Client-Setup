@@ -1,0 +1,73 @@
+name: Verify actual N Addon Suite v2.0.0 release ZIP (developer only)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-addon-v2-release-asset.yml'
+      - 'tools/Test-Naxxramas-AddonArchive.ps1'
+      - 'config/optional-content.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-published-release-asset:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out read-only source
+        uses: actions/checkout@v4
+      - name: Fetch and inspect genuine v2.0.0 ZIP in ephemeral runner only
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+          # Strictly this one published, immutable-tag reference. The ZIP is not
+          # uploaded as an artifact, added to a public package, or extracted.
+          $url='https://github.com/CosmicCuddle/N-Addon-Collection/releases/download/v2.0.0/N-Addon-Collection-v2.0.0.zip'
+          $referenceSha='07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324'
+          $referenceSize=[long]26762217
+          $folder=Join-Path $env:RUNNER_TEMP ('NaxxAddonAudit-'+[guid]::NewGuid().ToString('N'))
+          [void][IO.Directory]::CreateDirectory($folder)
+          $archive=Join-Path $folder 'N-Addon-Collection-v2.0.0.zip'
+          try {
+            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $archive -MaximumRedirection 5 -TimeoutSec 120
+            $actualSize=[long](Get-Item -LiteralPath $archive).Length
+            if($actualSize -ne $referenceSize) {
+              throw ('Published asset byte length mismatch: '+$actualSize)
+            }
+            $actualSha=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+            if($actualSha -cne $referenceSha) {
+              throw 'Downloaded asset SHA-256 differs from the fixed published reference.'
+            }
+            $json=(& .\tools\Test-Naxxramas-AddonArchive.ps1 -ArchivePath $archive | Out-String)
+            $report=$json | ConvertFrom-Json
+            if($report.kind -cne 'naxxramas_offline_addon_zip_audit' -or
+               $report.reference_kind -cne 'github_release_asset_metadata_not_redistribution_approval' -or
+               -not $report.reference_fingerprint_matches -or
+               -not $report.zip_metadata_layout_passed -or
+               [int]$report.packaging_recipe_marker_count -ne 12 -or
+               @($report.folders).Count -ne 5 -or
+               $report.archive_contents_extracted -or
+               $report.archive_payload_crc_or_lua_verified -or
+               $report.addon_licenses_approved -or
+               $report.game_compatibility_verified -or
+               $report.install_or_backup_authorised -or
+               $report.redistribution_authorised -or
+               $report.client_files_changed) {
+              throw 'Downloaded asset failed the developer-only no-approval read-only audit contract.'
+            }
+            Write-Host 'PASS: published N Addon Suite v2.0.0 ZIP bytes, hash, metadata directory layout and 12 packaging markers.'
+            Write-Host ('Verified SHA-256: '+$actualSha)
+            Write-Host ('Verified byte length: '+$actualSize)
+            Write-Host ('Five addon folder names: '+(@($report.folders|ForEach-Object {$_.name}) -join ', '))
+            Write-Host 'Read-only ZIP metadata check only; no extraction, installation, license/gameplay approval or public artifacts.'
+          } finally {
+            if(Test-Path -LiteralPath $archive -PathType Leaf) {
+              Remove-Item -LiteralPath $archive -Force
+            }
+            if(Test-Path -LiteralPath $folder -PathType Container) {
+              Remove-Item -LiteralPath $folder -Force
+            }
+          }
