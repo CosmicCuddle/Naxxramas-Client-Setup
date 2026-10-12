@@ -159,6 +159,7 @@ function Add-NaxxOptionalReview(
         $notes.Add('N Addon Suite is not selected. Existing addon folders are inspected by name only, with no changes.')
     }
     foreach($row in $inventory){
+        $notes.Add(('Addon folder '+$row.folder+': '+$row.state+' (name only, content/version unverified).'))
         if($row.state -in @('linked_unsafe','not_a_folder','ambiguous')){
             $extra.Add(('Addon folder '+$row.folder+' is '+$row.state+'. Stop and review manually; no changes made.'))
         }
