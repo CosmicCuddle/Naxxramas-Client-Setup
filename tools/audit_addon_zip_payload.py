@@ -56,7 +56,7 @@ MAX_CAPTURE = 256 * 1024
 CHUNK = 64 * 1024
 RESERVED = re.compile(r"^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$", re.I)
 UNSAFE = re.compile(r'[\x00-\x1f<>:"|?*]')
-META = re.compile(r"^##\s*([A-Za-z][A-Za-z0-9]*):\s*(.*?)\s*$")
+META = re.compile(r"^##\s*([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$")
 
 
 class AuditFailure(ValueError):
