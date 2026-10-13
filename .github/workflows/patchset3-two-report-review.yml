@@ -1,0 +1,40 @@
+name: Compare two untrusted patchset 0003 QA reports
+
+on:
+  pull_request:
+    paths:
+      - 'tools/compare_patchset3_human_reports.py'
+      - 'tests/test_patchset3_two_report_comparison.py'
+      - 'tools/review_patchset3_manual_record.py'
+      - 'tools/plan_patchset3_manual_qa.py'
+      - 'docs/PATCHSET3-TWO-REPORT-REVIEW.md'
+      - '.github/workflows/patchset3-two-report-review.yml'
+  push:
+    paths:
+      - 'tools/compare_patchset3_human_reports.py'
+      - 'tests/test_patchset3_two_report_comparison.py'
+      - '.github/workflows/patchset3-two-report-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  untrusted-comparison-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source-only synthetic comparison tests
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compare synthetic cloned, conflicting and mutually matching records
+        run: python -m unittest discover -s tests -p test_patchset3_two_report_comparison.py -v
+      - name: Preserve strict human record validation regression tests
+        run: python -m unittest discover -s tests -p test_patchset3_manual_record.py -v
