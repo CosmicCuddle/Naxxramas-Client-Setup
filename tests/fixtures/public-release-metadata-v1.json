@@ -1,0 +1,86 @@
+{
+  "patch_releases": [
+    {
+      "tag_name": "v1.0.6.8.4",
+      "published_at": "2026-10-08T19:47:05Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "patch-V.mpq",
+          "size": 450631505,
+          "digest": "sha256:68ca0d260841a028181fdeac72db5cd96a752da9c5f2798432a065db6dcd70ff"
+        }
+      ]
+    },
+    {
+      "tag_name": "optional-v1.0",
+      "published_at": "2026-09-02T20:44:44Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "Patch-C.mpq",
+          "size": 26753640,
+          "digest": "sha256:16b339522ca9394c11a5afe505e25cf9f326325eb2518dfde328ff08a99920c8"
+        },
+        {
+          "name": "Patch-J.mpq",
+          "size": 5739890,
+          "digest": "sha256:24385046f0db6c17db5f549fa0f418f5d5ed1d4c2100059f1db9bede709113c9"
+        },
+        {
+          "name": "Patch-U.mpq",
+          "size": 11050502,
+          "digest": "sha256:51fc8cbd1786537772ea7f59eac7be244eedabf7e6487ee41e5ce2009ecd9a6d"
+        }
+      ]
+    },
+    {
+      "tag_name": "v1.0.6.7",
+      "published_at": "2026-09-02T20:18:12Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "patch-V.mpq",
+          "size": 182617418,
+          "digest": "sha256:f152aa2841a9dc83915304dcd9e070b231c39e0b47334af90a6e563be3ac17fa"
+        },
+        {
+          "name": "patch-Z.mpq",
+          "size": 47337608,
+          "digest": "sha256:5eb17ce5dc7b87990dd173a7c3dd3ff5be7d34219be407eaa854d95625011b3a"
+        }
+      ]
+    }
+  ],
+  "addon_releases": [
+    {
+      "tag_name": "v2.0.0",
+      "published_at": "2026-10-09T15:10:17Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "N-Addon-Collection-v2.0.0.zip",
+          "size": 26762217,
+          "digest": "sha256:07595216ccffe4cfc7566810ad0990bd030f813e78e2eefb4ebe2a656f5bd324"
+        }
+      ]
+    },
+    {
+      "tag_name": "v1.0.0",
+      "published_at": "2026-10-09T11:40:07Z",
+      "draft": false,
+      "prerelease": false,
+      "assets": [
+        {
+          "name": "N-Addon-Collection-v1.0.0.zip",
+          "size": 26753848,
+          "digest": "sha256:e6a6fd14fff7cdfd6650fab492e24efbec1fa70b8b8d2d146934908e638805d7"
+        }
+      ]
+    }
+  ]
+}

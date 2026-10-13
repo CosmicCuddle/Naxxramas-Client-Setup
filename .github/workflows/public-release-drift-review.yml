@@ -1,0 +1,46 @@
+name: Read-only public release reference drift review
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_public_release_drift.py'
+      - 'tests/test_public_release_drift.py'
+      - 'tests/fixtures/public-release-metadata-v1.json'
+      - 'config/client-patches.json'
+      - 'config/patch-versions/patchset-0002.json'
+      - 'config/optional-content.json'
+      - 'docs/release-rights-evidence-v1.json'
+      - '.github/workflows/public-release-drift-review.yml'
+  push:
+    paths:
+      - 'tools/review_public_release_drift.py'
+      - 'tests/test_public_release_drift.py'
+      - 'tests/fixtures/public-release-metadata-v1.json'
+      - '.github/workflows/public-release-drift-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metadata-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source and pinned policy; no game assets
+        uses: actions/checkout@v4
+      - name: Python 3.12 developer-only metadata reviewer
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test public release drift with frozen actual metadata and hostile fixtures
+        run: python -m unittest discover -s tests -p test_public_release_drift.py -v
+      - name: Check fixed historical public metadata remains an exact match
+        run: python tools/review_public_release_drift.py --snapshot tests/fixtures/public-release-metadata-v1.json
+      - name: Manually requested LIVE public GitHub release metadata check (no downloads or edits)
+        if: ${{ github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' }}
+        run: python tools/review_public_release_drift.py --live

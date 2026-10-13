@@ -49,3 +49,11 @@ Every file change must have a backup and a recorded before/after checksum. Updat
 - Test J and U separately and together if either one changes, since their loading-screen assets overlap.
 
 The actual installer, remote updater, patch distribution, automatic rollback and self-update functionality are not implemented yet.
+
+## Read-only GitHub release-reference drift check (13 October 2026)
+
+For a **source/developer-only metadata check**, the repository includes `tools/review_public_release_drift.py` and [public release drift guide](PUBLIC-RELEASE-DRIFT-REVIEW.md). At the time of the check, the official latest stable **Patch-V** is v1.0.6.8.4 and its referenced SHA-256/size still match patchset-0002. Patch-Z remains independently pinned to v1.0.6.7 (the newest release does not bundle a new Z). Optional C/J/U remain optional-v1.0 and N Addon Suite remains v2.0.0.
+
+Use **Actions → Read-only public release reference drift review → Run workflow** to check GitHub release metadata without changing a client. PR CI tests only an offline frozen public metadata snapshot. The operator-invoked live check reads two specific public GitHub release-list endpoints and flags a new stable V, Z, individual optional MPQ or addon version. **No binary MPQ/ZIP downloads, patch proposals, backups or updater actions occur.**
+
+When drift is flagged, verify the published new asset, rights, checksum and in-game behaviour; keep existing client contents untouched and create a **new immutable patchset** only after review. A public source listing and matching SHA-256 are not rights clearance, signed provenance or installer authority. No installation or public release permission is granted.
