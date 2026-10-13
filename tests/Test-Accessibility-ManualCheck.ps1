@@ -108,6 +108,25 @@ exit 0
     $missingFixture=Run-QA @('-Headless','-Scenario','Ready')
     Check ($missingFixture.exit_code -ne 0 -and $missingFixture.calls.Count -eq 0) 'Missing disposable fixture fails closed'
 
+    # The human-facing BAT must not silently start an interactive GUI in CI,
+    # accept caller-supplied game paths or permit client/writer operations.
+    $batchSource=Join-Path $PSScriptRoot 'Start-Accessibility-ManualCheck.bat'
+    Check (Test-Path -LiteralPath $batchSource -PathType Leaf) 'Double-click source-only QA launcher is present'
+    $batchText=[IO.File]::ReadAllText($batchSource)
+    Check ($batchText.Contains('Start-Accessibility-ManualCheck.ps1') -and
+        $batchText.Contains('-Interactive -Scenario Both') -and
+        $batchText.Contains('Test-SetupWizard.ps1') -and
+        $batchText.Contains('if not "%~1"=="" goto invalid') -and
+        -not $batchText.Contains('-ClientPath')) 'BAT delegates only to existing interactive fake-file QA with no client path parameter'
+
+    $batchResult=(& $env:ComSpec /d /c ('"'+$batchSource+'"') 2>&1 | Out-String)
+    $batchExit=$LASTEXITCODE
+    Check ($batchExit -eq 2 -and $batchResult.Contains('refused in CI')) 'Double-click BAT refuses interactive execution in CI without invoking fixtures'
+
+    $batchInvalid=(& $env:ComSpec /d /c ('"'+$batchSource+'" private-client-folder') 2>&1 | Out-String)
+    $batchInvalidExit=$LASTEXITCODE
+    Check ($batchInvalidExit -eq 2 -and $batchInvalid.Contains('accepts no arguments')) 'BAT rejects extra arguments before any fixture execution'
+
     Write-Host 'All accessibility launcher negative-path tests passed; only temporary fake files were used.' -ForegroundColor Green
     # Some GH Actions PowerShell wrappers propagate the most recent native
     # child's LASTEXITCODE even after every expected failure was asserted.

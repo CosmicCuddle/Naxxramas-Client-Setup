@@ -54,6 +54,12 @@ Before opening the wizard, enable **Windows High Contrast / contrast theme** and
 
 For each manual 100/125/150/200% scaling test, launch **by double-clicking the actual `tools/Start-Naxxramas-SetupWizard.bat` in the extracted scripts-only candidate**, not by invoking `-Diagnostics` (which never displays a window). Run this from an ordinary folder with spaces in its name to exercise the packaged path handling. Validate the real UI, Windows security prompts (if any), and safe Close behaviour. The CI headless BAT test confirms argument wiring only and must **not** be recorded as a passed human accessibility test.
 
+## Double-click local human QA (source checkout only)
+
+On a physical Windows desktop, extract the **full source repository** outside the game folder, then double-click `tests/Start-Accessibility-ManualCheck.bat`. It opens the same established, disposable **Ready** and **Blocked** fake-client fixtures as the PowerShell instructions below, in that order. Close each wizard normally and leave the console open to see the final fake-file integrity result. **No WoW client, original settings or MPQs are needed.** The BAT refuses arguments, client paths and unattended CI; it does not belong to the strict player scripts-only archive.
+
+Repeat at actual Windows scaling 100%, 125%, 150% and 200%, using keyboard and (when available) Narrator and High Contrast. Record the observations manually in [Windows Accessibility Test Record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md). A successful disposable integrity test is **not** a gameplay, screen-reader, DPI or release PASS.
+
 ## Disposable local visual acceptance fixtures (PR #37)
 
 If you have a **Windows computer** and a local clone/download of the **source repository** (not merely the scripts-only candidate ZIP), you can visually test the real read-only WinForms wizard without pointing it at an existing WoW installation. Open **Windows PowerShell 5.1** in the source repository root, at each actual Windows display-scaling setting.
