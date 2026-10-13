@@ -448,3 +448,10 @@ The developer-only real-release CI job https://github.com/CosmicCuddle/Naxxramas
 - [x] All four exact final-head workflows green, seven developer source/test/docs/workflow text files, no changes to immutable patchsets, player ZIP or manifest, unchanged main base and zero unresolved review threads. Merged 13 October 2026 as `d6ef6feff8c1af3c27cb000966dbf34e7c705cce`. No human game tests, real asset authentication, physical accessibility or backups performed.
 - [ ] No human testing has occurred. Independent valid test-client provenance, legally permitted actual images, protected original/WTF backups and restore, signed/replay-protected reviewer authority, real game/accessibility observations, owner consent and distribution rights remain **NOT TESTED / BLOCKED**.
 
+
+### 13 October 2026 — Physical Windows QA entrypoint (PR pending)
+
+- [x] Add a **double-click source-only** `tests/Start-Accessibility-ManualCheck.bat` wrapper for the existing human-run Ready + Blocked disposable fake-client review. Reuse the existing PowerShell test instead of making another synthetic patch/gameplay model. It refuses arguments, source/client paths and CI; is not included in the strict player ZIP; and keeps the console open to show the synthetic integrity result.
+- [x] Add Windows negative-path regression assertions for CI refusal, unsupported arguments and exact delegation, and keep the existing Windows fixture tests. Document the short human route in README, accessibility acceptance and test record.
+- [ ] Await exact PR-head Windows CI and source diff review before merge. **No real Windows DPI, keyboard, Narrator, High Contrast or WoW gameplay test was performed by this change.**
+- [ ] **Next actual gate:** operator physically runs source-only BAT on a Windows desktop at 100/125/150/200% scaling, completes the existing private observation record, and reports reproduction steps for any real clipping/focus/announcement issue. Do not create further synthetic acceptance claims, modify a real client, ship a public release, enable file writes, or treat fake bytes as patch/game evidence.
