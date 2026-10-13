@@ -7,7 +7,8 @@
 ## Before testing
 
 - Open the source repository on a physical Windows desktop using Windows PowerShell 5.1; do not run the headless `-Diagnostics` variant as a substitute for seeing the window.
-- **Simplest Windows option:** double-click `tests/Start-Accessibility-ManualCheck.bat` from a full source repository download. The launcher runs the existing **Ready**, then **Blocked** fake-client review; close each wizard when finished. The console remains open for the unchanged fake-file result. It accepts **no arguments or real client paths** and refuses unattended CI.\n- **PowerShell alternative:** run the same existing test from the source repository root with Windows PowerShell 5.1:
+- **Simplest Windows option:** double-click `tests/Start-Accessibility-ManualCheck.bat` from a full source repository download. The launcher runs the existing **Ready**, then **Blocked** fake-client review; close each wizard when finished. The console remains open for the unchanged fake-file result. It accepts **no arguments or real client paths** and refuses unattended CI.
+- **PowerShell alternative:** run the same existing test from the source repository root with Windows PowerShell 5.1:
 
   ```powershell
   powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Interactive -Scenario Both
