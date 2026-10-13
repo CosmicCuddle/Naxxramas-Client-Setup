@@ -33,7 +33,7 @@ When deliberately invoked on an **already existing, separately prepared test cop
 From a trusted **source** checkout, after preparing that separate test root:
 
 ```powershell
-python .\tools\review_disposable_test_client.py --test-root "D:\\YourDisposableTestCopy" --selection j-u
+python .\tools\review_disposable_test_client.py --test-root "D:\YourDisposableTestCopy" --selection j-u
 ```
 
 The example path is only illustrative, not a folder that the tool creates. **Do not create or change the marker in your existing client.** Nothing is scanned automatically, no folder is discovered, and the script is not part of the published scripts-only player ZIP.
