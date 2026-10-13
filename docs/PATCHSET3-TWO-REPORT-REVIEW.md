@@ -50,3 +50,7 @@ A distinct, separately reviewed process would need the following *real* evidence
 ## Guaranteed non-actions
 
 There is **no install, download, backup, recovery, real gameplay, real tester identification, game file access, patchset-0003 creation, player ZIP change, public asset redistribution or release**. All source-rights, actual compatibility, physical Windows/accessibility, authenticated consent and recovery gates remain **BLOCKED / NOT TESTED**.
+
+## Follow-on: fake-file custody versus genuine game evidence
+
+The new [synthetic evidence custody reviewer](PATCHSET3-SYNTHETIC-EVIDENCE-CUSTODY.md) checks SHA-256/size and case/check bindings in **disposable text-only placeholders**. Tests prove both tampering detection and **coherent replay of an entire valid evidence folder**; source-only hash matching is not independent proof of two human testers, real game execution or trusted custody. No genuine player screenshot, MPQ, file or personal data is read, and this does not change any owner consent or release gate.
