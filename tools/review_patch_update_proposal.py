@@ -68,8 +68,13 @@ def _check_frozen_history():
     for revision, expected_git_blob in HISTORICAL_BLOBS.items():
         path = HISTORY_DIR / ("patchset-%04d.json" % revision)
         raw = _read_bytes(path)
-        git_blob = hashlib.sha1(b"blob " + str(len(raw)).encode("ascii") +
-                                b"\0" + raw).hexdigest()
+        # GitHub source blob IDs use canonical committed LF data, while
+        # windows-latest can check out these text files with CRLF endings.
+        # Normalise only the line-ending representation for this reference
+        # check; any changed key, digest, size or semantic JSON is refused.
+        canonical = raw.replace(b"\r\n", b"\n")
+        git_blob = hashlib.sha1(b"blob " + str(len(canonical)).encode("ascii") +
+                                b"\0" + canonical).hexdigest()
         if git_blob != expected_git_blob:
             raise Refusal("historical_patchset_changed_from_reviewed_baseline")
         data = drift._decode(raw)
