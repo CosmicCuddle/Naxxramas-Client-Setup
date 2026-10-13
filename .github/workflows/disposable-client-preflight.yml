@@ -1,0 +1,40 @@
+name: Marked disposable client patch preflight tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_disposable_test_client.py'
+      - 'tests/test_disposable_client_preflight.py'
+      - 'docs/DISPOSABLE-CLIENT-READONLY-PREFLIGHT.md'
+      - '.github/workflows/disposable-client-preflight.yml'
+      - 'config/client-patches.json'
+      - 'config/patch-versions/**'
+  push:
+    paths:
+      - 'tools/review_disposable_test_client.py'
+      - 'tests/test_disposable_client_preflight.py'
+      - '.github/workflows/disposable-client-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fake-data-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source only - no WoW client or released binaries
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate all six patch selections with disposable FAKE bytes and no WTF access
+        run: python -m unittest discover -s tests -p test_disposable_client_preflight.py -v
+      - name: Retain older strict patch proposal and history safeguards
+        run: python -m unittest discover -s tests -p test_patch_update_proposal_evidence.py -v

@@ -61,3 +61,7 @@ The CLI is only for inspecting **already authored disposable JSON fixtures**. It
 These are **design acceptance criteria**, not steps secretly performed by the source-only checker. Their implementation must undergo another independent security/rights review and cannot be granted by editing a JSON status to `true`.
 
 **Every current output has** `installation_authorised=false`, `redistribution_authorised=false`, `public_release_authorised=false`, and `coherent_replay_prevented=false`. No new real patchset-0003, installer, backup or live gameplay test has been introduced.
+
+## Follow-on: marked disposable client patch preflight remains untrusted
+
+The [read-only test-copy patch preflight](DISPOSABLE-CLIENT-READONLY-PREFLIGHT.md) verifies locally opened V/Z/J/C/U file sizes and SHA-256 against frozen source pins **only when explicitly pointed at a caller-marked test root**. It rejects extra optional MPQs contaminating a declared scenario and never accesses WTF, account records or realmlist. Its marker can be forged; a matching hash is not authenticated source provenance, a confirmed build 12340, lawful media, independent observer, full backup or actual gameplay evidence. Production use is not scheduled or included in the player package.
