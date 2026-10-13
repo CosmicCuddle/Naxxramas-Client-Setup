@@ -197,7 +197,7 @@ def review_record(record: object, plan: dict) -> dict:
         "human_identity_or_consent_authenticated": False,
         "game_or_mpq_files_read": False,
         "game_or_mpq_files_written": False,
-        "case_claims_independently_corrobated": False,
+        "case_claims_independently_corroborated": False,
         "backup_or_recovery_executed": False,
         "manifest_or_patchset_written": False,
         "installation_authorised": False,
