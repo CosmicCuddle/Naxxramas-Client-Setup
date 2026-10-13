@@ -7,13 +7,13 @@
 ## Before testing
 
 - Open the source repository on a physical Windows desktop using Windows PowerShell 5.1; do not run the headless `-Diagnostics` variant as a substitute for seeing the window.
-- Run the **one-command manual QA launcher** from the source repository root in **Windows PowerShell 5.1**:
+- **Simplest Windows option:** double-click `tests/Start-Accessibility-ManualCheck.bat` from a full source repository download. The launcher runs the existing **Ready**, then **Blocked** fake-client review; close each wizard when finished. The console remains open for the unchanged fake-file result. It accepts **no arguments or real client paths** and refuses unattended CI.\n- **PowerShell alternative:** run the same existing test from the source repository root with Windows PowerShell 5.1:
 
   ```powershell
   powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File ".\tests\Start-Accessibility-ManualCheck.ps1" -Interactive -Scenario Both
   ```
 
-  This opens the disposable **Ready** wizard first. Close it normally after checking the UI; the fixture verifies its unchanged bytes and cleans up before opening **Blocked**. It is source/developer-only, not in the player ZIP. For a single scenario use `-Scenario Ready` or `-Scenario Blocked`.
+  This opens the disposable **Ready** wizard first. Close it normally after checking the UI; the fixture verifies its unchanged bytes and cleans up before opening **Blocked**. Both launch methods are source/developer-only, not in the player ZIP. For a single scenario use `-Scenario Ready` or `-Scenario Blocked`.
 - The generated fixture is removed after the window is closed. No genuine MPQs or SavedVariables are required. **Keep the console open until its final unchanged-file confirmation.**
 - Check a real extracted scripts-only **candidate** launcher separately using `tools/Start-Naxxramas-SetupWizard.bat`, to test startup rather than synthetic file contents. Do not treat that as an installation.
 - Never include personal paths, character names, player folders, screenshots containing private content, or complete game archives in a public issue.
