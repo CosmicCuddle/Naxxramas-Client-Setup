@@ -60,3 +60,7 @@ The matching plan SHA-256 is a **locally reproducible fingerprint against accide
 - No actual `patchset-0003`, user client, MPQ, installer, manifest, SavedVariables, recovery record or public release is created or changed.
 
 **Do not upload private records to public GitHub issues or commit them to the repository.** A successfully parsed record is not permission to modify a real WoW client.
+
+## Comparing two separate self-reports is still not authentication
+
+The source-only [two-report discrepancy reviewer](PATCHSET3-TWO-REPORT-REVIEW.md) can compare two existing local records at the individual check and scenario level. It flags identical canonical report content and mismatches without printing private data. Neither apparently matching PASS records nor distinct report dates establish separate authors, independently verified gameplay, source rights or permission to install/publish. No actual second human observation has been received.
