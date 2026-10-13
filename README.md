@@ -23,7 +23,7 @@ This repository is **not** a full World of Warcraft client download. Do not uplo
 
 Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The `.gitignore` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
 
-## First step: inspect the existing client safely
+## Try the review-only Windows interface without touching WoW\n\nFor an initial **hands-on accessibility check**, download and extract the full source repository outside your game installation. On Windows, double-click `tests/Start-Accessibility-ManualCheck.bat`. It opens the existing read-only setup wizard with **disposable fake files**, first in Ready mode and then in Blocked mode. No real WoW client path is accepted and no game, account, addon, or SavedVariables files are accessed. This source-only developer QA launcher is **not** an installer and is **not** part of the player ZIP.\n\nChange your real Windows display scaling to 100%, 125%, 150%, and 200% in turn, reopen the launcher, and record what you actually observe. See [Windows accessibility test record](docs/WINDOWS-ACCESSIBILITY-TEST-RECORD.md). Automated tests do not establish physical usability or gameplay compatibility.\n\n## First step: inspect the existing client safely
 
 The included inventory tool lists filenames and approximate sizes only. It does **not** read the contents of account settings, saved variables, passwords, or realm configuration.
 
