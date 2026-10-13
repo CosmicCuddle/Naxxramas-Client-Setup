@@ -1,0 +1,42 @@
+name: Synthetic patchset 0003 evidence custody
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_synthetic_patchset3_evidence.py'
+      - 'tests/test_synthetic_patchset3_evidence.py'
+      - 'tools/review_patchset3_manual_record.py'
+      - 'tools/plan_patchset3_manual_qa.py'
+      - 'docs/PATCHSET3-SYNTHETIC-EVIDENCE-CUSTODY.md'
+      - '.github/workflows/patchset3-synthetic-evidence-custody.yml'
+  push:
+    paths:
+      - 'tools/review_synthetic_patchset3_evidence.py'
+      - 'tests/test_synthetic_patchset3_evidence.py'
+      - '.github/workflows/patchset3-synthetic-evidence-custody.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-text-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout developer source (no client data)
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Detect synthetic evidence tamper and coherent replay limitations
+        run: python -m unittest discover -s tests -p test_synthetic_patchset3_evidence.py -v
+      - name: Preserve strict patchset3 single-report validation
+        run: python -m unittest discover -s tests -p test_patchset3_manual_record.py -v
+      - name: Preserve dual-report contradiction detection
+        run: python -m unittest discover -s tests -p test_patchset3_two_report_comparison.py -v
