@@ -95,7 +95,7 @@ class PatchProposalEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(reviewer.Refusal, "required_patch_not_checked"):
             reviewer.review(p, self.releases)
         p = copy.deepcopy(self.proposal)
-        p["files_checked"].append(copy.deepcopy(p["files_checked"][-1]))
+        p["files_checked"][-1] = copy.deepcopy(p["files_checked"][-2])
         with self.assertRaisesRegex(reviewer.Refusal, "ambiguous_or_untrusted_checked_file"):
             reviewer.review(p, self.releases)
         p = copy.deepcopy(self.proposal)
