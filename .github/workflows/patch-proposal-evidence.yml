@@ -1,0 +1,46 @@
+name: Read-only patch proposal and frozen history evidence
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_patch_update_proposal.py'
+      - 'tests/test_patch_update_proposal_evidence.py'
+      - 'tests/fixtures/synthetic-patch-proposal-v3.json'
+      - 'config/client-patches.json'
+      - 'config/patch-versions/**'
+      - 'tools/review_public_release_drift.py'
+      - 'tests/fixtures/public-release-metadata-v1.json'
+      - '.github/workflows/patch-proposal-evidence.yml'
+      - 'docs/PATCH-PROPOSAL-EVIDENCE.md'
+  push:
+    paths:
+      - 'tools/review_patch_update_proposal.py'
+      - 'tests/test_patch_update_proposal_evidence.py'
+      - 'tests/fixtures/synthetic-patch-proposal-v3.json'
+      - '.github/workflows/patch-proposal-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Check out developer-only evidence and source history
+        uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit-test synthetic proposals, frozen history and fail-closed path handling
+        run: python -m unittest discover -s tests -p test_patch_update_proposal_evidence.py -v
+      - name: Run sample V-only synthetic patch proposal review
+        run: python tools/review_patch_update_proposal.py --proposal tests/fixtures/synthetic-patch-proposal-v3.json --release-snapshot tests/fixtures/public-release-metadata-v1.json
+      - name: Regression-test earlier public release drift rules
+        run: python -m unittest discover -s tests -p test_public_release_drift.py -v
