@@ -1,0 +1,44 @@
+name: Read-only patchset 0003 human report consistency
+
+on:
+  pull_request:
+    paths:
+      - 'tools/review_patchset3_manual_record.py'
+      - 'tests/test_patchset3_manual_record.py'
+      - 'tools/plan_patchset3_manual_qa.py'
+      - 'tools/review_patch_update_proposal.py'
+      - 'tests/fixtures/synthetic-patch-proposal-v3.json'
+      - 'tests/fixtures/public-release-metadata-v1.json'
+      - 'docs/PATCHSET3-MANUAL-QA-RECORD.md'
+      - '.github/workflows/patchset3-manual-record.yml'
+  push:
+    paths:
+      - 'tools/review_patchset3_manual_record.py'
+      - 'tests/test_patchset3_manual_record.py'
+      - '.github/workflows/patchset3-manual-record.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fixture-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source-only human record tests
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Refuse false claims, missing cases, private fields and incompatible plan bindings
+        run: python -m unittest discover -s tests -p test_patchset3_manual_record.py -v
+      - name: Preserve all earlier patchset manual-plan regressions
+        run: python -m unittest discover -s tests -p test_patchset3_manual_qa_plan.py -v
+      - name: Print unperformed template from purely fake V-only proposal
+        run: python tools/review_patchset3_manual_record.py --proposal tests/fixtures/synthetic-patch-proposal-v3.json --release-snapshot tests/fixtures/public-release-metadata-v1.json --print-template
