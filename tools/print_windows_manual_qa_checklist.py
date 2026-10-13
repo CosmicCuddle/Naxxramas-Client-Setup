@@ -7,6 +7,7 @@ This does not perform any of the described actions.
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 import sys
 
 import plan_patchset3_manual_qa as qa
@@ -154,8 +155,8 @@ def main() -> int:
     p.add_argument("--release-snapshot", required=True)
     args = p.parse_args()
     try:
-        plan = qa.make_plan(proposals._load(args.proposal),
-                            proposals._load(args.release_snapshot))
+        plan = qa.make_plan(proposals._load(Path(args.proposal)),
+                            proposals._load(Path(args.release_snapshot)))
         result = render(plan)
     except (Refusal, proposals.Refusal, drift.Refusal, OSError) as exc:
         label = str(exc) if isinstance(exc, (Refusal, proposals.Refusal, drift.Refusal)) else "unreadable_metadata_fixture"
