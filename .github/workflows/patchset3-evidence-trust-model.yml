@@ -1,0 +1,40 @@
+name: Synthetic evidence challenge authority boundary model
+
+on:
+  pull_request:
+    paths:
+      - 'tools/model_patchset3_evidence_challenge.py'
+      - 'tests/test_patchset3_claimed_challenge.py'
+      - 'docs/PATCHSET3-EVIDENCE-TRUST-MODEL.md'
+      - '.github/workflows/patchset3-evidence-trust-model.yml'
+      - 'tools/plan_patchset3_manual_qa.py'
+      - 'tools/review_patchset3_manual_record.py'
+  push:
+    paths:
+      - 'tools/model_patchset3_evidence_challenge.py'
+      - 'tests/test_patchset3_claimed_challenge.py'
+      - '.github/workflows/patchset3-evidence-trust-model.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  caller-claimed-authority-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout synthetic source fixtures only
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test synthetic challenge issuance, expiry, replay and role separation
+        run: python -m unittest discover -s tests -p test_patchset3_claimed_challenge.py -v
+      - name: Preserve fake evidence custody/replay and privacy refusals
+        run: python -m unittest discover -s tests -p test_synthetic_patchset3_evidence.py -v
