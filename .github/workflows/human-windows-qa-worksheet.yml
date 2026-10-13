@@ -1,0 +1,42 @@
+name: Source-only human Windows QA worksheet
+
+on:
+  pull_request:
+    paths:
+      - 'tools/print_windows_manual_qa_checklist.py'
+      - 'tests/test_windows_manual_qa_checklist.py'
+      - 'tools/plan_patchset3_manual_qa.py'
+      - 'tools/review_disposable_test_client.py'
+      - 'docs/HUMAN-WINDOWS-QA-WORKSHEET.md'
+      - '.github/workflows/human-windows-qa-worksheet.yml'
+  push:
+    paths:
+      - 'tools/print_windows_manual_qa_checklist.py'
+      - 'tests/test_windows_manual_qa_checklist.py'
+      - '.github/workflows/human-windows-qa-worksheet.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  never-execute-game:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source and synthetic metadata only
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check six permitted cases, two forbidden mutex cases and all NOT TESTED warnings
+        run: python -m unittest discover -s tests -p test_windows_manual_qa_checklist.py -v
+      - name: Ensure prior 31 changed-patch scenarios remain supported
+        run: python -m unittest discover -s tests -p test_patchset3_manual_qa_plan.py -v
+      - name: Print synthetic human worksheet without game access
+        run: python tools/print_windows_manual_qa_checklist.py --proposal tests/fixtures/synthetic-patch-proposal-v3.json --release-snapshot tests/fixtures/public-release-metadata-v1.json
