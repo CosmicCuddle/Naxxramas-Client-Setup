@@ -179,6 +179,19 @@ class PatchProposalEvidenceTests(unittest.TestCase):
             # Source history remains untouched.
             self.assertEqual((reviewer.HISTORY_DIR / "patchset-0001.json").read_bytes(), original)
 
+    def test_windows_crlf_checkout_of_historical_json_is_semantically_unchanged(self):
+        with tempfile.TemporaryDirectory(prefix="FAKE-CRLF-History-") as folder:
+            fake = Path(folder)
+            for revision in (1, 2):
+                name = "patchset-%04d.json" % revision
+                data = (reviewer.HISTORY_DIR / name).read_bytes()
+                # Use only a generated temporary source history, never modify
+                # the real committed patchsets or owner client.
+                (fake / name).write_bytes(data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n"))
+            with mock.patch.object(reviewer, "HISTORY_DIR", fake):
+                result = reviewer.review(self.proposal, self.releases)
+            self.assertEqual(result["status"], "manual_review_required_NO_INSTALL_AUTHORITY")
+
     def test_source_manifest_drift_detected_against_disposable_copy(self):
         with tempfile.TemporaryDirectory(prefix="FAKE-Manifest-") as folder:
             fake = Path(folder) / "client-patches.json"
