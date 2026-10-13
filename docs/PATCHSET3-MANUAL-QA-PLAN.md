@@ -74,3 +74,7 @@ The tool emits these focus categories only when relevant. For consistency it pro
 ## Recording genuinely performed checks (self-report review, not approval)
 
 The optional [manual QA record guide](PATCHSET3-MANUAL-QA-RECORD.md) now explains how to **print a blank local JSON template** and review human-entered statuses against all six valid scenarios and two forbidden J/C selections. The reviewer accepts only fixed status/check IDs, requires every check in a reported passing case to pass, binds records to the exact generated plan fingerprint, refuses free-text identifying data and never changes the test client. All such entries are self-reports, **not independently observed or authenticated**; no manual checks have been done through this milestone and there is still **no owner install/release permission**.
+
+## Printable Windows worksheet for later owner-authorised physical testing
+
+The [printable human Windows QA worksheet](HUMAN-WINDOWS-QA-WORKSHEET.md) combines all six valid patch selections, the two forbidden C/J selection-only cases, game/startup/client-file checks and physical DPI/High Contrast/keyboard/Narrator acceptance in an **unperformed** source-only document. It prints the prior read-only disposable test-client preflight command separately for each case. The current preflight compares to **patchset-0002**, not any genuine changed future patchset-0003 bytes, and must never be treated as v3 approval. Nothing is run on a real client and every checkbox starts blank.
