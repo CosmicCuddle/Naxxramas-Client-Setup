@@ -210,6 +210,12 @@ class TwoReportTests(unittest.TestCase):
             self.b["valid_scenarios"][0]["outcome"] = "NOT_TESTED"
             for check in self.b["valid_scenarios"][0]["checks"]:
                 check["status"] = "NOT_TESTED"
+            # A now wholly blank record cannot retain a claimed observation
+            # context; preserve the strict existing single-record invariant.
+            for name in ("reported_utc_date", "observed_client_build", "observed_locale"):
+                self.b[name] = None
+            self.b["reported_disposable_test_environment"] = False
+            self.b["reported_human_observation"] = False
             b.write_text(json.dumps(self.b), encoding="utf-8")
             conflict = subprocess.run(base, capture_output=True, text=True)
             self.assertEqual(conflict.returncode, 3)
