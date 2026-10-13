@@ -63,3 +63,7 @@ The test suite creates its own synthetic files in a temporary directory and clea
 **Crucial limitation:** even a real file with a matching SHA-256 would only establish byte agreement with a provided hash. It would not prove who captured it, when, on which client, whether it depicts the requested test, or whether it is legal to redistribute. Coordinated rewriting of index, report and artifacts can always produce another internally valid bundle. To prevent coherent replay, the trust root must be **independently protected outside the caller-controlled evidence folder**; this project has no such implemented authority.
 
 **No real patchset-0003 is created. No WoW files, SavedVariables, client installations, automatic backups, restorations or public releases are touched or authorised.**
+
+## Follow-on: challenge lifecycle is still only a caller's claim
+
+See [Evidence Trust Model](PATCHSET3-EVIDENCE-TRUST-MODEL.md) for a strict *in-memory simulation* of challenge issue/submit/review/consume/revoke steps, expiry, actor-label separation and revoked or repeated claims. The test deliberately shows that **replaying the whole internally valid challenge event history and rolling back its claimed epoch can still pass** because no independently protected authority is present. It is not a live nonce issuer, identity service, signature, real evidence capture, backup or approval.
