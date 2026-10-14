@@ -18,9 +18,9 @@ Record each configuration separately. **Unrecorded is NOT passed.** Windows scal
 | 125% | Not tested | Not tested | Not tested | Not tested |
 | 150% | Not tested | Not tested | Not tested | Not tested |
 | 200% | Not tested | Not tested | Not tested | Not tested |
-| 300% (owner-reported) | Partial visual screenshots only | Partial visual screenshots only; interaction untested | Partial visual screenshots only | Not tested |
+| 300% (owner-reported) | Partial visual observation | Partial visual; mutual-exclusion interactions untested | Partial visual observation | Partial owner-reported keyboard: Tab/Shift+Tab, Enter, Escape working; review text controls no issue reported. Narrator/contrast untested |
 
-**300% partial observation (14 October 2026):** the owner reports using 300% display scaling on a large monitor and supplied pictures of the Ready and Blocked fake-client wizard, File Details and final console check. Text, six rows, warnings and controls appear readable without obvious overlap in the captured regions. Monitor resolution and OS DPI were not independently checked; other physical scales, keyboard traversal, Narrator and contrast theme remain **NOT TESTED**. This is **not full acceptance**, and no screenshot or personal path is committed. Details: [partial observation record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md).
+**300% partial observation (14 October 2026):** the owner reports using 300% display scaling on a large monitor and supplied pictures of the Ready and Blocked fake-client wizard, File Details and final console check. Text, six rows, warnings and controls appear readable without obvious overlap in the captured regions. Monitor resolution and OS DPI were not independently checked; other physical scales, **full keyboard traversal**, Narrator and contrast theme remain **NOT TESTED**. Follow-up on 14 October: owner reported Tab/Shift+Tab visible focus, Enter activating Review Only, no issues with review-text controls, and Escape closing the main window; this is **partial keyboard evidence**, not full acceptance. This is **not full acceptance**, and no screenshot or personal path is committed. Details: [partial observation record](WINDOWS-ACCESSIBILITY-TEST-RECORD.md).
 
 ### Steps
 
