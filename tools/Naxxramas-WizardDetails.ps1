@@ -90,20 +90,30 @@ function Get-WizardTheme([bool]$HighContrast){
             InputText=[Drawing.SystemColors]::WindowText
             Accent=[Drawing.SystemColors]::Highlight
             AccentText=[Drawing.SystemColors]::HighlightText
+            SectionText=[Drawing.SystemColors]::WindowText
+            Surface=[Drawing.SystemColors]::Control
+            SurfaceText=[Drawing.SystemColors]::ControlText
+            Border=[Drawing.SystemColors]::ControlDark
         }
     }
     return [pscustomobject]@{
         HighContrast=$false
-        Window=[Drawing.Color]::FromArgb(247,249,252)
-        Text=[Drawing.Color]::FromArgb(40,54,70)
-        Header=[Drawing.Color]::FromArgb(27,44,64)
-        HeaderText=[Drawing.Color]::White
-        HeaderSecondary=[Drawing.Color]::FromArgb(221,231,240)
-        MutedText=[Drawing.Color]::FromArgb(88,99,111)
-        Input=[Drawing.Color]::White
-        InputText=[Drawing.Color]::Black
-        Accent=[Drawing.Color]::FromArgb(33,75,114)
+        # Original Naxxramas-inspired colours; no copyrighted game textures.
+        # Keep Segoe UI/native focus and scroll behaviour for accessibility.
+        Window=[Drawing.Color]::FromArgb(19,29,40)
+        Text=[Drawing.Color]::FromArgb(235,242,245)
+        Header=[Drawing.Color]::FromArgb(12,20,30)
+        HeaderText=[Drawing.Color]::FromArgb(241,246,247)
+        HeaderSecondary=[Drawing.Color]::FromArgb(181,201,205)
+        MutedText=[Drawing.Color]::FromArgb(181,201,205)
+        Input=[Drawing.Color]::FromArgb(36,49,60)
+        InputText=[Drawing.Color]::FromArgb(241,246,247)
+        Accent=[Drawing.Color]::FromArgb(34,91,95)
         AccentText=[Drawing.Color]::White
+        SectionText=[Drawing.Color]::FromArgb(219,189,125)
+        Surface=[Drawing.Color]::FromArgb(36,49,60)
+        SurfaceText=[Drawing.Color]::FromArgb(235,242,245)
+        Border=[Drawing.Color]::FromArgb(120,147,142)
     }
 }
 function New-WizardDetailsForm([object]$Report){
@@ -127,6 +137,7 @@ function New-WizardDetailsForm([object]$Report){
     $content.Name='ReadOnlyDetailsContent'
     $content.Location=New-Object Drawing.Point(0,0)
     $content.Size=New-Object Drawing.Size(900,730)
+    $content.BackColor=$theme.Window
     $win.Controls.Add($content)
     $banner=New-Object Windows.Forms.Label
     $banner.Name='ReadOnlyDetailsBanner'
@@ -134,7 +145,7 @@ function New-WizardDetailsForm([object]$Report){
     $banner.Location=New-Object Drawing.Point(22,17)
     $banner.Size=New-Object Drawing.Size(854,34)
     $banner.Font=New-Object Drawing.Font('Segoe UI',12,[Drawing.FontStyle]::Bold)
-    $banner.ForeColor=$theme.Text
+    $banner.ForeColor=$theme.SectionText
     $banner.AccessibleName='Read-only file review, no files changed'
     $banner.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $content.Controls.Add($banner)
@@ -164,16 +175,17 @@ function New-WizardDetailsForm([object]$Report){
     $grid.AutoSizeColumnsMode=[Windows.Forms.DataGridViewAutoSizeColumnsMode]::Fill
     $grid.AutoSizeRowsMode=[Windows.Forms.DataGridViewAutoSizeRowsMode]::AllCells
     $grid.DefaultCellStyle.WrapMode=[Windows.Forms.DataGridViewTriState]::True
-    if($theme.HighContrast){
-        $grid.BackgroundColor=$theme.Input
-        $grid.DefaultCellStyle.BackColor=$theme.Input
-        $grid.DefaultCellStyle.ForeColor=$theme.InputText
-        $grid.DefaultCellStyle.SelectionBackColor=$theme.Accent
-        $grid.DefaultCellStyle.SelectionForeColor=$theme.AccentText
-        $grid.EnableHeadersVisualStyles=$false
-        $grid.ColumnHeadersDefaultCellStyle.BackColor=$theme.Header
-        $grid.ColumnHeadersDefaultCellStyle.ForeColor=$theme.HeaderText
-    }
+    # Apply an explicit palette in BOTH modes. High Contrast entries are
+    # Windows SystemColors rather than hard-coded fantasy colours.
+    $grid.BackgroundColor=$theme.Input
+    $grid.DefaultCellStyle.BackColor=$theme.Input
+    $grid.DefaultCellStyle.ForeColor=$theme.InputText
+    $grid.DefaultCellStyle.SelectionBackColor=$theme.Accent
+    $grid.DefaultCellStyle.SelectionForeColor=$theme.AccentText
+    $grid.EnableHeadersVisualStyles=$false
+    $grid.ColumnHeadersDefaultCellStyle.BackColor=$theme.Surface
+    $grid.ColumnHeadersDefaultCellStyle.ForeColor=$theme.SurfaceText
+    $grid.GridColor=$theme.Border
     $grid.ColumnHeadersHeight=38
     $grid.ColumnHeadersHeightSizeMode=[Windows.Forms.DataGridViewColumnHeadersHeightSizeMode]::DisableResizing
     $grid.AccessibleName='Six read-only game file actions'
@@ -200,7 +212,7 @@ function New-WizardDetailsForm([object]$Report){
     $heading.Location=New-Object Drawing.Point(22,353)
     $heading.Size=New-Object Drawing.Size(820,29)
     $heading.Font=New-Object Drawing.Font('Segoe UI',11,[Drawing.FontStyle]::Bold)
-    $heading.ForeColor=$theme.Text
+    $heading.ForeColor=$theme.SectionText
     $content.Controls.Add($heading)
     $notes=New-Object Windows.Forms.RichTextBox
     $notes.Name='ReadOnlyIssues'
@@ -250,6 +262,14 @@ function New-WizardDetailsForm([object]$Report){
     $close.Anchor=[Windows.Forms.AnchorStyles]::Bottom -bor [Windows.Forms.AnchorStyles]::Right
     $close.AccessibleName='Close read-only file details'
     $close.ForeColor=$theme.Text
+    if(-not $theme.HighContrast){
+        $close.UseVisualStyleBackColor=$false
+        $close.BackColor=$theme.Surface
+        $close.ForeColor=$theme.SurfaceText
+        $close.FlatStyle=[Windows.Forms.FlatStyle]::Flat
+        $close.FlatAppearance.BorderColor=$theme.Border
+        $close.FlatAppearance.BorderSize=1
+    }
     $close.TabIndex=2
     # This callback executes *after* New-WizardDetailsForm has returned.
     # Local $win is then out of scope in an event callback (StrictMode would

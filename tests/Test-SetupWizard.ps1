@@ -116,7 +116,9 @@ try{
     Check ($layout.preview_read_only -and $layout.selection_changes_clear_stale_review) 'Read-only scrolling result and stale-review invalidation on optional or realm edits'
     Check ($layout.contrast_matches_windows -and $layout.theme_preserves_standard_palette -and
         $layout.high_contrast_palette_uses_system_colours -and
-        $layout.contrast_applied_to_actual_controls) 'Wizard uses the active Windows palette and the High Contrast palette resolves OS system colours'
+        $layout.contrast_applied_to_actual_controls -and
+        $layout.naxx_preview_theme_controls -and
+        $layout.high_contrast_extra_palette_uses_system_colours) 'Naxx visual preview preserves native controls and Windows High Contrast OS colours'
     Check ($layout.review_status_accessible -and $layout.clear_and_close_accessible -and
         $layout.initial_keyboard_focus_target -ceq 'ClientFolder') 'Review status descriptions, safe buttons and initial keyboard focus remain available'
     Check ($layout.read_review_text_accessible -and
