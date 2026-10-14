@@ -518,9 +518,13 @@ if($DetailDiagnostics){
                 grid_add_delete_disabled=(-not $grid.AllowUserToAddRows -and -not $grid.AllowUserToDeleteRows)
                 warnings_read_only=$issues.ReadOnly
                 detail_matches_system_contrast=($dialog.BackColor -eq $theme.Window -and
-                    $banner.ForeColor -eq $theme.Text -and
+                    $banner.ForeColor -eq $theme.SectionText -and
                     $issues.BackColor -eq $theme.Input -and
-                    $issues.ForeColor -eq $theme.InputText)
+                    $issues.ForeColor -eq $theme.InputText -and
+                    $grid.DefaultCellStyle.BackColor -eq $theme.Input -and
+                    $grid.DefaultCellStyle.ForeColor -eq $theme.InputText -and
+                    $grid.ColumnHeadersDefaultCellStyle.BackColor -eq $theme.Surface -and
+                    $grid.ColumnHeadersDefaultCellStyle.ForeColor -eq $theme.SurfaceText)
                 details_notes_accessible=(-not [string]::IsNullOrWhiteSpace($issues.AccessibleName) -and
                     $issues.AccessibleDescription.Contains('Read-only'))
                 compact_viewport_checked=$true
