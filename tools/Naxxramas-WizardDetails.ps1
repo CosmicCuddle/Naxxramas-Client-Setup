@@ -118,7 +118,7 @@ public sealed class NaxxramasNecropolisHeader : Panel
         {
             // Respect Windows' Reduce animation settings and High Contrast.
             // Failure to read system motion preference disables motion.
-            if (SystemInformation.HighContrast || !SystemInformation.UIEffects)
+            if (SystemInformation.HighContrast)
                 return false;
             int enabled = 0;
             return SystemParametersInfo(0x1042, 0, out enabled, 0) && enabled != 0;
