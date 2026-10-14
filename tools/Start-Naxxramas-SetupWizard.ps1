@@ -638,6 +638,22 @@ if($Diagnostics){
             $contrastTheme.Text -eq [Drawing.SystemColors]::WindowText -and
             $contrastTheme.Accent -eq [Drawing.SystemColors]::Highlight -and
             $contrastTheme.AccentText -eq [Drawing.SystemColors]::HighlightText)
+        naxx_preview_theme_controls=(
+            $headerTrim.BackColor -eq $wizardTheme.Border -and
+            $clientField.Field.BackColor -eq $wizardTheme.Input -and
+            $clientField.Field.ForeColor -eq $wizardTheme.InputText -and
+            $clientField.Caption.ForeColor -eq $wizardTheme.SectionText -and
+            $login.BackColor -eq $wizardTheme.Window -and
+            $suite.BackColor -eq $wizardTheme.Window -and
+            ($wizardTheme.HighContrast -or
+             ($clear.BackColor -eq $wizardTheme.Surface -and
+              $clear.ForeColor -eq $wizardTheme.SurfaceText -and
+              $review.BackColor -eq $wizardTheme.Accent)))
+        high_contrast_extra_palette_uses_system_colours=(
+            $contrastTheme.SectionText -eq [Drawing.SystemColors]::WindowText -and
+            $contrastTheme.Surface -eq [Drawing.SystemColors]::Control -and
+            $contrastTheme.SurfaceText -eq [Drawing.SystemColors]::ControlText -and
+            $contrastTheme.Border -eq [Drawing.SystemColors]::ControlDark)
         contrast_applied_to_actual_controls=(
             $form.BackColor -eq $wizardTheme.Window -and
             $header.BackColor -eq $wizardTheme.Header -and
