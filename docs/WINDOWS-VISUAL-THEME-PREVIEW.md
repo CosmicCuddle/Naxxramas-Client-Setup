@@ -29,7 +29,3 @@ If the user does not use Narrator, screen-reader results remain **NOT TESTED** r
 ## Future polished player experience
 
 After practical visual acceptance and the independent legal/safety approvals, a future installer could use a purpose-built Naxxramas-branded UI with licensed or entirely original imagery, step-by-step panes, readable file-review and backup/consent stages. The **current themed preview is not that installer**; no game or account files may be modified without the separate documented original-backup, authentic consent, journal, recovery and rights gates.
-
-## Decorative artwork follow-up — 14 October 2026 (PR pending)
-
-The first dark palette alone was considered too generic. The next source-only review prototype draws original necropolis-style vector artwork in an enlarged header, adds a subtle rune-halo glow and a **visual-only** animation toggle. Window High Contrast and disabled Windows animation effects take precedence. No images, downloads, new UI framework or game files are needed. Physical confirmation of the **new** artwork at the owner's actual 300% scale is still **NOT TESTED**. See [art and motion acceptance steps](NECROPOLIS-ARTWORK-PREVIEW.md).
