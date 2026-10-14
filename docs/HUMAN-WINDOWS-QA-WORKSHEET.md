@@ -57,7 +57,7 @@ The two negative cases are `j-c` and `j-c-u`. They should be tested only with an
 
 Each test must be observed in a reviewed **non-writing interface**, not inferred from headless GitHub CI.
 
-- Test **100%, 125%, 150% and 200%** display scaling.
+- Test **100%, 125%, 150%, 200% and 300%** display scaling. The 300% row was added after partial owner-reported visual observation, not a full accessibility PASS.
 - Check clipped or overlapping controls, long labels/errors, keyboard Tab and Shift+Tab focus order, and reliable non-writing cancellation.
 - Check High Contrast visibility and screen-reader/Narrator labels and feedback.
 
