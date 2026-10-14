@@ -684,9 +684,8 @@ if($Diagnostics){
             -not $header.AnimationRunning -and
             $header.MotionEnabled -eq $false)
         hero_does_not_cover_first_section=(
-            $header.Bottom -le (@($form.Controls | Where-Object {
-                $_ -ne $header
-            } | Measure-Object -Property Top -Minimum)[0].Minimum))
+            $header.Bottom -lt $clientField.Caption.Top -and
+            $form.AutoScrollMinSize.Height -ge 1670)
         naxx_preview_theme_controls=(
             $headerTrim.BackColor -eq $wizardTheme.Border -and
             $clientField.Field.BackColor -eq $wizardTheme.Input -and
