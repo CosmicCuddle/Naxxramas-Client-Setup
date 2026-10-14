@@ -1,5 +1,8 @@
 # Milestone 4 — Guided Windows setup wizard (read-only)
 
+> **Visual design update:** the read-only WinForms preview now uses original Naxxramas-inspired dark colours in ordinary display modes. Windows High Contrast uses OS colours. This is **not** a finished player installer. Physical Windows 300% display/contrast testing for the new palette is still pending. See [visual theme and testing safeguards](WINDOWS-VISUAL-THEME-PREVIEW.md).
+
+
 **Status:** A working Windows Forms **review window**, not an installer. No copying, patching, backups, downloads, registration, genuine consent, uninstall or recovery actions exist. The wizard never calls a write engine.
 
 ## Player experience
