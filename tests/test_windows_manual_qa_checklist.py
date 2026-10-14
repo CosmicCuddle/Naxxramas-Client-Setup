@@ -61,7 +61,7 @@ class WindowsWorksheetTests(unittest.TestCase):
 
     def test_accessibility_acceptance_scales_and_assistive_technology_unperformed(self):
         doc = tool.render(self.plan)
-        for scale in ("100%", "125%", "150%", "200%"):
+        for scale in ("100%", "125%", "150%", "200%", "300%"):
             self.assertIn("### Display scaling " + scale + " — NOT TESTED", doc)
         for required in ("High Contrast", "Narrator", "Keyboard", "Shift+Tab"):
             self.assertIn(required.lower(), doc.lower())

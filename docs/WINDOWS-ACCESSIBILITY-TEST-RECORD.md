@@ -1,6 +1,6 @@
 # Windows Read-only Wizard — Manual Accessibility Test Record
 
-**Acceptance status: NOT TESTED.** This document is a blank, privacy-safe worksheet. Running CI or seeing successful diagnostics does **not** complete any entry.
+**Acceptance status: INCOMPLETE — partial owner-reported visual observation at 300% only.** All other physical DPI/input/assistive-technology configurations remain NOT TESTED. Running CI or seeing successful diagnostics does **not** complete any physical acceptance entry.
 
 **Source:** [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). Test a disposable synthetic client only; never your only working WoW client.
 
@@ -40,6 +40,16 @@ For each scale, set actual **Windows display scaling**, close and reopen the wiz
 | 125% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
 | 150% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
 | 200% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
+| 300% (owner reported) | PARTIAL VISUAL: folder inputs and Browse buttons visible in supplied images | PARTIAL VISUAL: choices and written C/J restriction visible; keyboard mutex interaction NOT TESTED | PARTIAL VISUAL: addon controls, six-file details, warning text and Close Review observed in screenshots | NOT TESTED | NOT TESTED |
+
+## Owner-reported 300% visual review — 14 October 2026 (partial; not acceptance)
+
+- Source: owner-provided on-screen screenshots and console text from the **existing disposable FAKE-file** `Start-Accessibility-ManualCheck.bat` Ready and Blocked sessions; **no screenshots, names, temporary paths or account data are committed**.
+- Owner reports **300% Windows display scaling** on a large monitor. **Monitor resolution, Windows build and OS-confirmed DPI were not supplied.** Record this as *reported*, not independently measured.
+- Visible in screenshots: folder selectors, optional J/C/U choices and textual mutual-exclusion warning, N Addon Suite area, main-page scrolling, six file-details rows, backup-needed text, scrollable warning area, Close Review button, and the blocked preview's unrecognised V / missing backup-folder messages. No obvious clipping or overlap in the captured regions; this does **not** rule out issues elsewhere or establish automatic PASS.
+- Console ended with `SYNTHETIC FIXTURES COMPLETE` and confirmed the Blocked fixture's synthetic files unchanged. This is evidence about **fake fixture integrity only**, not real-game integrity or the actual scaling setting; automatic cleanup was announced by the helper, not independently inspected here.
+- **NOT TESTED:** complete Tab/Shift+Tab navigation, Enter/Escape by hand, screen-reader announcements, contrast theme, all C/J toggle combinations, separately tested 100/125/150/200% scales, any actual WoW build/gameplay or independently protected original/WTF backups. These remain open; this visual session alone cannot authorise an installer or public release.
+- If further testing shows cropping, clipped warnings or inaccessible focus, record FAIL and reproduction steps. Do not upgrade this row to PASS from the screenshots alone.
 
 ## Three-minute keyboard check at each scaling level
 

@@ -27,7 +27,7 @@ Do not commit personal game settings, account data, screenshots, logs, or the ow
 
 For an initial **hands-on accessibility check**, download and extract the full source repository outside your game installation. On Windows, double-click `tests/Start-Accessibility-ManualCheck.bat`. It opens the existing read-only setup wizard with **disposable fake files**, first in Ready mode and then in Blocked mode. No real WoW client path is accepted and no game, account, addon, or SavedVariables files are accessed. This source-only developer QA launcher is **not** an installer and is **not** part of the player ZIP.
 
-Change your real Windows display scaling to 100%, 125%, 150%, and 200% in turn, reopen the launcher, and record what you actually observe. See [Windows accessibility test record](docs/WINDOWS-ACCESSIBILITY-TEST-RECORD.md). Automated tests do not establish physical usability or gameplay compatibility.
+Check your actual Windows display scaling at 100%, 125%, 150%, 200% and (where available) 300%, reopening the launcher at each scale you can test. Record actual observations; an owner-reported partial 300% visual review is not full acceptance. See [Windows accessibility test record](docs/WINDOWS-ACCESSIBILITY-TEST-RECORD.md). Automated tests do not establish physical usability or gameplay compatibility.
 
 ## First step: inspect the existing client safely
 
