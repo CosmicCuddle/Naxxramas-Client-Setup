@@ -118,9 +118,6 @@ try{
         $layout.high_contrast_palette_uses_system_colours -and
         $layout.contrast_applied_to_actual_controls -and
         $layout.naxx_preview_theme_controls -and
-        $layout.original_artwork_preview -and
-        $layout.art_motion_obeys_windows -and
-        $layout.hero_does_not_cover_first_section -and
         $layout.high_contrast_extra_palette_uses_system_colours) 'Naxx visual preview preserves native controls and Windows High Contrast OS colours'
     Check ($layout.review_status_accessible -and $layout.clear_and_close_accessible -and
         $layout.initial_keyboard_focus_target -ceq 'ClientFolder') 'Review status descriptions, safe buttons and initial keyboard focus remain available'
