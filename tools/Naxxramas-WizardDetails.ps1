@@ -76,6 +76,205 @@ function Format-WizardSummary([object]$Report){
 # Resolve a testable palette at construction time. In Windows High Contrast,
 # use OS colours instead of fixed light-theme colours. This is not a claim
 # of validated screen-reader behaviour or live DPI adjustment.
+
+# Original, vector-only decorative artwork. Compiled locally from source on
+# Windows PowerShell 5.1; no game images, downloaded assets or file writes.
+# This is intentionally NOT a custom renderer for keyboard-operable controls.
+if(-not ('NaxxramasNecropolisHeader' -as [type])){
+    Add-Type -ReferencedAssemblies @('System.Windows.Forms.dll','System.Drawing.dll') -TypeDefinition @'
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+public sealed class NaxxramasNecropolisHeader : Panel
+{
+    private readonly Timer glowTimer;
+    private int glowFrame;
+    private bool motionRequested = true;
+
+    [DllImport("user32.dll", SetLastError = false)]
+    private static extern bool SystemParametersInfo(uint action, uint param,
+        out int value, uint update);
+
+    public NaxxramasNecropolisHeader()
+    {
+        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
+                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+        TabStop = false;
+        glowTimer = new Timer();
+        glowTimer.Interval = 170;
+        glowTimer.Tick += delegate(object sender, EventArgs args)
+        {
+            glowFrame = (glowFrame + 1) % 720;
+            Invalidate();
+        };
+    }
+
+    public bool MotionAvailable
+    {
+        get
+        {
+            // Respect Windows' Reduce animation settings and High Contrast.
+            // Failure to read system motion preference disables motion.
+            if (SystemInformation.HighContrast)
+                return false;
+            int enabled = 0;
+            return SystemParametersInfo(0x1042, 0, out enabled, 0) && enabled != 0;
+        }
+    }
+
+    public bool MotionEnabled
+    {
+        get { return motionRequested && MotionAvailable; }
+        set { motionRequested = value; SyncMotion(); Invalidate(); }
+    }
+
+    public bool AnimationRunning { get { return glowTimer.Enabled; } }
+    public bool OriginalVectorArt { get { return true; } }
+
+    private void SyncMotion()
+    {
+        if (IsHandleCreated && MotionEnabled)
+            glowTimer.Start();
+        else
+            glowTimer.Stop();
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        SyncMotion();
+    }
+
+    protected override void OnHandleDestroyed(EventArgs e)
+    {
+        glowTimer.Stop();
+        base.OnHandleDestroyed(e);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            glowTimer.Stop();
+            glowTimer.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    private static PointF P(float x, float y) { return new PointF(x, y); }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+        if (SystemInformation.HighContrast)
+            return; // Never paint fantasy colours over Windows contrast settings.
+
+        Graphics g = e.Graphics;
+        SmoothingMode before = g.SmoothingMode;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        float w = ClientSize.Width;
+        float h = ClientSize.Height;
+        float cx = w - 195f, cy = h * 0.61f;
+        float pulse = MotionEnabled
+            ? (float)(0.5 + 0.5 * Math.Sin(glowFrame * 0.18))
+            : 0.45f;
+        try
+        {
+            using (var fog = new LinearGradientBrush(
+                new PointF(w * 0.50f, 0), new PointF(w, h),
+                Color.FromArgb(0, 14, 28, 30), Color.FromArgb(90, 18, 65, 65)))
+            {
+                g.FillRectangle(fog, w * 0.46f, 0, w * 0.54f, h);
+            }
+
+            // Framed antique-gold tracery and one static lower guide line.
+            using (var line = new Pen(Color.FromArgb(95, 162, 143, 104), 1.2f))
+            {
+                g.DrawLine(line, 12, 10, 12, h - 13);
+                g.DrawLine(line, 12, 10, 48, 10);
+                g.DrawLine(line, 12, h - 13, 48, h - 13);
+                g.DrawLine(line, w - 12, 12, w - 55, 12);
+                g.DrawLine(line, w - 12, 12, w - 12, h - 14);
+                g.DrawLine(line, w - 12, h - 14, w - 55, h - 14);
+            }
+
+            // A floating rune-gate, not traced from a game asset.
+            using (var outer = new Pen(Color.FromArgb(65 + (int)(31*pulse),
+                66, 189, 167), 6.0f))
+            using (var inner = new Pen(Color.FromArgb(128 + (int)(36*pulse),
+                113, 215, 188), 1.6f))
+            {
+                g.DrawEllipse(outer, cx - 70, cy - 65, 140, 130);
+                g.DrawArc(inner, cx - 63, cy - 60, 126, 120, 195, 293);
+            }
+
+            // Floating stone island and original tiered spires.
+            PointF[] island = {
+                P(cx-148,cy+45), P(cx-107,cy+33), P(cx-56,cy+41),
+                P(cx+23,cy+28), P(cx+111,cy+38), P(cx+143,cy+47),
+                P(cx+96,cy+59), P(cx+40,cy+68), P(cx-28,cy+64),
+                P(cx-89,cy+70), P(cx-130,cy+59)
+            };
+            using (var stone = new SolidBrush(Color.FromArgb(16, 25, 33)))
+            using (var edge = new Pen(Color.FromArgb(130, 107, 141, 139), 1.3f))
+            {
+                g.FillPolygon(stone, island);
+                g.DrawLines(edge, island);
+            }
+            using (var citadel = new SolidBrush(Color.FromArgb(29, 48, 56)))
+            using (var outline = new Pen(Color.FromArgb(158, 121, 163, 151), 1.4f))
+            {
+                PointF[] keep = { P(cx-77,cy+37), P(cx-77,cy-17),
+                    P(cx-49,cy-17), P(cx-49,cy-37), P(cx-28,cy-37),
+                    P(cx-28,cy-55), P(cx,cy-72), P(cx+28,cy-55),
+                    P(cx+28,cy-37), P(cx+48,cy-37), P(cx+48,cy-15),
+                    P(cx+80,cy-15), P(cx+80,cy+39) };
+                g.FillPolygon(citadel,keep);
+                g.DrawLines(outline,keep);
+                // Three needle spires and rune-lit windows.
+                float[] towers = {cx-82,cx,cx+81};
+                for(int i=0;i<towers.Length;i++)
+                {
+                    float x=towers[i];
+                    float tip=(i==1?cy-108:cy-63);
+                    PointF[] spire={P(x-12,cy+30),P(x-12,tip+21),
+                        P(x,tip),P(x+12,tip+21),P(x+12,cy+30)};
+                    g.FillPolygon(citadel,spire);
+                    g.DrawLines(outline,spire);
+                }
+            }
+            // Carved, glowing gate and slim windows.
+            using (var lamp = new Pen(Color.FromArgb(127 + (int)(50*pulse),
+                106, 215, 185), 2.0f))
+            {
+                g.DrawArc(lamp,cx-14,cy+9,28,29,180,180);
+                g.DrawLine(lamp,cx-14,cy+23,cx-14,cy+39);
+                g.DrawLine(lamp,cx+14,cy+23,cx+14,cy+39);
+                g.DrawLine(lamp,cx-47,cy-22,cx-47,cy-2);
+                g.DrawLine(lamp,cx+47,cy-22,cx+47,cy-2);
+            }
+            // Five rune diamonds drift only in brightness; no moving controls.
+            for(int i=0;i<5;i++)
+            {
+                float x=cx-129+i*65, y=cy-40+(i%2)*18;
+                int alpha=105+(int)(30*pulse);
+                using (var pen=new Pen(Color.FromArgb(alpha,112,204,188),1.35f))
+                {
+                    g.DrawLines(pen,new PointF[]{
+                        P(x,y-9),P(x+6,y),P(x,y+9),P(x-6,y),P(x,y-9)});
+                    g.DrawLine(pen,x-4,y,x+4,y);
+                }
+            }
+        }
+        finally { g.SmoothingMode = before; }
+    }
+}
+'@
+}
+
 function Get-WizardTheme([bool]$HighContrast){
     if($HighContrast){
         return [pscustomobject]@{

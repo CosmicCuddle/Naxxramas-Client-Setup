@@ -23,6 +23,10 @@ This repository is **not** a full World of Warcraft client download. Do not uplo
 
 Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The `.gitignore` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
 
+## Original Necropolis illustration and optional rune glow
+
+The **source-only review prototype** now includes an original illustrated gothic-citadel hero banner with soft optional rune-glow animation. It honours Windows reduced-motion and High Contrast, never moves input controls, and has no game files or copyrighted textures. This is **still not an installer**. [How to review the art safely at 300%](docs/NECROPOLIS-ARTWORK-PREVIEW.md). Actual 300% rendering and contrast/motion comfort require human verification.
+
 ## Naxxramas-inspired visual preview (not a finished installer)
 
 The Windows read-only wizard now has an **original dark stone/teal/gold Naxxramas-inspired theme**, rather than generic light Windows colours. It is still built with native Windows Forms controls and is **not** a working client installer. Windows High Contrast uses the system palette, and the owner's 300% scaling needs fresh physical visual confirmation after this theme change. Read [visual theme and accessibility safeguards](docs/WINDOWS-VISUAL-THEME-PREVIEW.md). No game artwork or assets are bundled, and no install, backup, restore or download action has been granted.
