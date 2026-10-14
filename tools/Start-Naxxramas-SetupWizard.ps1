@@ -76,7 +76,7 @@ function New-Label([string]$Text,[int]$Y,[bool]$Bold=$false){
     $l.Size=New-Object Drawing.Size(910,27)
     $l.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $l.Font=New-Font $(if($Bold){11}else{10}) $Bold
-    $l.ForeColor=$wizardTheme.Text
+    $l.ForeColor=if($Bold){$wizardTheme.SectionText}else{$wizardTheme.Text}
     return $l
 }
 function New-FolderControls([string]$Name,[string]$Label,[int]$Y,[string]$Initial,[int]$Index){
@@ -87,6 +87,8 @@ function New-FolderControls([string]$Name,[string]$Label,[int]$Y,[string]$Initia
     $field.Location=New-Object Drawing.Point(24,($Y+27))
     $field.Size=New-Object Drawing.Size(775,30)
     $field.Font=New-Font 10
+    $field.BackColor=$wizardTheme.Input
+    $field.ForeColor=$wizardTheme.InputText
     $field.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
     $field.TabIndex=$Index
     $field.AccessibleName=$Label
@@ -99,7 +101,20 @@ function New-FolderControls([string]$Name,[string]$Label,[int]$Y,[string]$Initia
     $browse.TabIndex=($Index+1)
     $browse.AccessibleName=('Browse existing '+$Label)
     $browse.ForeColor=$wizardTheme.Text
+    Set-NaxxramasSecondaryButton $browse
     return [pscustomobject]@{Caption=$caption;Field=$field;Browse=$browse}
+}
+# Native controls retain their system keyboard/focus, role and screen-reader
+# semantics. Only ordinary (not High Contrast) colours/borders are themed.
+function Set-NaxxramasSecondaryButton([Windows.Forms.Button]$Button){
+    if(-not $wizardTheme.HighContrast){
+        $Button.UseVisualStyleBackColor=$false
+        $Button.BackColor=$wizardTheme.Surface
+        $Button.ForeColor=$wizardTheme.SurfaceText
+        $Button.FlatStyle=[Windows.Forms.FlatStyle]::Flat
+        $Button.FlatAppearance.BorderColor=$wizardTheme.Border
+        $Button.FlatAppearance.BorderSize=1
+    }
 }
 $form=New-Object Windows.Forms.Form
 $form.Name='NaxxramasReadOnlySetup'
@@ -129,6 +144,14 @@ $heading.ForeColor=$wizardTheme.HeaderText
 $subheading=New-Label 'READ-ONLY PREVIEW  -  No installation, backup, approval or recovery.' 56
 $subheading.ForeColor=$wizardTheme.HeaderSecondary
 $header.Controls.AddRange(@($heading,$subheading))
+# Non-interactive accent trim: outside the text and native focus areas.
+$headerTrim=New-Object Windows.Forms.Panel
+$headerTrim.Name='NaxxramasHeaderTrim'
+$headerTrim.Location=New-Object Drawing.Point(0,86)
+$headerTrim.Size=New-Object Drawing.Size(962,3)
+$headerTrim.BackColor=$wizardTheme.Border
+$headerTrim.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
+$header.Controls.Add($headerTrim)
 $form.Controls.Add($header)
 $form.Controls.Add((New-Label '1. Choose folders' 101 $true))
 $clientField=New-FolderControls 'ClientFolder' 'Existing World of Warcraft client' 132 $ClientPath 0
@@ -165,6 +188,9 @@ $tbc.AccessibleName='Optional TBC login Patch-C, incompatible with Vanilla login
 $login.ForeColor=$wizardTheme.Text
 $loading.ForeColor=$wizardTheme.Text
 $tbc.ForeColor=$wizardTheme.Text
+$login.BackColor=$wizardTheme.Window
+$loading.BackColor=$wizardTheme.Window
+$tbc.BackColor=$wizardTheme.Window
 $form.Controls.AddRange(@($login,$loading,$tbc))
 $core=New-Label 'Core patches V and Z are always required for this setup.' 515
 $core.ForeColor=$wizardTheme.MutedText
@@ -186,6 +212,7 @@ $suite.Size=New-Object Drawing.Size(914,34)
 $suite.TabIndex=9
 $suite.AccessibleName='Optional N Addon Suite version 2, planning only'
 $suite.ForeColor=$wizardTheme.Text
+$suite.BackColor=$wizardTheme.Window
 $form.Controls.Add($suite)
 $moduleChecks=@()
 $moduleNames=@('IndividualProgressionAddon','DungeonJournal','MultiBot','NaxxLootLottery')
@@ -200,6 +227,7 @@ for($i=0;$i -lt 4;$i++){
     $check.Checked=(-not $addonModulesExplicit -or $initialAddonModules -ccontains $moduleNames[$i])
     $check.Enabled=$suite.Checked
     $check.ForeColor=$wizardTheme.Text
+    $check.BackColor=$wizardTheme.Window
     $check.AccessibleName=($moduleLabels[$i]+' preference, only active when suite selected')
     $form.Controls.Add($check)
     $moduleChecks+=,$check
@@ -234,6 +262,9 @@ $review.Size=New-Object Drawing.Size(165,40)
 $review.BackColor=$wizardTheme.Accent
 $review.ForeColor=$wizardTheme.AccentText
 $review.FlatStyle=[Windows.Forms.FlatStyle]::Flat
+$review.UseVisualStyleBackColor=$false
+$review.FlatAppearance.BorderColor=$wizardTheme.Border
+$review.FlatAppearance.BorderSize=1
 $review.AccessibleName='Read-only review of proposed changes'
 $review.TabIndex=15
 $clear=New-Object Windows.Forms.Button
@@ -272,6 +303,9 @@ $readText.ForeColor=$wizardTheme.Text
 $close.TabIndex=19
 $close.AccessibleName='Close the read-only setup wizard'
 $close.ForeColor=$wizardTheme.Text
+foreach($button in @($clear,$details,$close,$readText)){
+    Set-NaxxramasSecondaryButton $button
+}
 $form.Controls.AddRange(@($review,$clear,$details,$close,$readText))
 $status=New-Label 'Not reviewed - no files have been changed.' 1169
 $status.Name='ReviewStatus'
