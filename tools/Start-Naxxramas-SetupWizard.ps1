@@ -134,8 +134,11 @@ $form.AutoScrollMinSize=New-Object Drawing.Size(0,1570)
 $form.StartPosition=[Windows.Forms.FormStartPosition]::CenterScreen
 $form.BackColor=$wizardTheme.Window
 
-$header=New-Object Windows.Forms.Panel
-$header.Size=New-Object Drawing.Size(962,89)
+$header=New-Object NaxxramasNecropolisHeader
+$header.Name='NaxxramasOriginalArtHeader'
+$header.Size=New-Object Drawing.Size(962,188)
+# Diagnostics must never animate or launch a genuine review window.
+if($Diagnostics -or $DetailDiagnostics){$header.MotionEnabled=$false}
 $header.BackColor=$wizardTheme.Header
 $header.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
 $heading=New-Label 'NAXXRAMAS  |  CLIENT SETUP' 15 $true
@@ -144,10 +147,28 @@ $heading.ForeColor=$wizardTheme.HeaderText
 $subheading=New-Label 'READ-ONLY PREVIEW  -  No installation, backup, approval or recovery.' 56
 $subheading.ForeColor=$wizardTheme.HeaderSecondary
 $header.Controls.AddRange(@($heading,$subheading))
+# Decorative effect is never needed for review. Windows motion/contrast
+# settings override the user's preference; no game files are accessed.
+$motionSwitch=New-Object Windows.Forms.CheckBox
+$motionSwitch.Name='DecorativeRuneGlow'
+$motionSwitch.Location=New-Object Drawing.Point(27,117)
+$motionSwitch.Size=New-Object Drawing.Size(410,30)
+$motionSwitch.Text=if($header.MotionAvailable){'Enable subtle rune glow'}else{'Rune glow disabled by Windows accessibility settings'}
+$motionSwitch.Checked=[bool]$header.MotionEnabled
+$motionSwitch.Enabled=[bool]$header.MotionAvailable
+$motionSwitch.ForeColor=$wizardTheme.HeaderSecondary
+$motionSwitch.BackColor=$wizardTheme.Header
+$motionSwitch.TabIndex=21
+$motionSwitch.AccessibleName='Toggle decorative rune glow only'
+$motionSwitch.AccessibleDescription='Visual animation only. Does not affect files, patches, review or installation. Windows accessibility settings override this option.'
+$motionSwitch.Add_CheckedChanged({
+    $header.MotionEnabled=[bool]$motionSwitch.Checked
+})
+$header.Controls.Add($motionSwitch)
 # Non-interactive accent trim: outside the text and native focus areas.
 $headerTrim=New-Object Windows.Forms.Panel
 $headerTrim.Name='NaxxramasHeaderTrim'
-$headerTrim.Location=New-Object Drawing.Point(0,86)
+$headerTrim.Location=New-Object Drawing.Point(0,185)
 $headerTrim.Size=New-Object Drawing.Size(962,3)
 $headerTrim.BackColor=$wizardTheme.Border
 $headerTrim.Anchor=[Windows.Forms.AnchorStyles]::Top -bor [Windows.Forms.AnchorStyles]::Left -bor [Windows.Forms.AnchorStyles]::Right
@@ -461,6 +482,14 @@ $readText.Add_Click({
     $script:preview.ScrollToCaret()
 })
 $close.Add_Click({$form.Close()})
+# Reserve actual space for the illustrated header instead of overlapping
+# original controls. No event handlers, file actions or relative tab indices
+# below the banner are modified by this visual-only offset.
+$heroOffset=100
+foreach($child in @($form.Controls)){
+    if($child -ne $header){$child.Top=($child.Top+$heroOffset)}
+}
+$form.AutoScrollMinSize=New-Object Drawing.Size(0,(1570+$heroOffset))
 $form.AcceptButton=$review
 $form.CancelButton=$close
 # Start keyboard navigation at the first existing-client folder, not an action.
@@ -642,6 +671,22 @@ if($Diagnostics){
             $contrastTheme.Text -eq [Drawing.SystemColors]::WindowText -and
             $contrastTheme.Accent -eq [Drawing.SystemColors]::Highlight -and
             $contrastTheme.AccentText -eq [Drawing.SystemColors]::HighlightText)
+        original_artwork_preview=(
+            $header -is [NaxxramasNecropolisHeader] -and
+            $header.OriginalVectorArt -and
+            $header.Name -ceq 'NaxxramasOriginalArtHeader' -and
+            $header.Height -eq 188 -and
+            $motionSwitch.AccessibleName -ceq 'Toggle decorative rune glow only' -and
+            $motionSwitch.AccessibleDescription.Contains('Does not affect files') -and
+            -not $header.AnimationRunning)
+        art_motion_obeys_windows=(
+            $motionSwitch.Enabled -eq $header.MotionAvailable -and
+            -not $header.AnimationRunning -and
+            $header.MotionEnabled -eq $false)
+        hero_does_not_cover_first_section=(
+            $header.Bottom -le (@($form.Controls | Where-Object {
+                $_ -ne $header
+            } | Measure-Object -Property Top -Minimum)[0].Minimum))
         naxx_preview_theme_controls=(
             $headerTrim.BackColor -eq $wizardTheme.Border -and
             $clientField.Field.BackColor -eq $wizardTheme.Input -and
