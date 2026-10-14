@@ -23,6 +23,10 @@ This repository is **not** a full World of Warcraft client download. Do not uplo
 
 Do not commit personal game settings, account data, screenshots, logs, or the owner's 18.6 GB client archive. The `.gitignore` includes protective exclusions, but it is **not** a substitute for reviewing files before committing.
 
+## Naxxramas-inspired visual preview (not a finished installer)
+
+The Windows read-only wizard now has an **original dark stone/teal/gold Naxxramas-inspired theme**, rather than generic light Windows colours. It is still built with native Windows Forms controls and is **not** a working client installer. Windows High Contrast uses the system palette, and the owner's 300% scaling needs fresh physical visual confirmation after this theme change. Read [visual theme and accessibility safeguards](docs/WINDOWS-VISUAL-THEME-PREVIEW.md). No game artwork or assets are bundled, and no install, backup, restore or download action has been granted.
+
 ## Try the review-only Windows interface without touching WoW
 
 For an initial **hands-on accessibility check**, download and extract the full source repository outside your game installation. On Windows, double-click `tests/Start-Accessibility-ManualCheck.bat`. It opens the existing read-only setup wizard with **disposable fake files**, first in Ready mode and then in Blocked mode. No real WoW client path is accepted and no game, account, addon, or SavedVariables files are accessed. This source-only developer QA launcher is **not** an installer and is **not** part of the player ZIP.
