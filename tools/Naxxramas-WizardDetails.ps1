@@ -177,7 +177,7 @@ public sealed class NaxxramasNecropolisHeader : Panel
         g.SmoothingMode = SmoothingMode.AntiAlias;
         float w = ClientSize.Width;
         float h = ClientSize.Height;
-        float cx = w - 195f, cy = h * 0.51f;
+        float cx = w - 195f, cy = h * 0.61f;
         float pulse = MotionEnabled
             ? (float)(0.5 + 0.5 * Math.Sin(glowFrame * 0.18))
             : 0.45f;
