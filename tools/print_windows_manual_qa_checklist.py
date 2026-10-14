@@ -129,7 +129,7 @@ def render(plan: dict) -> str:
         "These require hands-on acceptance of a reviewed **non-writing** setup UI; CI cannot substitute.",
         "",
     ])
-    for scale in ("100%", "125%", "150%", "200%"):
+    for scale in ("100%", "125%", "150%", "200%", "300%"):
         lines.extend([
             "### Display scaling " + scale + " — NOT TESTED", "",
             "- [ ] No clipped or overlapping controls, labels or long errors.",
