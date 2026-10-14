@@ -1,6 +1,6 @@
 # Windows Read-only Wizard — Manual Accessibility Test Record
 
-**Acceptance status: INCOMPLETE — partial owner-reported visual observation at 300% only.** All other physical DPI/input/assistive-technology configurations remain NOT TESTED. Running CI or seeing successful diagnostics does **not** complete any physical acceptance entry.
+**Acceptance status: INCOMPLETE — partial owner-reported visual and keyboard observations at 300%.** Other physical DPI configurations and assistive technologies remain NOT TESTED. Running CI or seeing successful diagnostics does **not** complete any physical acceptance entry.
 
 **Source:** [Windows Accessibility Acceptance](WINDOWS-ACCESSIBILITY-ACCEPTANCE.md). Test a disposable synthetic client only; never your only working WoW client.
 
@@ -40,7 +40,7 @@ For each scale, set actual **Windows display scaling**, close and reopen the wiz
 | 125% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
 | 150% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
 | 200% | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED | NOT TESTED |
-| 300% (owner reported) | PARTIAL VISUAL: folder inputs and Browse buttons visible in supplied images | PARTIAL VISUAL: choices and written C/J restriction visible; keyboard mutex interaction NOT TESTED | PARTIAL VISUAL: addon controls, six-file details, warning text and Close Review observed in screenshots | NOT TESTED | NOT TESTED |
+| 300% (owner reported) | PARTIAL VISUAL: folder inputs and Browse buttons visible in supplied images | PARTIAL VISUAL: choices and written C/J restriction visible; keyboard mutex interaction NOT TESTED | PARTIAL VISUAL: addon controls, six-file details, warning text and Close Review observed in screenshots | PARTIAL KEYBOARD (owner report): Tab/Shift+Tab visible focus, Enter activates Review Only, review text controls without reported issue, Escape closes main window; full focus traversal and exact arrow-key behaviour NOT TESTED | NOT TESTED |
 
 ## Owner-reported 300% visual review — 14 October 2026 (partial; not acceptance)
 
@@ -48,8 +48,20 @@ For each scale, set actual **Windows display scaling**, close and reopen the wiz
 - Owner reports **300% Windows display scaling** on a large monitor. **Monitor resolution, Windows build and OS-confirmed DPI were not supplied.** Record this as *reported*, not independently measured.
 - Visible in screenshots: folder selectors, optional J/C/U choices and textual mutual-exclusion warning, N Addon Suite area, main-page scrolling, six file-details rows, backup-needed text, scrollable warning area, Close Review button, and the blocked preview's unrecognised V / missing backup-folder messages. No obvious clipping or overlap in the captured regions; this does **not** rule out issues elsewhere or establish automatic PASS.
 - Console ended with `SYNTHETIC FIXTURES COMPLETE` and confirmed the Blocked fixture's synthetic files unchanged. This is evidence about **fake fixture integrity only**, not real-game integrity or the actual scaling setting; automatic cleanup was announced by the helper, not independently inspected here.
-- **NOT TESTED:** complete Tab/Shift+Tab navigation, Enter/Escape by hand, screen-reader announcements, contrast theme, all C/J toggle combinations, separately tested 100/125/150/200% scales, any actual WoW build/gameplay or independently protected original/WTF backups. These remain open; this visual session alone cannot authorise an installer or public release.
+- **NOT TESTED / STILL OPEN:** exhaustive focus order and each control's keyboard activation, exact review-text arrow-key behaviour, keyboard-only File Details/Close Review, screen-reader announcements, contrast theme, all C/J toggle combinations, separately tested 100/125/150/200% scales, any actual WoW build/gameplay or independently protected original/WTF backups. Partial owner-reported keyboard success does not authorise installation or public release.
 - If further testing shows cropping, clipped warnings or inaccessible focus, record FAIL and reproduction steps. Do not upgrade this row to PASS from the screenshots alone.
+
+## Owner-reported follow-up — 300% keyboard controls, 14 October 2026 (partial)
+
+Following the 300% visual review, the owner directly reported:
+
+- **Tab / Shift+Tab:** focus moves forwards/backwards; selected control is visually distinguishable — **observed working**.
+- **Enter on Review Only:** review results appear without reported error — **observed working**.
+- **Read Review Text controls:** owner reported no navigation problems. The individual arrow-key actions were **not independently isolated or demonstrated**; no exhaustive PASS claim.
+- **Escape on the main wizard:** closes the window correctly without reported error — **observed working**.
+- No apparent control problems in the portions tried. This is an **owner-reported sample**, not an exhaustive keyboard-accessibility acceptance or a CI result.
+
+**Not assessed in this follow-up:** screen reader/Narrator, Windows contrast theme, full keyboard-only path through File Details, J/C mutual-exclusion toggles, all UI controls, display resolution, other scaling values, real WoW client or actual game. The separate prior fake-file integrity result is unchanged.
 
 ## Three-minute keyboard check at each scaling level
 
